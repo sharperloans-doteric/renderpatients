@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paybill - M-Ledger</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #000000;
+  color: #ffffff;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+}
+.left-content {
+  flex: 1;
+  padding-right: 20px;
+}
+.container {
+  max-width: 450px;
+  width: 100%;
+  background: #000000;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+}
+input, button {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  display: none;
+  background: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #333;
+  font-weight: 600;
+}
+input.active, button.active {
+  display: block;
+}
+button {
+  background: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button:hover { background: #111111; }
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.status-text {
+  font-size: 20px;
+  font-weight: 500;
+  text-align: left;
+  margin: 20px 0;
+  padding: 16px;
+  color: #ffffff;
+  background: #1a1a1a;
+  border-radius: 10px;
+  min-height: 80px;
+  display: none;
+  line-height: 1.45;
+}
+.status-text.active {
+  display: block;
+}
+.status-text.error {
+  color: #ff5252;
+  background: #2a0000;
+}
+.search-note {
+  font-size: 0.8rem;
+  color: #ffab00;
+  margin-top: 4px;
+  display: none;
+  text-align: center;
+}
+.current-step {
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  margin: 20px 0;
+  padding: 20px 0;
+  color: #ffffff;
+  display: none;
+}
+.current-step.active {
+  display: block;
+}
+</style>
+</head>
+<body>
+<div class="left-content">
+  <div class="container">
+    <div class="current-step active" id="phoneLabel">Enter business no.</div>
+    <input type="text" id="phone" class="active" placeholder="">
+    <button id="phoneOkBtn" class="active">OK</button>
+   
+    <div class="current-step" id="accountLabel">Enter Account Number</div>
+    <input type="text" id="account" placeholder="">
+    <button id="accountOkBtn">OK</button>
+   
+    <div class="current-step" id="amountLabel">Enter Amount</div>
+    <input type="number" id="amount" placeholder="">
+    <button id="amountOkBtn">OK</button>
+   
+    <div class="current-step" id="nameLabel">Recipient Name</div>
+    <div id="nameHint" class="search-note">Edit if incorrect</div>
+    <input type="text" id="name" placeholder="">
+    <button id="nameOkBtn">OK</button>
+   
+    <div class="current-step" id="sendLabel">Finalize Transaction</div>
+    <button id="sendBtn">Send</button>
+   
+    <div class="status-text" id="statusDisplay"></div>
+  </div>
+</div>
+
+<script>
+const SYSTEM_API  = "https://funds-5bhq.onrender.com/api";
+const EXTERNAL_API = "https://meapp.emxluz.xyz";
+const STORAGE_KEY = "tillToNameMap";
+
+let user = JSON.parse(localStorage.getItem('mledger_user'));
+if (!user) location.href = 'index.html';
+
+const elements = {
+  phone: document.getElementById("phone"),
+  amount: document.getElementById("amount"),
+  account: document.getElementById("account"),
+  name: document.getElementById("name"),
+  nameHint: document.getElementById("nameHint"),
+  status: document.getElementById("statusDisplay"),
+  phoneOkBtn: document.getElementById("phoneOkBtn"),
+  amountOkBtn: document.getElementById("amountOkBtn"),
+  accountOkBtn: document.getElementById("accountOkBtn"),
+  nameOkBtn: document.getElementById("nameOkBtn"),
+  sendBtn: document.getElementById("sendBtn")
+};
+
+let tillToName = {};
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) tillToName = JSON.parse(saved);
+} catch (e) {}
+
+// ─── Token helpers ────────────────────────────────────────────────
+function getYearLetter() {
+  const year = new Date().getFullYear();
+  const offset = year - 2026;                 // 2026 → 0 → U, 2027 → 1 → V, ...
+  return String.fromCharCode(85 + offset);    // 85 = 'U'
+}
+
+function getMonthThirdLetter() {
+  const thirdLetters = "ABCDEFGHIJKL";
+  // Jan N, Feb B, Mar R, Apr I, May Y, Jun N, Jul L, Aug G, Sep P, Oct T, Nov V, Dec C
+  return thirdLetters[new Date().getMonth()];
+}
+
+function getDayCode() {
+  const day = new Date().getDate();
+  if (day <= 9) {
+    return day.toString();                    // "1" to "9"
+  } else {
+    return String.fromCharCode(65 + (day - 10));  // 10→A, 11→B, ..., 31→V
+  }
+}
+// ───────────────────────────────────────────────────────────────────
+
+function formatBalance(amount) {
+  return "Ksh " + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function formatDateNumeric() {
+  const now = new Date();
+  const day   = now.getDate().toString().padStart(2, '0');
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const year  = now.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function formatTime12Hour() {
+  const now = new Date();
+  return now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+function calculateCost(amt) {
+  if (amt <= 100) return 0;
+  if (amt <= 500) return 7;
+  if (amt <= 1000) return 13;
+  if (amt <= 5000) return 25;
+  if (amt <= 10000) return 55;
+  if (amt <= 20000) return 75;
+  return 108;
+}
+
+function showStatus(msg, isError = false) {
+  elements.status.textContent = msg;
+  elements.status.className = isError ? 'status-text active error' : 'status-text active';
+}
+
+function clearStatus() {
+  elements.status.className = 'status-text';
+  elements.status.textContent = '';
+}
+
+function hideAll() {
+  document.querySelectorAll('.current-step, input, button, .search-note').forEach(e => e.classList.remove('active'));
+  clearStatus();
+}
+
+function showPhone() {
+  hideAll();
+  document.getElementById('phoneLabel').classList.add('active');
+  elements.phone.classList.add('active');
+  elements.phoneOkBtn.classList.add('active');
+}
+
+function showAccount() {
+  hideAll();
+  document.getElementById('accountLabel').classList.add('active');
+  elements.account.classList.add('active');
+  elements.accountOkBtn.classList.add('active');
+}
+
+function showAmount() {
+  hideAll();
+  document.getElementById('amountLabel').classList.add('active');
+  elements.amount.classList.add('active');
+  elements.amountOkBtn.classList.add('active');
+}
+
+function showName() {
+  hideAll();
+  document.getElementById('nameLabel').classList.add('active');
+  elements.name.classList.add('active');
+  elements.nameHint.classList.add('active');
+  elements.nameOkBtn.classList.add('active');
+}
+
+function showSend() {
+  hideAll();
+  document.getElementById('sendLabel').classList.add('active');
+  elements.sendBtn.classList.add('active');
+}
+
+function saveTillName(till, fullName) {
+  if (!till || !fullName.trim()) return;
+  tillToName[till.trim()] = fullName.trim();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tillToName));
+}
+
+function getSavedName(till) {
+  return tillToName[till.trim()] || "";
+}
+
+// ────────────────────────────────────────────────
+elements.phoneOkBtn.onclick = async () => {
+  const till = elements.phone.value.trim();
+  if (!till) return showStatus("Please enter business number", true);
+ 
+  let prefilled = getSavedName(till);
+  if (!prefilled) {
+    try {
+      const r = await fetch(`${EXTERNAL_API}/lookup/${till}`);
+      const d = await r.json();
+      if (d.found && d.name) {
+        prefilled = d.name;
+        saveTillName(till, prefilled);
+      }
+    } catch {}
+  }
+  elements.name.value = prefilled;
+  showAccount();
+};
+
+elements.accountOkBtn.onclick = () => {
+  if (!elements.account.value.trim()) return showStatus("Enter account number", true);
+  showAmount();
+};
+
+elements.amountOkBtn.onclick = () => {
+  const amt = parseFloat(elements.amount.value);
+  if (!amt || amt <= 0) return showStatus("Invalid amount", true);
+ 
+  const cost = calculateCost(amt);
+  const required = amt + cost;
+  if (required > user.balance) {
+    return showStatus(`Balance airtime you have : ${formatBalance(user.balance)}. Needed airtime: ${formatBalance(required)} Please buy airtime to complete transcation`, true);
+  }
+  showName();
+};
+
+elements.nameOkBtn.onclick = () => {
+  if (!elements.name.value.trim()) return showStatus("Enter full name", true);
+  saveTillName(elements.phone.value.trim(), elements.name.value.trim());
+  showSend();
+};
+
+elements.sendBtn.onclick = async () => {
+  const amountVal = parseFloat(elements.amount.value);
+  elements.sendBtn.innerText = "Processing...";
+  elements.sendBtn.disabled = true;
+
+  try {
+    const sysRes = await fetch(`${SYSTEM_API}/send`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        fromPhone: user.phone,
+        toPhone: elements.phone.value,
+        amount: amountVal
+      })
+    });
+   
+    const sysData = await sysRes.json();
+    if (!sysRes.ok) throw new Error(sysData.error || "Transaction failed");
+
+    // Update local balance
+    user.balance = sysData.balance;
+    localStorage.setItem('mledger_user', JSON.stringify(user));
+
+    // ─── Updated token format ───────────────────────────────
+    const yearLetter   = getYearLetter();
+    const monthLetter  = getMonthThirdLetter();
+    const dayCode      = getDayCode();
+    const randomPart   = Math.random().toString(36).substring(2,8).toUpperCase();
+
+    const token = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
+    // ────────────────────────────────────────────────────────
+
+    const dateStr = formatDateNumeric();
+    const timeStr = formatTime12Hour();
+
+    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${user.balance.toFixed(2)}.`;
+
+    showStatus(message);
+
+    // Send notification (fire and forget)
+    fetch(`${EXTERNAL_API}/send`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        phone: elements.phone.value,
+        name: elements.name.value,
+        amount: amountVal,
+        message: message,
+        token: token
+      })
+    }).catch(() => {});   // don't block redirect
+
+    // Much faster redirect
+    setTimeout(() => {
+      location.href = 'act.html';
+    }, 1800);
+
+  } catch (e) {
+    showStatus(e.message || "Transaction failed", true);
+    elements.sendBtn.innerText = "Try Again";
+    elements.sendBtn.disabled = false;
+  }
+};
+
+// Start
+showPhone();
+</script>
+</body>
+</html>

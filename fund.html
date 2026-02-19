@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fund Account - Secure Payment</title>
+    <style>
+        :root { --primary: #4CAF50; --dark: #121212; --card: #1e1e1e; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+        }
+        .card { 
+            background: var(--card); padding: 2rem; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center;
+            border: 1px solid #333;
+        }
+        h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .user-info { font-size: 0.9rem; color: #aaa; margin-bottom: 1rem; }
+        .fee-info { font-size: 0.85rem; color: #ffab00; margin: 10px 0; display: none; }
+        input { 
+            width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #444; 
+            border-radius: 6px; background: #121212; color: white; box-sizing: border-box;
+        }
+        button { 
+            width: 100%; padding: 14px; background: var(--primary); color: white; 
+            border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px;
+        }
+        button:disabled { background: #444; cursor: not-allowed; }
+        #status { margin-top: 15px; font-size: 0.9rem; min-height: 40px; line-height: 1.4; }
+        .loader {
+            display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;
+            margin-right: 8px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Fund Your Account</h2>
+    <div class="user-info">Account: <span id="accPhone" style="color:var(--primary)">Loading...</span></div>
+    
+    <p style="font-size: 0.8rem; color: #888;">Minimum amount: Ksh 100.00</p>
+    
+    <input type="number" id="fundAmount" placeholder="Amount to Add (Ksh)" oninput="updateFee()">
+    <div id="feeDisplay" class="fee-info">STK Push Amount: <span id="stkPrice">Ksh 0.00</span> (4% Fee)</div>
+    
+    <button id="payBtn" onclick="initiateFunding()">Pay & Fund Account</button>
+    
+    <div id="status"></div>
+    <a href="act.html" style="display:block; margin-top:15px; color:#666; text-decoration:none; font-size:0.8rem">Cancel</a>
+</div>
+
+<script>
+    const BACKEND_PAYMENT = "https://newpayment-srpu.onrender.com";
+    const BACKEND_FUNDS = "https://money.emxluz.xyz/api";
+    const userData = JSON.parse(localStorage.getItem('mledger_user'));
+    
+    if(!userData) window.location.href = "index.html";
+    document.getElementById('accPhone').innerText = userData.phone;
+
+    function updateFee() {
+        const amt = parseFloat(document.getElementById('fundAmount').value);
+        const feeDiv = document.getElementById('feeDisplay');
+        const stkSpan = document.getElementById('stkPrice');
+        
+        if (amt >= 100) {
+            const fee = amt * 0.06;
+            feeDiv.style.display = "block";
+            stkSpan.innerText = "Ksh " + fee.toFixed(2);
+        } else {
+            feeDiv.style.display = "none";
+        }
+    }
+
+    async function initiateFunding() {
+        const amt = parseFloat(document.getElementById('fundAmount').value);
+        const statusDiv = document.getElementById('status');
+        const payBtn = document.getElementById('payBtn');
+
+        if (isNaN(amt) || amt < 100) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
+            return;
+        }
+
+        const stkAmount = Math.ceil(amt * 0.06); // 15% fee for the STK push
+        
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<span class="loader"></span>Processing...';
+        statusDiv.style.color = "#aaa";
+        statusDiv.innerText = `Requesting STK Push for fee: Ksh ${stkAmount}...`;
+
+        try {
+            // 1. Initiate STK Push via Payment Backend
+            const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    amount: stkAmount, 
+                    phone_number: userData.phone 
+                })
+            });
+
+            const payData = await payRes.json();
+            const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+
+            if (invoiceId) {
+                statusDiv.innerText = "Check your phone for the M-Pesa PIN prompt. Do not refresh.";
+                startPolling(invoiceId, amt);
+            } else {
+                throw new Error("STK push failed.Use safaricom verified number.");
+            }
+        } catch (err) {
+            statusDiv.style.color = "red";
+            statusDiv.innerText = "Error: " + err.message;
+            resetUI();
+        }
+    }
+
+    function startPolling(invoiceId, fundAmt) {
+        const statusDiv = document.getElementById('status');
+        let pollCount = 0;
+
+        const pollTimer = setInterval(async () => {
+            pollCount++;
+            try {
+                const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
+                const data = await res.json();
+                const state = data.invoice ? data.invoice.state : data.state;
+
+                if (state === "COMPLETE" || state === "COMPLETED") {
+                    clearInterval(pollTimer);
+                    statusDiv.style.color = "#4CAF50";
+                    statusDiv.innerText = "✅ Payment success! Funding your account...";
+                    finalizeFunding(fundAmt);
+                } else if (state === "FAILED" || state === "REJECTED" || pollCount > 20) {
+                    clearInterval(pollTimer);
+                    statusDiv.style.color = "red";
+                    statusDiv.innerText = "❌ Payment failed or timed out. Account not funded.";
+                    resetUI();
+                }
+            } catch (e) { console.error("Polling error"); }
+        }, 3000);
+    }
+
+    async function finalizeFunding(amt) {
+        const statusDiv = document.getElementById('status');
+        try {
+            // 2. Fund the actual account via Funds Backend
+            const res = await fetch(`${BACKEND_FUNDS}/fund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: userData.phone, amount: amt })
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                userData.balance = result.newBalance;
+                localStorage.setItem('mledger_user', JSON.stringify(userData));
+                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.`;
+                setTimeout(() => window.location.href = "act.html", 3000);
+            } else {
+                statusDiv.innerText = "Payment ok, but account update failed. Contact Admin.";
+            }
+        } catch (err) {
+            statusDiv.innerText = "Critical error during balance update.";
+        }
+    }
+
+    function resetUI() {
+        const payBtn = document.getElementById('payBtn');
+        payBtn.disabled = false;
+        payBtn.innerText = "Pay & Fund Account";
+    }
+</script>
+</body>
+</html>
