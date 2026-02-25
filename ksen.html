@@ -50,12 +50,12 @@
             <input id="rPass" type="password" placeholder="Set PIN/Password">
             
             <select id="referralChoice" onchange="toggleReferralInput()">
-               
+               <option value="no">No Referral</option>
                 <option value="yes">Has been Referred</option>
             </select>
             <input id="rReferrer" placeholder="Referrer's Phone Number" type="tel" style="display:none;">
             
- <option value="no">No Referral</option>
+ 
             <button id="rBtn" onclick="register()">Register</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
