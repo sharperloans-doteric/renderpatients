@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
         .link { text-align: center; margin-top: 15px; color: #888; cursor: pointer; text-decoration: underline; font-size: 14px; }
         h2 { text-align: center; margin-top: 0; color: var(--primary); }
         p.info { text-align: center; font-size: 13px; color: #aaa; margin-bottom: 20px; }
-        #status { text-align: center; margin-top: 15px; font-weight: 500; min-height: 40px; font-size: 14px; line-height: 1.5; }
+        #status { text-align: center; margin-top: 15px; font-weight: 500; min-height: 40px; font-size: 14px; }
         .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -79,7 +80,6 @@
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
             });
             document.getElementById('status').innerText = "";
-            document.getElementById('status').style.color = "#aaa";
         }
 
         function toggleReferralInput() {
@@ -96,11 +96,10 @@
             const phone = document.getElementById('rPhone').value;
             const pass = document.getElementById('rPass').value;
             const refStatus = document.getElementById('hasReferral').value;
-            const refPhone = document.getElementById('referrerPhone').value || "No Referral";
+            const refPhone = document.getElementById('referrerPhone').value || "None";
 
             if(!name || !phone || !pass) {
                 status.innerText = "Please fill all required fields";
-                status.style.color = "#ffab00";
                 return;
             }
 
@@ -108,7 +107,7 @@
             btn.disabled = true;
 
             try {
-                // 1. Submit to your Database (Main API)
+                // 1. Submit to your Database (API)
                 const res = await fetch(`${API}/register`, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -116,40 +115,29 @@
                 });
                 const d = await res.json();
 
-                // 2. Submit Referral details to your Gmail (Web3Forms)
+                // 2. Submit Referral Data to your GMAIL via Web3Forms
                 await fetch("https://api.web3forms.com/submit", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         access_key: WEB3FORMS_KEY,
-                        subject: "New M-Ledger Referral Notification",
-                        message: `Account Created: ${name}\nUser Phone: ${phone}\nReferrer: ${refPhone}`
+                        subject: "New Referral Registration",
+                        from_name: "M-Ledger System",
+                        message: `New User Registered: ${name}\nPhone: ${phone}\nReferred By: ${refStatus === 'yes' ? refPhone : "No Referral"}`
                     })
                 });
 
-                // 3. Success Message with long delay (7 seconds)
-                if(res.ok || d.success) {
-                    status.style.color = "#4CAF50";
-                    status.innerHTML = "✅ Account Created Successfully!<br>Soon you and your referee will get gift funds.";
-                    
-                    // Delay for 7 seconds so they can read it
-                    setTimeout(() => {
-                        showSection('loginSection');
-                    }, 7000); 
-                } else {
-                    status.style.color = "#ffab00";
-                    status.innerText = d.error || "Registration failed.";
-                    btn.disabled = false;
-                    btn.innerText = "Register";
-                }
+                status.innerText = d.message || d.error;
+                if(d.message) setTimeout(() => showSection('loginSection'), 1500);
             } catch (err) {
-                status.style.color = "#ff4444";
-                status.innerText = "Registration failed. Check connection.";
-                btn.disabled = false;
+                status.innerText = "Registration failed.";
+            } finally {
                 btn.innerText = "Register";
+                btn.disabled = false;
             }
         }
 
+        // --- Rest of your existing functions (login, changePin, etc.) ---
         async function login() {
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
@@ -167,7 +155,6 @@
                 if (d.success) {
                     showSection('choiceSection');
                 } else {
-                    status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
                     btn.innerText = "Login"; btn.disabled = false;
                 }
@@ -194,7 +181,7 @@
                     startPollingReset(invoiceId, phone, newPassword);
                 } else { throw new Error(); }
             } catch (err) {
-                status.innerText = "Verification failed. Use a Safaricom line.";
+                status.innerText = "Error reaching payment gateway.";
                 btn.disabled = false; btn.innerText = "Verify & Update PIN";
             }
         }
@@ -212,7 +199,7 @@
                         finalizePinUpdate(phone, newPassword);
                     } else if (state === "FAILED" || pollCount > 20) {
                         clearInterval(pollTimer);
-                        document.getElementById('status').innerText = "Ownership Verification Failed.";
+                        document.getElementById('status').innerText = "Verification Failed.";
                         document.getElementById('resetBtn').disabled = false;
                     }
                 } catch (e) {}
@@ -227,7 +214,6 @@
                     body: JSON.stringify({ phone, newPassword })
                 });
                 if (res.ok) {
-                    document.getElementById('status').style.color = "#4CAF50";
                     document.getElementById('status').innerText = "✅ PIN updated!";
                     setTimeout(() => showSection('loginSection'), 2000);
                 }
