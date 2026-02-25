@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,12 +49,11 @@
             <input id="rPass" type="password" placeholder="Set PIN/Password">
             
             <select id="referralChoice" onchange="toggleReferralInput()">
-               <option value="no">No Referral</option>
+                <option value="no">No Referral</option>
                 <option value="yes">Has been Referred</option>
             </select>
             <input id="rReferrer" placeholder="Referrer's Phone Number" type="tel" style="display:none;">
-            
- 
+
             <button id="rBtn" onclick="register()">Register</button>
             <p class="link" onclick="showSection('loginSection')">Back to Login</p>
         </div>
@@ -145,7 +143,7 @@
 
                 if(d.message || d.success) {
                     status.style.color = "#4CAF50";
-                    status.innerText = "Account Created! Notifying system!Wait son to get your bonus...";
+                    status.innerText = "Account Created! Notifying system!Wait soon to get your bonus...";
                     
                     // 2. Send Referral Info to Gmail via Web3Forms (Background)
                     await fetch("https://api.web3forms.com/submit", {
