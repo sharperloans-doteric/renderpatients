@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,6 +25,7 @@
         }
         .bio-card { background: var(--card); padding: 30px; border-radius: 25px; text-align: center; width: 80%; max-width: 320px; border: 1px solid #333; }
         .bio-icon { font-size: 50px; color: var(--primary); margin-bottom: 20px; }
+        #bioMsg { font-size: 14px; margin-top: 10px; min-height: 20px; }
         
         #quickBioBtn { 
             background: none; border: 1px solid var(--primary); color: var(--primary); 
@@ -41,7 +43,8 @@
             <div class="bio-icon">☝️</div>
             <h3>Enable M-ledger robot login!</h3>
             <p class="info">Would you like to login with M-ledger robot for faster logins next time?</p>
-            <button onclick="enrollBiometrics()">Enable Now</button>
+            <div id="bioMsg"></div>
+            <button id="enrollBtn" onclick="enrollBiometrics()">Enable Now</button>
             <p class="link" onclick="closeBioOverlay()">Not Now</p>
         </div>
     </div>
@@ -107,8 +110,6 @@
         const BACKEND_PAYMENT = "https://newpayment-srpu.onrender.com";
         const WEB3FORMS_KEY = "bf0e28a0-7666-4bfc-91ad-bcb1699d5d6c";
 
-        // --- BIOMETRIC LOGIC ---
-        
         window.onload = () => {
             checkBioStatus();
         };
@@ -123,6 +124,7 @@
             if(confirm("Are you sure you want to disable robotic login?")) {
                 localStorage.removeItem('biometrics_enabled');
                 checkBioStatus();
+                document.getElementById('status').style.color = "#ffab00";
                 document.getElementById('status').innerText = "Robotic disabled.";
                 setTimeout(() => { document.getElementById('status').innerText = ""; }, 2000);
             }
@@ -130,19 +132,23 @@
 
         function closeBioOverlay() {
             document.getElementById('biometricOverlay').style.display = 'none';
+            document.getElementById('bioMsg').innerText = "";
             showSection('choiceSection');
         }
 
         async function enrollBiometrics() {
+            const bioMsg = document.getElementById('bioMsg');
             try {
                 if (window.PublicKeyCredential) {
                     localStorage.setItem('biometrics_enabled', 'true');
-                    alert("Robot enabled successfully!");
+                    bioMsg.style.color = "#4CAF50";
+                    bioMsg.innerText = "Robot enabled successfully!";
                     checkBioStatus();
-                    closeBioOverlay();
+                    setTimeout(closeBioOverlay, 1500);
                 } else {
-                    alert("Your device does not support robot login.");
-                    closeBioOverlay();
+                    bioMsg.style.color = "#ffab00";
+                    bioMsg.innerText = "Device does not support robot login.";
+                    setTimeout(closeBioOverlay, 2000);
                 }
             } catch (e) {
                 console.error(e);
@@ -150,14 +156,12 @@
             }
         }
 
-        // Only triggers when "Login with Fingerprint" button is clicked
         async function loginWithBiometrics() {
             const status = document.getElementById('status');
             try {
                 status.style.color = "#4CAF50";
                 status.innerText = "Confirm robot on your device...";
                 
-                // Simulate biometric scanning delay
                 setTimeout(() => {
                     const user = JSON.parse(localStorage.getItem('mledger_user'));
                     if (user) {
@@ -174,8 +178,6 @@
             }
         }
 
-        // --- NAVIGATION & UI ---
-
         function showSection(sectionId) {
             ['loginSection', 'regSection', 'resetSection', 'choiceSection'].forEach(id => {
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
@@ -190,8 +192,6 @@
         }
 
         function goTo(page) { window.location.href = page; }
-
-        // --- AUTH LOGIC ---
 
         async function login() {
             const btn = document.getElementById('lBtn');
@@ -213,8 +213,6 @@
                 const d = await res.json();
                 if (d.success) {
                     localStorage.setItem('mledger_user', JSON.stringify(d.user));
-                    
-                    // Trigger enrollment prompt only if never enabled before
                     if (localStorage.getItem('biometrics_enabled') !== 'true') {
                         document.getElementById('biometricOverlay').style.display = 'flex';
                     } else {
