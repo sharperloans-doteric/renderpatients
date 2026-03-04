@@ -137,11 +137,11 @@
             try {
                 if (window.PublicKeyCredential) {
                     localStorage.setItem('biometrics_enabled', 'true');
-                    alert("Biometrics enabled successfully!");
+                    alert("Robot enabled successfully!");
                     checkBioStatus();
                     closeBioOverlay();
                 } else {
-                    alert("Your device does not support fingerprint login.");
+                    alert("Your device does not support robot login.");
                     closeBioOverlay();
                 }
             } catch (e) {
@@ -155,7 +155,7 @@
             const status = document.getElementById('status');
             try {
                 status.style.color = "#4CAF50";
-                status.innerText = "Confirm fingerprint on your device...";
+                status.innerText = "Confirm robot on your device...";
                 
                 // Simulate biometric scanning delay
                 setTimeout(() => {
@@ -170,7 +170,7 @@
                 }, 1500);
                 
             } catch (err) {
-                status.innerText = "Fingerprint failed.";
+                status.innerText = "Robot failed.";
             }
         }
 
