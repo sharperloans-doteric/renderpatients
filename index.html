@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,6 +118,16 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
+.register-btn {
+  padding: 12px 20px;
+  background: transparent;
+  color: #25d366;
+  border: 2px solid #25d366;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+}
 .change-btn {
   padding: 12px 15px;
   background: #333;
@@ -226,9 +235,10 @@ body {
   <!-- Login Section -->
   <div class="phone-input-container" id="loginContainer">
     <h2>Messages Login</h2>
-    <input type="tel" class="phone-input" id="loginPhone" placeholder="username">
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Phone number">
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
     <button class="load-btn" id="loginBtn">Login</button>
+    <button class="register-btn" onclick="window.location.href='ksen.html'">Requesting Account</button>
   </div>
   
   <!-- Phone Search Section (hidden until logged in) -->
