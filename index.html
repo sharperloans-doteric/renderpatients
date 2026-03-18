@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,14 +274,14 @@ async function tryAutoLogin() {
   return false;
 }
 
-// Try auto-login on page load
-tryAutoLogin();
-
 const loginContainer = document.getElementById('loginContainer');
 const loginBtn = document.getElementById('loginBtn');
 const loginPhone = document.getElementById('loginPhone');
 const loginPassword = document.getElementById('loginPassword');
 const changeBtn = document.getElementById('changeBtn');
+
+// Try auto-login after DOM is ready
+tryAutoLogin();
 
 loginBtn.addEventListener('click', async () => {
   const phone = loginPhone.value.trim();
