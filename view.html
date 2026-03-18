@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -200,14 +201,14 @@ body {
   <div class="phone-input-container" id="loginContainer">
     <input type="tel" class="phone-input" id="loginPhone" placeholder="Phone number">
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
-    <button class="load-btn" id="loginBtn">Login</button>
+    <button class="load-btn" id="loginBtn">Send</button>
   </div>
   
   <!-- Phone Search Section (hidden until logged in) -->
   <div class="phone-input-container hidden" id="phoneInputContainer">
     <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter phone number (e.g., 2547...)">
     <button class="change-btn" id="changeBtn">Change</button>
-    <button class="load-btn" id="loadBtn">Load</button>
+    <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
   <div class="messages-container" id="messages"></div>
   <div class="no-reply-info" id="noReplyBar">
@@ -224,9 +225,66 @@ const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-mauve.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-// ─── LOGIN FUNCTIONALITY ───
+// ─── AUTO-LOGIN (Remember Me) ───
 let isLoggedIn = false;
 let loggedInPhone = null;
+
+// Check for saved login on page load
+const SAVED_PHONE_KEY = 'mledger_view_phone';
+const SAVED_AUTH_KEY = 'mledger_view_auth';
+
+function getSavedCredentials() {
+  const phone = localStorage.getItem(SAVED_PHONE_KEY);
+  const auth = localStorage.getItem(SAVED_AUTH_KEY);
+  return { phone, auth };
+}
+
+function saveCredentials(phone, auth) {
+  localStorage.setItem(SAVED_PHONE_KEY, phone);
+  localStorage.setItem(SAVED_AUTH_KEY, auth);
+}
+
+function clearCredentials() {
+  localStorage.removeItem(SAVED_PHONE_KEY);
+  localStorage.removeItem(SAVED_AUTH_KEY);
+}
+
+async function tryAutoLogin() {
+  const { phone, auth } = getSavedCredentials();
+  if (!phone || !auth) return false;
+  
+  loginPhone.value = phone;
+  loginPassword.value = auth;
+  
+  try {
+    const res = await fetch(`${SYSTEM_API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, password: auth })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok && data.success) {
+      isLoggedIn = true;
+      loggedInPhone = phone;
+      loginContainer.classList.add('hidden');
+      phoneInputContainer.classList.remove('hidden');
+      phoneInput.value = phone;
+      loadMessagesByPhone(phone);
+      return true;
+    } else {
+      clearCredentials();
+      return false;
+    }
+  } catch (err) {
+    clearCredentials();
+    return false;
+  }
+}
+
+// Try auto-login on page load
+tryAutoLogin();
 
 const loginContainer = document.getElementById('loginContainer');
 const loginBtn = document.getElementById('loginBtn');
@@ -243,7 +301,7 @@ loginBtn.addEventListener('click', async () => {
     return;
   }
   
-  loginBtn.innerText = 'Logging in...';
+  loginBtn.innerText = 'Sending...';
   loginBtn.disabled = true;
   
   try {
@@ -258,10 +316,12 @@ loginBtn.addEventListener('click', async () => {
     if (res.ok && data.success) {
       isLoggedIn = true;
       loggedInPhone = phone;
+      // Save credentials for auto-login
+      saveCredentials(phone, password);
       loginContainer.classList.add('hidden');
       phoneInputContainer.classList.remove('hidden');
       phoneInput.value = phone;
-      loadMessagesByPhone(phone);
+      // Don't auto-load, wait for user to click View Messages button
     } else {
       alert(data.error || 'Invalid phone number or password');
     }
@@ -270,7 +330,7 @@ loginBtn.addEventListener('click', async () => {
     console.error('Login error:', err);
   }
   
-  loginBtn.innerText = 'Login';
+  loginBtn.innerText = 'Send';
   loginBtn.disabled = false;
 });
 
@@ -289,6 +349,7 @@ loginPhone.addEventListener('keypress', (e) => {
 changeBtn.addEventListener('click', () => {
   isLoggedIn = false;
   loggedInPhone = null;
+  clearCredentials();
   phoneInputContainer.classList.add('hidden');
   loginContainer.classList.remove('hidden');
   loginPassword.value = '';
