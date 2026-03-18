@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messages</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #000;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.messages-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  padding: 10px 15px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+}
+.logo { height: 28px; }
+.header-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #af5656;
+}
+.more-menu {
+  position: absolute;
+  right: 0.3cm;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+  user-select: none;
+  -webkit-touch-callout: none;
+  padding: 5px;
+}
+.page-content {
+  margin-top: 50px;
+  flex: 1;
+  max-width: 500px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background: #1a1919;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.phone-input-container {
+  padding: 15px;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  display: flex;
+  gap: 10px;
+}
+.phone-input-container.hidden {
+  display: none;
+}
+#loginContainer.hidden {
+  display: none;
+}
+.phone-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+}
+.phone-input:focus {
+  outline: none;
+  border-color: #25d366;
+}
+.load-btn {
+  padding: 12px 20px;
+  background: #25d366;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.change-btn {
+  padding: 12px 15px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.messages-container {
+  background: #000;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: auto;
+}
+.message-bubble {
+  max-width: 90%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 8px;
+  width: fit-content;
+  animation: slideInUp 0.4s ease both;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-bubble.hide {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: right;
+}
+.install-btn {
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  background: #25d366;
+  color: #000;
+  padding: 14px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+}
+.no-reply-info {
+  background: #1a1919;
+  color: #aaa;
+  font-size: 13px;
+  padding: 15px;
+  text-align: center;
+  border-top: 1px solid #333;
+  user-select: none;
+  cursor: pointer;
+}
+.offline-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #ff6b6b;
+  text-align: center;
+  padding: 20px;
+}
+.enter-phone-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width:480px) {
+  .messages-header { padding: 8px 10px; height: 45px; }
+  .page-content { margin-top: 45px; }
+}
+</style>
+</head>
+<body>
+<div class="messages-header">
+  <img src="logo.png" class="logo">
+  <h1 class="header-title"></h1>
+  <div class="more-menu" id="moreBtn">⋮</div>
+</div>
+<div class="page-content">
+  <!-- Login Section -->
+  <div class="phone-input-container" id="loginContainer">
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Phone number">
+    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
+    <button class="load-btn" id="loginBtn">Login</button>
+  </div>
+  
+  <!-- Phone Search Section (hidden until logged in) -->
+  <div class="phone-input-container hidden" id="phoneInputContainer">
+    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter phone number (e.g., 2547...)">
+    <button class="change-btn" id="changeBtn">Change</button>
+    <button class="load-btn" id="loadBtn">Load</button>
+  </div>
+  <div class="messages-container" id="messages"></div>
+  <div class="no-reply-info" id="noReplyBar">
+    You can't reply to this short code. Learn more
+  </div>
+</div>
+<div class="install-btn" id="installBtn">
+  <span>⬇️</span> Install App
+</div>
+
+<script>
+// Use localhost for local development
+const API = "https://message-server-five.vercel.app";
+const SYSTEM_API = "https://funds-mauve.vercel.app/api";
+const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+
+// ─── LOGIN FUNCTIONALITY ───
+let isLoggedIn = false;
+let loggedInPhone = null;
+
+const loginContainer = document.getElementById('loginContainer');
+const loginBtn = document.getElementById('loginBtn');
+const loginPhone = document.getElementById('loginPhone');
+const loginPassword = document.getElementById('loginPassword');
+const changeBtn = document.getElementById('changeBtn');
+
+loginBtn.addEventListener('click', async () => {
+  const phone = loginPhone.value.trim();
+  const password = loginPassword.value.trim();
+  
+  if (!phone || !password) {
+    alert('Please enter both phone number and password');
+    return;
+  }
+  
+  loginBtn.innerText = 'Logging in...';
+  loginBtn.disabled = true;
+  
+  try {
+    const res = await fetch(`${SYSTEM_API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, password })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok && data.success) {
+      isLoggedIn = true;
+      loggedInPhone = phone;
+      loginContainer.classList.add('hidden');
+      phoneInputContainer.classList.remove('hidden');
+      phoneInput.value = phone;
+      loadMessagesByPhone(phone);
+    } else {
+      alert(data.error || 'Invalid phone number or password');
+    }
+  } catch (err) {
+    alert('Login failed. Please try again.');
+    console.error('Login error:', err);
+  }
+  
+  loginBtn.innerText = 'Login';
+  loginBtn.disabled = false;
+});
+
+loginPassword.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginBtn.click();
+  }
+});
+
+loginPhone.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginPassword.focus();
+  }
+});
+
+changeBtn.addEventListener('click', () => {
+  isLoggedIn = false;
+  loggedInPhone = null;
+  phoneInputContainer.classList.add('hidden');
+  loginContainer.classList.remove('hidden');
+  loginPassword.value = '';
+  document.getElementById('messages').innerHTML = '';
+});
+
+// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
+const moreBtn = document.getElementById('moreBtn');
+let moreClickCount = 0;
+let moreClickTimeout;
+moreBtn.addEventListener('click', (e) => {
+    moreClickCount++;
+    clearTimeout(moreClickTimeout);
+    if (moreClickCount === 3) {
+        loadMessages();
+        moreClickCount = 0;
+    } else {
+        moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);
+    }
+});
+moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ─── LOAD BUTTON CLICK ───
+const loadBtn = document.getElementById('loadBtn');
+const phoneInput = document.getElementById('phoneInput');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+
+loadBtn.addEventListener('click', () => {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    }
+});
+
+phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const phone = phoneInput.value.trim();
+        if (phone) {
+            loadMessagesByPhone(phone);
+        }
+    }
+});
+
+// ─── TRIPLE TAP ON NO-REPLY BAR ───
+const noReplyBar = document.getElementById('noReplyBar');
+let tapCount = 0;
+let tapTimeout;
+noReplyBar.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimeout);
+    if (tapCount === 3) {
+        window.location.href = 'ksen.html';
+        tapCount = 0;
+    } else {
+        tapTimeout = setTimeout(() => { tapCount = 0; }, 400);
+    }
+});
+
+// ─── HELPERS ───
+function extractFirstUrl(text) {
+  const match = text.match(urlRegex);
+  if (!match) return null;
+  let url = match[0].trim();
+  if (url.startsWith('www.')) url = 'https://' + url;
+  url = url.replace(/[.,!?;)\]}>]+$/g, '');
+  return url;
+}
+function isMpesaRelatedLink(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.includes('mpesa') || lower.includes('safaricom');
+}
+function getFaviconUrl(url) {
+  if (!url) return null;
+  try {
+    const domain = new URL(url).origin;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  } catch { return null; }
+}
+function renderMessageContent(text) {
+  let safe = text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+  return safe.replace(urlRegex, (match) => {
+    let full = match.startsWith('www.') ? 'https://' + match : match;
+    return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;
+  });
+}
+function extractTimeFromMessage(message) {
+  const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+  return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function createMessageBubble(tx, isLast) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+  if (isLast) bubble.id = "last-message";
+  const url = extractFirstUrl(tx.message);
+  let previewHtml = '';
+  if (url) {
+    if (isMpesaRelatedLink(url)) {
+      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+        </div>`;
+    } else {
+      const favicon = getFaviconUrl(url);
+      if (favicon) {
+        previewHtml = `<div style="margin-top:8px; display:flex; align-items:center; gap:8px; font-size:12px; opacity:0.85;">
+            <img src="${favicon}" style="width:20px; height:20px;">
+            <span>${new URL(url).hostname}</span>
+          </div>`;
+      }
+    }
+  }
+  bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
+                     previewHtml +
+                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+  enableDoubleTapRemove(bubble);
+  return bubble;
+}
+function enableDoubleTapRemove(el) {
+  let lastTap = 0;
+  el.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); removeMessage(el); }
+    lastTap = now;
+  });
+  el.addEventListener("dblclick", () => removeMessage(el));
+}
+function removeMessage(el) {
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
+}
+function renderMessages(messages) {
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  if (messages.length === 0) {
+    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number</div>`;
+    return;
+  }
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
+    const bubble = createMessageBubble(tx, isLast);
+    container.appendChild(bubble);
+  });
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+    const lastMsg = document.getElementById('last-message');
+    if (lastMsg) lastMsg.scrollIntoView({ behavior: 'instant', block: 'end' });
+  }, 100);
+}
+function showOfflineMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="offline-message">
+      You are offline.<br>Please connect to the internet to load messages.
+    </div>
+  `;
+}
+function showEnterPhoneMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="enter-phone-message">
+      Enter a phone number above<br>to view messages
+    </div>
+  `;
+}
+async function loadMessagesByPhone(phone) {
+  // Check if logged in
+  if (!isLoggedIn) {
+    alert('Please login first');
+    return;
+  }
+  
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  container.style.opacity = "0.5";
+  
+  // Hide the phone input container after loading
+  phoneInputContainer.classList.add('hidden');
+  
+  try {
+    // First try the new messages endpoint
+    let res = await fetch(`${API}/api/messages/${phone}`);
+    let data = await res.json();
+    
+    if (data.success && data.messages && data.messages.length > 0) {
+      container.style.opacity = "1";
+      // Messages are already sorted oldest first (newest at bottom)
+      renderMessages(data.messages);
+      localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
+    } else {
+      // Fallback to transactions endpoint
+      res = await fetch(`${API}/transactions`);
+      if (!res.ok) throw new Error("Network response was not ok");
+      const txData = await res.json();
+      
+      // Filter transactions by phone
+      const filtered = txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
+      
+      container.style.opacity = "1";
+      if (filtered.length > 0) {
+        // Already sorted oldest first from API, just render
+        renderMessages(filtered);
+        localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
+      } else {
+        renderMessages([]);
+      }
+    }
+  } catch (err) {
+    console.error('Error loading messages:', err);
+    const cached = localStorage.getItem("cached_messages_" + phone);
+    if (cached) {
+      const data = JSON.parse(cached);
+      container.style.opacity = "1";
+      renderMessages(data);
+      const notice = document.createElement("div");
+      notice.style.padding = "10px 14px";
+      notice.style.background = "#422c00";
+      notice.style.color = "#ffcc80";
+      notice.style.fontSize = "13px";
+      notice.style.textAlign = "center";
+      notice.style.borderRadius = "12px";
+      notice.style.margin = "8px auto";
+      notice.style.maxWidth = "90%";
+      notice.textContent = "Showing cached messages";
+      container.prepend(notice);
+    } else {
+      container.style.opacity = "1";
+      renderMessages([]);
+    }
+  }
+}
+
+function updateOnlineStatus() {
+  if (navigator.onLine) {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
+  } else {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ─── INITIAL LOAD ───
+showEnterPhoneMessage();
+
+// ─── PWA INSTALL PROMPT ───
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    document.getElementById("installBtn").style.display = "block";
+  }, 5000);
+});
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById("installBtn").style.display = "none";
+    }
+    deferredPrompt = null;
+  }
+});
+
+// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker registered!', reg))
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
