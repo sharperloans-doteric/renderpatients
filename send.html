@@ -287,22 +287,20 @@ elements.sendBtn.addEventListener("click", async () => {
 
     const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
 
-    // ─── NEW: Send "deducted" message to your exact message API ───────────────
-    const deductedMessage = `Ksh${amountVal.toFixed(2)} has been deducted from your account for transfer to ${nameVal} (${phoneVal}). New balance: Ksh${user.balance.toFixed(2)}. Tx Ref: ${token}`;
-
+    // ─── Send confirmation message to message API (same as external API) ─────────────
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         phone: user.phone,           // sender's phone
-        message: deductedMessage,
-        type: 'deducted'
+        message: confirmationMsg,
+        type: 'sent'
       })
     }).catch(err => {
-      console.warn("Deducted message failed to send:", err);
+      console.warn("Confirmation message failed to send:", err);
       // silent fail — doesn't stop the transaction flow
     });
-    // ──────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────────
 
     showStatus(confirmationMsg);
 
