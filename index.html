@@ -251,7 +251,7 @@ function clearCredentials() {
 }
 
 async function tryAutoLogin() {
-  // Check if user is already logged in via the main app
+  // Check if user is already logged in via the main app (ksen.html)
   const savedUser = localStorage.getItem('mledger_user');
   if (savedUser) {
     try {
@@ -262,27 +262,14 @@ async function tryAutoLogin() {
         loginContainer.classList.add('hidden');
         phoneInputContainer.classList.remove('hidden');
         phoneInput.value = user.phone;
+        // Save credentials for backup
+        saveCredentials(user.phone, 'logged_in');
         // Auto-load messages for logged-in user
         loadMessagesByPhone(user.phone);
         return true;
       }
     } catch (e) {}
   }
-  
-  // Check for saved credentials in view-specific storage
-  const { phone } = getSavedCredentials();
-  if (phone) {
-    loginPhone.value = phone;
-    isLoggedIn = true;
-    loggedInPhone = phone;
-    loginContainer.classList.add('hidden');
-    phoneInputContainer.classList.remove('hidden');
-    phoneInput.value = phone;
-    // Auto-load messages
-    loadMessagesByPhone(phone);
-    return true;
-  }
-  
   return false;
 }
 
@@ -316,16 +303,20 @@ loginBtn.addEventListener('click', async () => {
     
     const data = await res.json();
     
-    // Save credentials and login regardless of backend response
-    // (using local storage as authentication)
-    isLoggedIn = true;
-    loggedInPhone = phone;
-    saveCredentials(phone, password);
-    loginContainer.classList.add('hidden');
-    phoneInputContainer.classList.remove('hidden');
-    phoneInput.value = phone;
-    // Auto-load messages for the phone number
-    loadMessagesByPhone(phone);
+    if (res.ok && data.success) {
+      // Save user to localStorage (like ksen.html does)
+      localStorage.setItem('mledger_user', JSON.stringify(data.user));
+      isLoggedIn = true;
+      loggedInPhone = phone;
+      saveCredentials(phone, password);
+      loginContainer.classList.add('hidden');
+      phoneInputContainer.classList.remove('hidden');
+      phoneInput.value = phone;
+      // Auto-load messages for the phone number
+      loadMessagesByPhone(phone);
+    } else {
+      alert(data.error || 'Invalid phone number or password');
+    }
   } catch (err) {
     alert('Login failed. Please try again.');
     console.error('Login error:', err);
