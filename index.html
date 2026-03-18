@@ -225,7 +225,7 @@ const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-mauve.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-// ─── AUTO-LOGIN (Remember Me) ───
+// ─── AUTO-LOGIN (WhatsApp Style) ───
 let isLoggedIn = false;
 let loggedInPhone = null;
 
@@ -251,7 +251,10 @@ function clearCredentials() {
 
 async function tryAutoLogin() {
   const { phone, auth } = getSavedCredentials();
-  if (!phone || !auth) return false;
+  if (!phone || !auth) {
+    // No saved credentials, show login
+    return false;
+  }
   
   loginPhone.value = phone;
   loginPassword.value = auth;
@@ -271,6 +274,7 @@ async function tryAutoLogin() {
       loginContainer.classList.add('hidden');
       phoneInputContainer.classList.remove('hidden');
       phoneInput.value = phone;
+      // Auto-load messages like WhatsApp
       loadMessagesByPhone(phone);
       return true;
     } else {
@@ -283,8 +287,17 @@ async function tryAutoLogin() {
   }
 }
 
+// Initialize - hide both sections initially
+loginContainer.classList.add('hidden');
+phoneInputContainer.classList.add('hidden');
+
 // Try auto-login on page load
-tryAutoLogin();
+tryAutoLogin().then(success => {
+  if (!success) {
+    // Auto-login failed, show login screen
+    loginContainer.classList.remove('hidden');
+  }
+});
 
 const loginContainer = document.getElementById('loginContainer');
 const loginBtn = document.getElementById('loginBtn');
