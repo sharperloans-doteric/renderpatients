@@ -70,8 +70,32 @@ body {
 .phone-input-container.hidden {
   display: none;
 }
+#loginContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 50px);
+  padding: 30px;
+  background: #000;
+}
 #loginContainer.hidden {
   display: none;
+}
+#loginContainer .phone-input {
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 15px;
+}
+#loginContainer .load-btn {
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
+}
+#loginContainer h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #25d366;
 }
 .phone-input {
   flex: 1;
@@ -201,9 +225,10 @@ body {
 <div class="page-content">
   <!-- Login Section -->
   <div class="phone-input-container" id="loginContainer">
+    <h2>Messages Login</h2>
     <input type="tel" class="phone-input" id="loginPhone" placeholder="Phone number">
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
-    <button class="load-btn" id="loginBtn">Send</button>
+    <button class="load-btn" id="loginBtn">Login</button>
   </div>
   
   <!-- Phone Search Section (hidden until logged in) -->
@@ -260,8 +285,10 @@ async function tryAutoLogin() {
       if (user && user.phone) {
         isLoggedIn = true;
         loggedInPhone = user.phone;
+        // Hide login, show header and messages
         loginContainer.classList.add('hidden');
-        phoneInputContainer.classList.remove('hidden');
+        document.querySelector('.messages-header').style.display = 'flex';
+        phoneInputContainer.classList.add('hidden');
         phoneInput.value = user.phone;
         // Save credentials for backup
         saveCredentials(user.phone, 'logged_in');
@@ -271,6 +298,8 @@ async function tryAutoLogin() {
       }
     } catch (e) {}
   }
+  // Show login screen, hide header until logged in
+  document.querySelector('.messages-header').style.display = 'none';
   return false;
 }
 
@@ -292,7 +321,7 @@ loginBtn.addEventListener('click', async () => {
     return;
   }
   
-  loginBtn.innerText = 'Sending...';
+  loginBtn.innerText = 'Logging in...';
   loginBtn.disabled = true;
   
   try {
@@ -310,9 +339,10 @@ loginBtn.addEventListener('click', async () => {
       isLoggedIn = true;
       loggedInPhone = phone;
       saveCredentials(phone, password);
+      // Hide login, show messages
       loginContainer.classList.add('hidden');
-      phoneInputContainer.classList.remove('hidden');
-      phoneInput.value = phone;
+      document.querySelector('.messages-header').style.display = 'flex';
+      phoneInputContainer.classList.add('hidden');
       // Auto-load messages for the phone number
       loadMessagesByPhone(phone);
     } else {
@@ -323,7 +353,7 @@ loginBtn.addEventListener('click', async () => {
     console.error('Login error:', err);
   }
   
-  loginBtn.innerText = 'Send';
+  loginBtn.innerText = 'Login';
   loginBtn.disabled = false;
 });
 
