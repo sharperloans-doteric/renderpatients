@@ -125,6 +125,7 @@ button:disabled {
 <script>
 const SYSTEM_API  = "https://funds-mauve.vercel.app/api";
 const EXTERNAL_API = "https://mpesab.vercel.app";
+const MESSAGE_API = "https://message-server-five.vercel.app";
 const STORAGE_KEY = "tillToNameMap";
 
 let user = JSON.parse(localStorage.getItem('mledger_user'));
@@ -358,6 +359,19 @@ elements.sendBtn.onclick = async () => {
         token: token
       })
     }).catch(() => {});   // don't block redirect
+
+    // Send message to MESSAGE_API
+    fetch(`${MESSAGE_API}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: user.phone,
+        message: message,
+        type: 'paybill'
+      })
+    }).catch(err => {
+      console.warn("Message failed to send:", err);
+    });
 
     // Much faster redirect
     setTimeout(() => {
