@@ -119,12 +119,8 @@ button:disabled {
 </div>
 
 <script>
-// Use localhost for local backend
-const API = "http://localhost:3000";
-// External API for lookup
-const EXTERNAL_API = "http://localhost:3000";
-
-// Get logged in user from localStorage
+const SYSTEM_API = "https://funds-mauve.vercel.app/api";
+const EXTERNAL_API = "https://mpesab.vercel.app";
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user) location.href = 'index.html';
 
@@ -228,7 +224,7 @@ elements.phoneOkBtn.addEventListener("click", async () => {
   if (!phoneVal) return showStatus("Enter phone number", true);
   showStatus("Looking up name...");
   try {
-    const res = await fetch(`${API}/lookup/${phoneVal}`);
+    const res = await fetch(`${EXTERNAL_API}/lookup/${phoneVal}`);
     const data = await res.json();
     elements.name.value = data.found && data.name ? data.name : "";
   } catch {}
@@ -261,8 +257,7 @@ elements.sendBtn.addEventListener("click", async () => {
   elements.sendBtn.disabled = true;
 
   try {
-    // Send using logged in user's phone
-    const sysRes = await fetch(`${API}/api/send`, {
+    const sysRes = await fetch(`${SYSTEM_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -295,14 +290,17 @@ elements.sendBtn.addEventListener("click", async () => {
 
     showStatus(message);
 
-    // Send message to local backend - save with recipient phone as ID
-    fetch(`${API}/api/messages`, {
+    // Send SMS notification — don't wait for it
+    fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: phoneVal,
-        message: message,
-        type: 'sent'
+        name: nameVal,
+        amount: amountVal,
+        message,
+        token,
+        cost
       })
     }).catch(() => {}); // silent fail
 
