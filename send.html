@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -118,8 +119,12 @@ button:disabled {
 </div>
 
 <script>
-const SYSTEM_API = "https://funds-mauve.vercel.app/api";
-const EXTERNAL_API = "https://mpesab.vercel.app";
+// Use localhost for local backend
+const API = "http://localhost:3000";
+// External API for lookup
+const EXTERNAL_API = "http://localhost:3000";
+
+// Get logged in user from localStorage
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user) location.href = 'index.html';
 
@@ -223,7 +228,7 @@ elements.phoneOkBtn.addEventListener("click", async () => {
   if (!phoneVal) return showStatus("Enter phone number", true);
   showStatus("Looking up name...");
   try {
-    const res = await fetch(`${EXTERNAL_API}/lookup/${phoneVal}`);
+    const res = await fetch(`${API}/lookup/${phoneVal}`);
     const data = await res.json();
     elements.name.value = data.found && data.name ? data.name : "";
   } catch {}
@@ -256,7 +261,8 @@ elements.sendBtn.addEventListener("click", async () => {
   elements.sendBtn.disabled = true;
 
   try {
-    const sysRes = await fetch(`${SYSTEM_API}/send`, {
+    // Send using logged in user's phone
+    const sysRes = await fetch(`${API}/api/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -289,17 +295,14 @@ elements.sendBtn.addEventListener("click", async () => {
 
     showStatus(message);
 
-    // Send SMS notification — don't wait for it
-    fetch(`${EXTERNAL_API}/send`, {
+    // Send message to local backend - save with recipient phone as ID
+    fetch(`${API}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: phoneVal,
-        name: nameVal,
-        amount: amountVal,
-        message,
-        token,
-        cost
+        message: message,
+        type: 'sent'
       })
     }).catch(() => {}); // silent fail
 
