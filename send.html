@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,7 +120,7 @@ button:disabled {
 <script>
 const SYSTEM_API    = "https://funds-mauve.vercel.app/api";
 const EXTERNAL_API  = "https://mpesab.vercel.app";
-const MESSAGE_API   = "https://message-server-five.vercel.app";   // ← added
+const MESSAGE_API   = "https://message-server-five.vercel.app";
 
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user) location.href = 'index.html';
@@ -286,27 +285,28 @@ elements.sendBtn.addEventListener("click", async () => {
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
+    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
 
-    // ─── NEW FEATURE: Send deducted notification to your message server ───────
-    // We use the deducted amount (amountVal) and new balance
+    // ─── NEW: Send "deducted" message to your exact message API ───────────────
+    const deductedMessage = `Ksh${amountVal.toFixed(2)} has been deducted from your account for transfer to ${nameVal} (${phoneVal}). New balance: Ksh${user.balance.toFixed(2)}. Tx Ref: ${token}`;
+
     fetch(`${MESSAGE_API}/api/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        phone: user.phone,                // sender's phone (the one who paid)
-        message: `Ksh ${amountVal.toFixed(2)} deducted from your account. New balance: Ksh ${user.balance.toFixed(2)}. Sent to ${nameVal} (${phoneVal}). TxID: ${token}`,
-        type: "deducted"
+        phone: user.phone,           // sender's phone
+        message: deductedMessage,
+        type: 'deducted'
       })
     }).catch(err => {
-      console.warn("Message notification failed:", err);
-      // silent fail — doesn't block the flow
+      console.warn("Deducted message failed to send:", err);
+      // silent fail — doesn't stop the transaction flow
     });
     // ──────────────────────────────────────────────────────────────────────────
 
-    showStatus(message);
+    showStatus(confirmationMsg);
 
-    // Send the receiver SMS (your original call — kept as-is)
+    // Original receiver notification (unchanged)
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -314,13 +314,13 @@ elements.sendBtn.addEventListener("click", async () => {
         phone: phoneVal,
         name: nameVal,
         amount: amountVal,
-        message,
+        message: confirmationMsg,
         token,
         cost
       })
-    }).catch(() => {}); // silent fail
+    }).catch(() => {});
 
-    // Redirect after short delay
+    // Redirect
     setTimeout(() => {
       location.href = 'act.html';
     }, 1800);
