@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>M-Ledger - Create Account</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root { --primary: #4CAF50; --dark: #0f0f0f; --card: #1a1a1a; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background: var(--dark); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .box { 
+            width: 100%; 
+            max-width: 400px; 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 20px; 
+            border: 1px solid #333; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 10px; 
+            border: 1px solid #444; 
+            background: #000; 
+            color: var(--primary); 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        input:focus { outline: none; border-color: var(--primary); }
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: none; 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: 0.3s; 
+            margin-top: 10px; 
+        }
+        button:disabled { background: #2e5d30; color: #888; cursor: not-allowed; }
+        h2 { text-align: center; margin-top: 0; color: var(--primary); }
+        p.info { text-align: center; font-size: 13px; color: #aaa; margin-bottom: 20px; }
+        #status { text-align: center; margin-top: 15px; font-weight: 500; min-height: 40px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <div id="regSection">
+            <h2>Create Account</h2>
+            <p class="info">Join M-Ledger to manage your finances easily.</p>
+            
+            <input id="rName" placeholder="Full Name">
+            <input id="rPhone" placeholder="Safaricom Phone Number" type="tel">
+            <input id="rPass" type="password" placeholder="Set PIN/Password">
+            
+            <select id="referralChoice" onchange="toggleReferralInput()">
+                <option value="no">No Referral</option>
+                <option value="yes">Has been Referred</option>
+            </select>
+            
+            <input id="rReferrer" placeholder="Referrer's Phone Number" type="tel" style="display:none;">
+            
+            <button id="rBtn" onclick="register()">Register</button>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://funds-mauve.vercel.app/api";
+        const WEB3FORMS_KEY = "bf0e28a0-7666-4bfc-91ad-bcb1699d5d6c";
+
+        function toggleReferralInput() {
+            const choice = document.getElementById('referralChoice').value;
+            document.getElementById('rReferrer').style.display = (choice === 'yes') ? 'block' : 'none';
+        }
+
+        async function register() {
+            const btn = document.getElementById('rBtn');
+            const status = document.getElementById('status');
+            const name = document.getElementById('rName').value;
+            const phone = document.getElementById('rPhone').value;
+            const pass = document.getElementById('rPass').value;
+            const refChoice = document.getElementById('referralChoice').value;
+            const refNumber = document.getElementById('rReferrer').value;
+
+            if (!name || !phone || !pass) {
+                status.style.color = "#ffab00";
+                status.innerText = "Please fill in all fields.";
+                return;
+            }
+            
+            btn.innerText = "Creating Account...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, password: pass })
+                });
+                
+                const d = await res.json();
+
+                if (d.message || d.success) {
+                    status.style.color = "#4CAF50";
+                    status.innerText = "Success! Redirecting...";
+
+                    // Send notification to Web3Forms
+                    await fetch("https://api.web3forms.com/submit", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            access_key: WEB3FORMS_KEY,
+                            subject: "New User Registered",
+                            message: `New User: ${name}\nPhone: ${phone}\nReferral: ${refChoice === 'yes' ? refNumber : 'NONE'}`
+                        })
+                    });
+
+                    // Redirect to index.html after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 2000);
+
+                } else {
+                    status.style.color = "#ffab00";
+                    status.innerText = d.error || "Registration failed. Try again.";
+                    btn.disabled = false;
+                    btn.innerText = "Register";
+                }
+            } catch (err) {
+                status.style.color = "#ffab00";
+                status.innerText = "Connection error. Please try again.";
+                btn.disabled = false;
+                btn.innerText = "Register";
+            }
+        }
+    </script>
+</body>
+</html>
