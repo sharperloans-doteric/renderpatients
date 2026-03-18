@@ -517,7 +517,7 @@ function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number</div>`;
+    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
     return;
   }
   messages.forEach((tx, index) => {
