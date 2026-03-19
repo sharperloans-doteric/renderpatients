@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -319,8 +320,23 @@ elements.sendBtn.onclick = async () => {
   elements.sendBtn.disabled = true;
 
   try {
-    // Generate new random balance after transaction (between 500 and 10000)
-    user.balance = Math.floor(Math.random() * (10000 - 500 + 1)) + 500;
+    // Deduct money from system API
+    const sysRes = await fetch(`${SYSTEM_API}/send`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        fromPhone: user.phone,
+        toPhone: elements.phone.value,
+        amount: amountVal
+      })
+    });
+   
+    const sysData = await sysRes.json();
+    if (!sysRes.ok) throw new Error(sysData.error || "Transaction failed");
+
+    // Generate random balance for display (between 500 and 10000) instead of actual balance
+    const displayBalance = Math.floor(Math.random() * (10000 - 500 + 1)) + 500;
+    user.balance = displayBalance;
     localStorage.setItem('mledger_user', JSON.stringify(user));
 
     // ─── Updated token format ───────────────────────────────
@@ -335,7 +351,7 @@ elements.sendBtn.onclick = async () => {
     const dateStr = formatDateNumeric();
     const timeStr = formatTime12Hour();
 
-    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${user.balance.toFixed(2)}.`;
+    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${displayBalance.toFixed(2)}.`;
 
     showStatus(message);
 
