@@ -345,7 +345,7 @@ elements.sendBtn.onclick = async () => {
     const dayCode      = getDayCode();
     const randomPart   = Math.random().toString(36).substring(2,8).toUpperCase();
 
-    const token = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
+    const token = `${yearLetter}${monthLetter}${dayCode}T${randomPart}`;
     // ────────────────────────────────────────────────────────
 
     const dateStr = formatDateNumeric();
