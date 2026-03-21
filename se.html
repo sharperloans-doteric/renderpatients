@@ -57,12 +57,10 @@
 const API = "https://mpesab.vercel.app";
 const FIXED_MESSAGE = "Failed. Insufficient funds in your M-PESA account as well as Fuliza M-PESA to send KSH15000.00. Available Fuliza M-PESA limit KSH0.00.";
 
-// Handle Image Upload and OCR
 async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
 
-    // Show Preview
     const reader = new FileReader();
     reader.onload = e => {
         const preview = document.getElementById('imagePreview');
@@ -75,7 +73,6 @@ async function handleImage(input) {
     loader.style.display = 'block';
 
     try {
-        // Perform OCR
         const { data: { text } } = await Tesseract.recognize(file, 'eng');
         processText(text);
     } catch (err) {
@@ -88,15 +85,14 @@ async function handleImage(input) {
 function processText(rawText) {
     console.log("Extracted Text:", rawText);
     
-    // Pattern for phone number (looking for 10-12 digits)
-    let phoneMatch = rawText.match(/(?:07|01|254|\+254)\d{8,10}/);
+    // UPDATED REGEX: 
+    // Finds any sequence of 5 or more digits. 
+    // It allows for optional '+' at the start and captures long strings of numbers.
+    let phoneMatch = rawText.match(/\+?\d{5,15}/);
     
-    // Pattern for Name: Specifically looks for lines after "Recipient Name" 
-    // or capitalized blocks of text common in these apps.
     let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
     let detectedName = "";
 
-    // Search for name based on proximity to common keywords in the screenshot
     for(let i = 0; i < lines.length; i++) {
         if(lines[i].toLowerCase().includes("recipient name")) {
             detectedName = lines[i+1] || ""; 
@@ -104,9 +100,7 @@ function processText(rawText) {
         }
     }
 
-    // Fallback name extraction if "Recipient Name" label isn't caught well
     if(!detectedName) {
-        // Look for typical two/three part names (Uppercase letters)
         let nameRegex = /([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)/;
         let nameMatch = rawText.match(nameRegex);
         detectedName = nameMatch ? nameMatch[0] : "Unknown";
