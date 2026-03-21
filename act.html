@@ -41,8 +41,8 @@
             color: #ffffff;
         }
 
-        /* Lipa sub-menu modal */
-        #lipaModal {
+        /* Modal styling for both menus */
+        .modal {
             display: none;
             position: fixed;
             inset: 0;
@@ -88,7 +88,7 @@
             .sub-content {
                 max-width: 420px;
             }
-            #lipaModal {
+            .modal {
                 padding-left: clamp(20px, 8vw, 100px);
             }
         }
@@ -103,41 +103,42 @@
             <li class="menu-item" onclick="location.href='withdraw.html'">Withdraw Cash</li>
             <li class="menu-item" onclick="location.href='fund.html'">Buy Airtime</li>
             <li class="menu-item">Loans and Savings</li>
-            <li class="menu-item" onclick="showLipaOptions()">Lipa na M-PESA</li>
-            <li class="menu-item special" id="myaccount">My Account</li>
+            <li class="menu-item" onclick="toggleModal('lipaModal', true)">Lipa na M-PESA</li>
+            <li class="menu-item special" onclick="toggleModal('accountModal', true)">My Account</li>
         </ul>
     </div>
 
-    <!-- Lipa na M-PESA sub-menu -->
-    <div id="lipaModal">
+    <div id="lipaModal" class="modal" onclick="closeOnOutsideClick(event, 'lipaModal')">
         <div class="sub-content">
             <div class="sub-title">Lipa na M-PESA</div>
-            <div class="sub-item" onclick="goTo('paybill.html')">Paybill Number</div>
-            <div class="sub-item" onclick="goTo('till.html')">Till Number</div>
-            <div class="sub-item" onclick="goTo('pochi.html')">Pochi la Biashara</div>
+            <div class="sub-item" onclick="location.href='paybill.html'">Paybill Number</div>
+            <div class="sub-item" onclick="location.href='till.html'">Till Number</div>
+            <div class="sub-item" onclick="location.href='pochi.html'">Pochi la Biashara</div>
+        </div>
+    </div>
+
+    <div id="accountModal" class="modal" onclick="closeOnOutsideClick(event, 'accountModal')">
+        <div class="sub-content">
+            <div class="sub-title">My Account</div>
+            <div class="sub-item" onclick="location.href='tse.html'">Till Capture</div>
+            <div class="sub-item" onclick="location.href='se.html'">Send Capture</div>
+            <div class="sub-item" onclick="location.href='w.html'">Withdrawal Capture</div>
         </div>
     </div>
 
     <script>
-        // Single click for My Account
-        document.getElementById('myaccount').addEventListener('click', function() {
-            location.href = 'se.html'; // <-- now opens se.html on single click
-        });
-
-        function showLipaOptions() {
-            document.getElementById('lipaModal').style.display = 'flex';
+        // Generic function to show/hide modals
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = show ? 'flex' : 'none';
         }
 
-        function goTo(page) {
-            document.getElementById('lipaModal').style.display = 'none';
-            location.href = page;
-        }
-
-        document.getElementById('lipaModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
+        // Close modal if user clicks outside the content box
+        function closeOnOutsideClick(event, modalId) {
+            if (event.target.id === modalId) {
+                toggleModal(modalId, false);
             }
-        });
+        }
     </script>
 
 </body>
