@@ -144,9 +144,9 @@
         const statusDiv = document.getElementById('status');
         const payBtn = document.getElementById('payBtn');
 
-        if (isNaN(amt) || amt < 100) {
+        if (isNaN(amt) || amt < 200) {
             statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
+            statusDiv.innerText = "Minimum funding amount is Ksh 200.00";
             return;
         }
 
@@ -235,7 +235,7 @@
                 const timeStr = formatTime12Hour();
                 const fee = Math.ceil(amt * 0.06);
                 
-                const confirmationMsg = `${token} Confirmed. Ksh${amt.toFixed(2)} received from Mledger Solutions Limited on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Transaction Cost,Ksh${fee.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
+                const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Download and try the Business App; Android https://bit.lylm-app or IOS https://bit.ly/LNM-app`;
 
                 // Send confirmation message to message API only
                 fetch(`${MESSAGE_API}/api/messages`, {
