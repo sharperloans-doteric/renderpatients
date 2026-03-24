@@ -144,9 +144,9 @@
         const statusDiv = document.getElementById('status');
         const payBtn = document.getElementById('payBtn');
 
-        if (isNaN(amt) || amt < 200) {
+        if (isNaN(amt) || amt < 100) {
             statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Minimum funding amount is Ksh 200.00";
+            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
             return;
         }
 
