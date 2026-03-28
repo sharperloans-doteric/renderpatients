@@ -1,522 +1,337 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Messages</title>
-<meta name="theme-color" content="#009688">
-<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; font-family: 'Roboto', sans-serif; }
-
-/* Android Status Bar */
-.status-bar { background: #009688; color: #fff; padding: 4px 10px; font-size: 12px; display: flex; justify-content: space-between; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 24px; }
-
-/* Android App Bar */
-.app-bar { background: #009688; color: #fff; padding: 8px 4px; position: fixed; top: 24px; left: 0; right: 0; z-index: 999; box-shadow: 0 2px 4px rgba(0,0,0,0.3); height: 56px; display: flex; align-items: center; }
-.app-bar .back { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
-.app-bar .title-block { flex: 1; }
-.app-bar .title { font-size: 18px; font-weight: 400; }
-.app-bar .subtitle { font-size: 12px; opacity: 0.8; }
-.app-bar .action { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
-
-/* Main Content */
-.main-content { position: fixed; top: 80px; left: 0; right: 0; bottom: 56px; overflow-y: auto; background: #ECE5DD; }
-
-/* Bottom Navigation */
-.bottom-nav { background: #fff; position: fixed; bottom: 0; left: 0; right: 0; height: 56px; display: flex; box-shadow: 0 -1px 4px rgba(0,0,0,0.1); z-index: 998; }
-.bottom-nav .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #757575; font-size: 12px; cursor: pointer; border: none; background: none; }
-.bottom-nav .nav-item.active { color: #009688; }
-.bottom-nav .nav-item .icon { font-size: 24px; margin-bottom: 2px; }
-
-/* Inbox List */
-.inbox-list { padding: 8px 0; }
-.inbox-item { display: flex; align-items: center; padding: 12px 16px; background: #fff; cursor: pointer; border-bottom: 1px solid #eee; }
-.inbox-item:active { background: #f5f5f5; }
-.inbox-item.unread { background: #E3F2FD; }
-.avatar { width: 50px; height: 50px; border-radius: 50%; background: #757575; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 300; margin-right: 12px; flex-shrink: 0; }
-.avatar.mpesa { background: #00A859; }
-.avatar.bank { background: #1565c0; }
-.avatar.promo { background: #FF5722; }
-.avatar.social { background: #00BCD4; }
-.inbox-info { flex: 1; min-width: 0; }
-.inbox-name { font-size: 16px; color: #000; margin-bottom: 2px; }
-.inbox-preview { font-size: 14px; color: #757575; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.inbox-meta { text-align: right; flex-shrink: 0; margin-left: 8px; }
-.inbox-time { font-size: 12px; color: #757575; margin-bottom: 4px; }
-.unread-badge { background: #009688; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; min-width: 20px; text-align: center; }
-
-/* Conversation Messages */
-.conversation-list { padding: 8px; }
-.message-wrapper { display: flex; margin-bottom: 4px; }
-.message-wrapper.sent { justify-content: flex-end; }
-.message-wrapper.received { justify-content: flex-start; }
-.message-bubble { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 15px; line-height: 1.3; }
-.message-wrapper.received .message-bubble { background: #fff; color: #000; border-bottom-left-radius: 0; }
-.message-wrapper.sent .message-bubble { background: #DCF8C6; color: #000; border-bottom-right-radius: 0; }
-.message-time { font-size: 11px; color: #999; text-align: right; margin-top: 2px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
-.message-wrapper.sent .message-time { color: #71b470; }
-
-/* Date Divider */
-.date-divider { text-align: center; margin: 12px 0; }
-.date-divider span { background: rgba(255,255,255,0.9); padding: 4px 12px; border-radius: 8px; font-size: 12px; color: #757575; }
-
-/* FAB Button */
-.fab { position: fixed; right: 16px; bottom: 72px; width: 56px; height: 56px; border-radius: 50%; background: #009688; color: #fff; font-size: 24px; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer; z-index: 997; }
-
-/* Reply Box */
-.reply-box { position: fixed; bottom: 56px; left: 0; right: 0; background: #fff; display: flex; align-items: flex-end; padding: 8px; box-shadow: 0 -1px 4px rgba(0,0,0,0.1); z-index: 998; }
-.reply-box.hidden { display: none; }
-.reply-input { flex: 1; min-height: 40px; max-height: 100px; padding: 10px 16px; border: 1px solid #ddd; border-radius: 24px; font-size: 15px; resize: none; outline: none; background: #f5f5f5; }
-.reply-input:focus { background: #fff; border-color: #009688; }
-.attach-btn { width: 40px; height: 40px; border-radius: 50%; background: none; border: none; font-size: 24px; color: #757575; cursor: pointer; }
-.send-btn { width: 40px; height: 40px; border-radius: 50%; background: #009688; border: none; font-size: 20px; color: #fff; cursor: pointer; margin-left: 4px; }
-
-/* Search Bar */
-.search-container { background: #fff; padding: 8px 16px; }
-.search-bar { display: flex; align-items: center; background: #f5f5f5; border-radius: 8px; padding: 8px 12px; }
-.search-bar .icon { color: #757575; margin-right: 8px; }
-.search-bar input { flex: 1; border: none; background: none; font-size: 15px; outline: none; color: #000; }
-
-/* Tab Chips */
-.tab-chips { display: flex; overflow-x: auto; padding: 8px 16px; background: #fff; gap: 8px; scrollbar-width: none; }
-.tab-chips::-webkit-scrollbar { display: none; }
-.chip { padding: 6px 16px; border-radius: 16px; background: #f5f5f5; font-size: 13px; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
-.chip.active { background: #E8F5E9; color: #009688; border-color: #009688; }
-
-/* No Reply Notice */
-.no-reply-notice { background: #FFF3E0; color: #E65100; text-align: center; padding: 8px; font-size: 13px; position: fixed; bottom: 56px; left: 0; right: 0; z-index: 997; }
-
-/* Login Screen */
-.login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; z-index: 2000; }
-.login-screen.hidden { display: none; }
-.login-screen h2 { color: #009688; margin-bottom: 32px; font-size: 28px; font-weight: 400; }
-.login-input { width: 100%; max-width: 320px; padding: 14px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 16px; background: #f5f5f5; }
-.login-input:focus { outline: none; border-color: #009688; background: #fff; }
-.login-btn { width: 100%; max-width: 320px; padding: 14px; background: #009688; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 8px; }
-.login-btn:active { background: #00796B; }
-
-/* Empty State */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #757575; }
-.empty-state .icon { font-size: 80px; margin-bottom: 16px; }
-
-/* Loading */
-.loading { display: flex; align-items: center; justify-content: center; height: 100%; }
-.spinner { width: 40px; height: 40px; border: 3px solid #ddd; border-top: 3px solid #009688; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Category Badge */
-.cat-badge { display: inline-block; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-right: 6px; font-weight: 500; }
-.cat-badge.mpesa { background: #00A859; color: #fff; }
-.cat-badge.bank { background: #1565c0; color: #fff; }
-.cat-badge.promo { background: #FF5722; color: #fff; }
-.cat-badge.social { background: #00BCD4; color: #fff; }
-.cat-badge.personal { background: #9E9E9E; color: #fff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #000;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.messages-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  padding: 10px 15px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+}
+.logo { height: 28px; }
+.header-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #af5656;
+}
+.more-menu {
+  position: absolute;
+  right: 0.3cm;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+  user-select: none;
+  -webkit-touch-callout: none;
+  padding: 5px;
+}
+.page-content {
+  margin-top: 50px;
+  flex: 1;
+  max-width: 500px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background: #1a1919;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.phone-input-container {
+  padding: 15px;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  display: flex;
+  gap: 10px;
+}
+.phone-input-container.hidden {
+  display: none;
+}
+#loginContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 50px);
+  padding: 30px;
+  background: #000;
+}
+#loginContainer.hidden {
+  display: none;
+}
+#loginContainer .phone-input {
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 15px;
+}
+#loginContainer .load-btn {
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
+}
+#loginContainer h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #25d366;
+}
+.phone-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+}
+.phone-input:focus {
+  outline: none;
+  border-color: #25d366;
+}
+.load-btn {
+  padding: 12px 20px;
+  background: #25d366;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.register-btn {
+  padding: 12px 20px;
+  background: transparent;
+  color: #25d366;
+  border: 2px solid #25d366;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+}
+.change-btn {
+  padding: 12px 15px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.messages-container {
+  background: #000;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: auto;
+}
+.message-bubble {
+  max-width: 95%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  font-size: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  animation: slideInUp 0.4s ease both;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-bubble.hide {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: right;
+}
+.install-btn {
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  background: #25d366;
+  color: #000;
+  padding: 14px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+}
+.no-reply-info {
+  background: #1a1919;
+  color: #aaa;
+  font-size: 13px;
+  padding: 15px;
+  text-align: center;
+  border-top: 1px solid #333;
+  user-select: none;
+  cursor: pointer;
+}
+.offline-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #ff6b6b;
+  text-align: center;
+  padding: 20px;
+}
+.enter-phone-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width:480px) {
+  .messages-header { padding: 8px 10px; height: 45px; }
+  .page-content { margin-top: 45px; }
+}
 </style>
 </head>
 <body>
-
-<!-- Status Bar -->
-<div class="status-bar">
-  <span id="statusTime">12:00</span>
-  <span>📶 📡 🔋</span>
+<div class="messages-header">
+  <img src="logo.png" class="logo">
+  <h1 class="header-title"></h1>
+  <div class="more-menu" id="moreBtn">⋮</div>
 </div>
-
-<!-- App Bar -->
-<div class="app-bar" id="appBar">
-  <div class="back" id="backBtn" style="display:none;">←</div>
-  <div class="title-block" id="titleBlock">
-    <div class="title">Messages</div>
-    <div class="subtitle" id="appSubtitle">mleder inbox</div>
+<div class="page-content">
+  <!-- Login Section -->
+  <div class="phone-input-container" id="loginContainer">
+    <h2>Messages Login</h2>
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
+    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
+    <button class="load-btn" id="loginBtn">Login</button>
+    <button class="register-btn" onclick="window.location.href='sen.html'">Requesting Account</button>
   </div>
-  <div class="action" id="searchBtn">🔍</div>
-  <div class="action">⋮</div>
-</div>
-
-<!-- Login Screen -->
-<div class="login-screen" id="loginScreen">
-  <h2>Messages</h2>
-  <input type="tel" class="login-input" id="loginPhone" placeholder="Phone number (2547...)">
-  <input type="password" class="login-input" id="loginPassword" placeholder="Password">
-  <button class="login-btn" id="loginBtn">Sign in</button>
-</div>
-
-<!-- Main Content -->
-<div class="main-content" id="mainContent">
-  <!-- Search Bar -->
-  <div class="search-container" id="searchBar" style="display:none;">
-    <div class="search-bar">
-      <span class="icon">🔍</span>
-      <input type="text" placeholder="Search messages..." id="searchInput">
-    </div>
+  
+  <!-- Phone Search Section (hidden until logged in) -->
+  <div class="phone-input-container hidden" id="phoneInputContainer">
+    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
+    <button class="change-btn" id="changeBtn">Change</button>
+    <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
-
-  <!-- Tab Chips -->
-  <div class="tab-chips" id="tabChips">
-    <div class="chip active" data-cat="all">All</div>
-    <div class="chip" data-cat="personal">Personal</div>
-    <div class="chip" data-cat="mpesa">M-PESA</div>
-    <div class="chip" data-cat="social">Social</div>
-    <div class="chip" data-cat="promo">Promotions</div>
-    <div class="chip" data-cat="bank">Banks</div>
+  <div class="messages-container" id="messages"></div>
+  <div class="no-reply-info" id="noReplyBar">
+    You can't reply to this short code. Learn more
   </div>
-
-  <!-- Inbox List -->
-  <div class="inbox-list" id="inboxList">
-    <div class="empty-state" id="emptyState">
-      <div class="icon">💬</div>
-      <div>No messages yet</div>
-    </div>
-  </div>
-
-  <!-- Conversation View -->
-  <div class="conversation-list" id="conversationList" style="display:none;"></div>
 </div>
-
-<!-- Reply Box -->
-<div class="reply-box hidden" id="replyBox">
-  <button class="attach-btn">📎</button>
-  <textarea class="reply-input" id="replyInput" placeholder="Type a message..." rows="1"></textarea>
-  <button class="send-btn" id="sendBtn">➤</button>
-</div>
-
-<!-- No Reply Notice -->
-<div class="no-reply-notice" id="noReplyNotice" style="display:none;">
-  Cannot reply to this number
-</div>
-
-<!-- FAB -->
-<button class="fab" id="fabBtn">✏️</button>
-
-<!-- Bottom Navigation -->
-<div class="bottom-nav" id="bottomNav">
-  <button class="nav-item active" data-nav="messages">
-    <span class="icon">💬</span>
-    Messages
-  </button>
-  <button class="nav-item" data-nav="calls">
-    <span class="icon">📞</span>
-    Calls
-  </button>
-  <button class="nav-item" data-nav="contacts">
-    <span class="icon">👥</span>
-    Contacts
-  </button>
-  <button class="nav-item" data-nav="settings">
-    <span class="icon">⚙️</span>
-    Settings
-  </button>
+<div class="install-btn" id="installBtn">
+  <span>⬇️</span> Install App
 </div>
 
 <script>
-// Configuration
+// Use localhost for local development
 const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-mauve.vercel.app/api";
-const MLEDER_ID = "mleder";
+const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-// State
+// ─── AUTO-LOGIN (Remember Me) ───
 let isLoggedIn = false;
 let loggedInPhone = null;
-let allMessages = [];
-let currentCategory = 'all';
-let currentConversation = null;
-let conversationMessages = [];
 
-// Elements
-const loginScreen = document.getElementById('loginScreen');
-const mainContent = document.getElementById('mainContent');
-const inboxList = document.getElementById('inboxList');
-const conversationList = document.getElementById('conversationList');
-const replyBox = document.getElementById('replyBox');
-const noReplyNotice = document.getElementById('noReplyNotice');
-const fabBtn = document.getElementById('fabBtn');
-const backBtn = document.getElementById('backBtn');
-const appBar = document.getElementById('appBar');
-const titleBlock = document.getElementById('titleBlock');
-const searchBar = document.getElementById('searchBar');
-const tabChips = document.getElementById('tabChips');
-const replyInput = document.getElementById('replyInput');
-const sendBtn = document.getElementById('sendBtn');
-const emptyState = document.getElementById('emptyState');
-const appSubtitle = document.getElementById('appSubtitle');
+// Check for saved login on page load
+const SAVED_PHONE_KEY = 'mledger_view_phone';
+const SAVED_AUTH_KEY = 'mledger_view_auth';
 
-// Update status bar time
-function updateStatusTime() {
-  const now = new Date();
-  document.getElementById('statusTime').textContent = now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+function getSavedCredentials() {
+  const phone = localStorage.getItem(SAVED_PHONE_KEY);
+  const auth = localStorage.getItem(SAVED_AUTH_KEY);
+  return { phone, auth };
 }
-updateStatusTime();
-setInterval(updateStatusTime, 60000);
 
-// Categorization
-function categorize(sender, text) {
-  const lowerText = (text || '').toLowerCase();
-  const senderLower = (sender || '').toLowerCase();
-  
-  if (lowerText.includes('mpesa') || lowerText.includes('safaricom') || 
-      sender === 'SAFARICOM' || sender === 'MPESA' || /^\d{3,4}$/.test(sender) && lowerText.includes('confirmed')) {
-    return 'mpesa';
+function saveCredentials(phone, auth) {
+  localStorage.setItem(SAVED_PHONE_KEY, phone);
+  localStorage.setItem(SAVED_AUTH_KEY, auth);
+}
+
+function clearCredentials() {
+  localStorage.removeItem(SAVED_PHONE_KEY);
+  localStorage.removeItem(SAVED_AUTH_KEY);
+}
+
+async function tryAutoLogin() {
+  // Check if user is already logged in via the main app (ksen.html)
+  const savedUser = localStorage.getItem('mledger_user');
+  if (savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      if (user && user.phone) {
+        isLoggedIn = true;
+        loggedInPhone = user.phone;
+        // Hide login, show header and messages
+        loginContainer.classList.add('hidden');
+        document.querySelector('.messages-header').style.display = 'flex';
+        phoneInputContainer.classList.add('hidden');
+        phoneInput.value = user.phone;
+        // Save credentials for backup
+        saveCredentials(user.phone, 'logged_in');
+        // Auto-load messages for logged-in user
+        loadMessagesByPhone(user.phone);
+        return true;
+      }
+    } catch (e) {}
   }
-  if (lowerText.includes('bank') || lowerText.includes('equity') || lowerText.includes('kcb') || 
-      lowerText.includes('co-op') || lowerText.includes('stanbic') || lowerText.includes('barclays')) {
-    return 'bank';
-  }
-  if (senderLower.includes('whatsapp') || senderLower.includes('telegram') || senderLower.includes('messenger')) {
-    return 'social';
-  }
-  if (lowerText.includes('win') || lowerText.includes('promo') || lowerText.includes('offer') || 
-      lowerText.includes('cashback') || lowerText.includes('bonus') || lowerText.includes('free')) {
-    return 'promo';
-  }
-  return 'personal';
+  // Show login screen, hide header until logged in
+  document.querySelector('.messages-header').style.display = 'none';
+  return false;
 }
 
-function canReply(category) {
-  return category !== 'mpesa' && category !== 'bank';
-}
+// Try auto-login on page load
+tryAutoLogin();
 
-function getCategoryIcon(cat) {
-  const icons = { mpesa: '💚', bank: '🏦', social: '💬', promo: '🎁', personal: '👤' };
-  return icons[cat] || '👤';
-}
-
-function formatTime(date) {
-  return new Date(date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-}
-
-function formatDate(date) {
-  const d = new Date(date);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], {month: 'short', day: 'numeric'});
-}
-
-// Group messages by sender
-function groupBySender(messages) {
-  const groups = {};
-  messages.forEach(msg => {
-    const sender = msg.sender || msg.from || 'Unknown';
-    const text = msg.message || msg.text || '';
-    const cat = categorize(sender, text);
-    
-    if (!groups[sender]) {
-      groups[sender] = { sender, category: cat, messages: [], lastTime: null };
-    }
-    groups[sender].messages.push(msg);
-    
-    const msgTime = msg.timestamp || msg.time || msg.created_at;
-    if (msgTime && (!groups[sender].lastTime || new Date(msgTime) > new Date(groups[sender].lastTime))) {
-      groups[sender].lastTime = msgTime;
-    }
-  });
-  
-  return Object.values(groups).sort((a, b) => {
-    const timeA = a.lastTime ? new Date(a.lastTime) : new Date(0);
-    const timeB = b.lastTime ? new Date(b.lastTime) : new Date(0);
-    return timeB - timeA;
-  });
-}
-
-// Render inbox
-function renderInbox(filteredMessages) {
-  const groups = groupBySender(filteredMessages);
-  
-  if (groups.length === 0) {
-    inboxList.innerHTML = '';
-    inboxList.appendChild(emptyState);
-    emptyState.style.display = 'flex';
-    return;
-  }
-  
-  emptyState.style.display = 'none';
-  inboxList.innerHTML = groups.map(group => {
-    const lastMsg = group.messages[group.messages.length - 1];
-    const preview = (lastMsg.message || lastMsg.text || '').substring(0, 60);
-    const time = group.lastTime ? formatDate(group.lastTime) : '';
-    const icon = getCategoryIcon(group.category);
-    
-    return `
-      <div class="inbox-item" data-sender="${group.sender}" data-cat="${group.category}">
-        <div class="avatar ${group.category}">${icon}</div>
-        <div class="inbox-info">
-          <div class="inbox-name">
-            <span class="cat-badge ${group.category}">${group.category.toUpperCase()}</span>
-            ${group.sender}
-          </div>
-          <div class="inbox-preview">${preview}</div>
-        </div>
-        <div class="inbox-meta">
-          <div class="inbox-time">${time}</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  // Click handlers
-  inboxList.querySelectorAll('.inbox-item').forEach(item => {
-    item.addEventListener('click', () => {
-      openConversation(item.dataset.sender, item.dataset.cat);
-    });
-  });
-}
-
-// Open conversation
-function openConversation(sender, category) {
-  currentConversation = { sender, category };
-  
-  // Update UI
-  inboxList.style.display = 'none';
-  conversationList.style.display = 'block';
-  replyBox.classList.remove('hidden');
-  backBtn.style.display = 'flex';
-  tabChips.style.display = 'none';
-  appSubtitle.textContent = sender;
-  
-  // Show/hide reply based on category
-  if (canReply(category)) {
-    noReplyNotice.style.display = 'none';
-    replyBox.style.bottom = '56px';
-  } else {
-    noReplyNotice.style.display = 'block';
-    replyBox.style.bottom = '100px';
-  }
-  
-  // Filter messages
-  conversationMessages = allMessages.filter(msg => {
-    const msgSender = msg.sender || msg.from || 'Unknown';
-    return msgSender.toLowerCase() === sender.toLowerCase();
-  }).sort((a, b) => {
-    const timeA = new Date(a.timestamp || a.time || a.created_at || 0);
-    const timeB = new Date(b.timestamp || b.time || b.created_at || 0);
-    return timeA - timeB;
-  });
-  
-  renderConversation();
-}
-
-// Render conversation
-function renderConversation() {
-  if (conversationMessages.length === 0) {
-    conversationList.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div>No messages</div></div>';
-    return;
-  }
-  
-  let lastDate = null;
-  conversationList.innerHTML = conversationMessages.map(msg => {
-    const msgDate = formatDate(msg.timestamp || msg.time || msg.created_at || Date.now());
-    const time = formatTime(msg.timestamp || msg.time || msg.created_at || Date.now());
-    const text = msg.message || msg.text || '';
-    
-    let dateHtml = '';
-    if (msgDate !== lastDate) {
-      dateHtml = `<div class="date-divider"><span>${msgDate}</span></div>`;
-      lastDate = msgDate;
-    }
-    
-    return `
-      ${dateHtml}
-      <div class="message-wrapper received">
-        <div class="message-bubble">
-          <div class="message-text">${text}</div>
-          <div class="message-time">${time} ✓</div>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  // Scroll to bottom
-  setTimeout(() => {
-    conversationList.scrollTop = conversationList.scrollHeight;
-  }, 100);
-}
-
-// Close conversation
-backBtn.addEventListener('click', () => {
-  currentConversation = null;
-  inboxList.style.display = 'block';
-  conversationList.style.display = 'none';
-  replyBox.classList.add('hidden');
-  noReplyNotice.style.display = 'none';
-  backBtn.style.display = 'none';
-  tabChips.style.display = 'flex';
-  appSubtitle.textContent = 'mleder inbox';
-  renderInbox(filteredByCategory());
-});
-
-// Tab chips
-tabChips.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    tabChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    currentCategory = chip.dataset.cat;
-    renderInbox(filteredByCategory());
-  });
-});
-
-function filteredByCategory() {
-  if (currentCategory === 'all') return allMessages;
-  return allMessages.filter(msg => {
-    const sender = msg.sender || msg.from || 'Unknown';
-    const text = msg.message || msg.text || '';
-    return categorize(sender, text) === currentCategory;
-  });
-}
-
-// Send reply
-sendBtn.addEventListener('click', () => {
-  const text = replyInput.value.trim();
-  if (!text || !currentConversation) return;
-  
-  const newMsg = {
-    id: Date.now(),
-    sender: loggedInPhone,
-    to: currentConversation.sender,
-    message: text,
-    timestamp: new Date().toISOString(),
-    type: 'sent'
-  };
-  
-  allMessages.push(newMsg);
-  conversationMessages.push(newMsg);
-  replyInput.value = '';
-  renderConversation();
-  renderInbox(filteredByCategory());
-});
-
-replyInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendBtn.click();
-  }
-});
-
-// Auto-resize textarea
-replyInput.addEventListener('input', () => {
-  replyInput.style.height = 'auto';
-  replyInput.style.height = Math.min(replyInput.scrollHeight, 100) + 'px';
-});
-
-// Login
+const loginContainer = document.getElementById('loginContainer');
 const loginBtn = document.getElementById('loginBtn');
 const loginPhone = document.getElementById('loginPhone');
 const loginPassword = document.getElementById('loginPassword');
+const changeBtn = document.getElementById('changeBtn');
 
 loginBtn.addEventListener('click', async () => {
   const phone = loginPhone.value.trim();
   const password = loginPassword.value.trim();
   
   if (!phone || !password) {
-    alert('Please enter phone and password');
+    alert('Please enter both phone number and password');
     return;
   }
   
-  loginBtn.textContent = 'Signing in...';
+  loginBtn.innerText = 'Logging in...';
   loginBtn.disabled = true;
   
   try {
@@ -529,111 +344,327 @@ loginBtn.addEventListener('click', async () => {
     const data = await res.json();
     
     if (res.ok && data.success) {
+      // Save user to localStorage (like ksen.html does)
       localStorage.setItem('mledger_user', JSON.stringify(data.user));
       isLoggedIn = true;
       loggedInPhone = phone;
-      loginScreen.classList.add('hidden');
-      loadMessages(phone);
+      saveCredentials(phone, password);
+      // Hide login, show messages
+      loginContainer.classList.add('hidden');
+      document.querySelector('.messages-header').style.display = 'flex';
+      phoneInputContainer.classList.add('hidden');
+      // Auto-load messages for the phone number
+      loadMessagesByPhone(phone);
     } else {
-      alert(data.error || 'Login failed');
+      alert(data.error || 'Invalid phone number or password');
     }
   } catch (err) {
-    alert('Login failed. Try again.');
+    alert('Login failed. Please try again.');
+    console.error('Login error:', err);
   }
   
-  loginBtn.textContent = 'Sign in';
+  loginBtn.innerText = 'Login';
   loginBtn.disabled = false;
 });
 
-// Auto-login
-async function tryAutoLogin() {
-  const savedUser = localStorage.getItem('mledger_user');
-  if (savedUser) {
-    try {
-      const user = JSON.parse(savedUser);
-      if (user && user.phone) {
-        isLoggedIn = true;
-        loggedInPhone = user.phone;
-        loginScreen.classList.add('hidden');
-        loadMessages(user.phone);
-        return true;
-      }
-    } catch (e) {}
+loginPassword.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginBtn.click();
   }
-  return false;
-}
+});
 
-// Load messages
-async function loadMessages(phone) {
-  inboxList.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+loginPhone.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginPassword.focus();
+  }
+});
+
+changeBtn.addEventListener('click', () => {
+  isLoggedIn = false;
+  loggedInPhone = null;
+  clearCredentials();
+  phoneInputContainer.classList.add('hidden');
+  loginContainer.classList.remove('hidden');
+  loginPassword.value = '';
+  document.getElementById('messages').innerHTML = '';
+});
+
+// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
+const moreBtn = document.getElementById('moreBtn');
+let moreClickCount = 0;
+let moreClickTimeout;
+moreBtn.addEventListener('click', (e) => {
+    moreClickCount++;
+    clearTimeout(moreClickTimeout);
+    if (moreClickCount === 3) {
+        loadMessages();
+        moreClickCount = 0;
+    } else {
+        moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);
+    }
+});
+moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ─── LOAD BUTTON CLICK ───
+const loadBtn = document.getElementById('loadBtn');
+const phoneInput = document.getElementById('phoneInput');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+
+loadBtn.addEventListener('click', () => {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    }
+});
+
+phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const phone = phoneInput.value.trim();
+        if (phone) {
+            loadMessagesByPhone(phone);
+        }
+    }
+});
+
+// ─── TRIPLE TAP ON NO-REPLY BAR ───
+const noReplyBar = document.getElementById('noReplyBar');
+let tapCount = 0;
+let tapTimeout;
+noReplyBar.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimeout);
+    if (tapCount === 3) {
+        window.location.href = 'ksen.html';
+        tapCount = 0;
+    } else {
+        tapTimeout = setTimeout(() => { tapCount = 0; }, 400);
+    }
+});
+
+// ─── HELPERS ───
+function extractFirstUrl(text) {
+  const match = text.match(urlRegex);
+  if (!match) return null;
+  let url = match[0].trim();
+  if (url.startsWith('www.')) url = 'https://' + url;
+  url = url.replace(/[.,!?;)\]}>]+$/g, '');
+  return url;
+}
+function isMpesaRelatedLink(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.includes('mpesa') || lower.includes('safaricom');
+}
+function getFaviconUrl(url) {
+  if (!url) return null;
+  try {
+    const domain = new URL(url).origin;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  } catch { return null; }
+}
+function renderMessageContent(text) {
+  let safe = text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+  return safe.replace(urlRegex, (match) => {
+    let full = match.startsWith('www.') ? 'https://' + match : match;
+    return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;
+  });
+}
+function extractTimeFromMessage(message) {
+  const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+  return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function createMessageBubble(tx, isLast) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+  if (isLast) bubble.id = "last-message";
+  const url = extractFirstUrl(tx.message);
+  let previewHtml = '';
+  if (url) {
+    if (isMpesaRelatedLink(url)) {
+      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+        </div>`;
+    } else {
+      const favicon = getFaviconUrl(url);
+      if (favicon) {
+        previewHtml = `<div style="margin-top:8px; display:flex; align-items:center; gap:8px; font-size:12px; opacity:0.85;">
+            <img src="${favicon}" style="width:20px; height:20px;">
+            <span>${new URL(url).hostname}</span>
+          </div>`;
+      }
+    }
+  }
+  bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
+                     previewHtml +
+                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+  enableDoubleTapRemove(bubble);
+  return bubble;
+}
+function enableDoubleTapRemove(el) {
+  let lastTap = 0;
+  el.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); removeMessage(el); }
+    lastTap = now;
+  });
+  el.addEventListener("dblclick", () => removeMessage(el));
+}
+function removeMessage(el) {
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
+}
+function renderMessages(messages) {
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  if (messages.length === 0) {
+    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
+    return;
+  }
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
+    const bubble = createMessageBubble(tx, isLast);
+    container.appendChild(bubble);
+  });
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+    const lastMsg = document.getElementById('last-message');
+    if (lastMsg) lastMsg.scrollIntoView({ behavior: 'instant', block: 'end' });
+  }, 100);
+}
+function showOfflineMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="offline-message">
+      You are offline.<br>Please connect to the internet to load messages.
+    </div>
+  `;
+}
+function showEnterPhoneMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="enter-phone-message">
+      Enter a phone number above<br>to view messages
+    </div>
+  `;
+}
+async function loadMessagesByPhone(phone) {
+  // Check if logged in
+  if (!isLoggedIn) {
+    alert('Please login first');
+    return;
+  }
+  
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  container.style.opacity = "0.5";
+  
+  // Hide the phone input container after loading
+  phoneInputContainer.classList.add('hidden');
   
   try {
-    const res = await fetch(`${API}/api/messages/${phone}`);
-    const data = await res.json();
+    // First try the new messages endpoint
+    let res = await fetch(`${API}/api/messages/${phone}`);
+    let data = await res.json();
     
-    if (data.success && data.messages) {
-      allMessages = data.messages.map(msg => ({
-        ...msg,
-        id: msg.id || msg._id,
-        sender: msg.from || msg.sender || phone,
-        message: msg.text || msg.message,
-        timestamp: msg.timestamp || msg.created_at
-      }));
+    if (data.success && data.messages && data.messages.length > 0) {
+      container.style.opacity = "1";
+      // Messages are already sorted oldest first (newest at bottom)
+      renderMessages(data.messages);
+      localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
     } else {
-      // Fallback
-      const txRes = await fetch(`${API}/transactions`);
-      if (txRes.ok) {
-        const txData = await txRes.json();
-        allMessages = txData.filter(tx => 
-          tx.phone === phone || tx.phone.includes(phone.slice(-9))
-        ).map(tx => ({
-          ...tx,
-          sender: 'SAFARICOM',
-          message: tx.message,
-          timestamp: tx.timestamp || tx.created_at
-        }));
+      // Fallback to transactions endpoint
+      res = await fetch(`${API}/transactions`);
+      if (!res.ok) throw new Error("Network response was not ok");
+      const txData = await res.json();
+      
+      // Filter transactions by phone
+      const filtered = txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
+      
+      container.style.opacity = "1";
+      if (filtered.length > 0) {
+        // Already sorted oldest first from API, just render
+        renderMessages(filtered);
+        localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
+      } else {
+        renderMessages([]);
       }
     }
-    
-    renderInbox(filteredByCategory());
   } catch (err) {
-    console.error('Error:', err);
-    const cached = localStorage.getItem('cached_messages_' + phone);
+    console.error('Error loading messages:', err);
+    const cached = localStorage.getItem("cached_messages_" + phone);
     if (cached) {
-      allMessages = JSON.parse(cached);
+      const data = JSON.parse(cached);
+      container.style.opacity = "1";
+      renderMessages(data);
+      const notice = document.createElement("div");
+      notice.style.padding = "10px 14px";
+      notice.style.background = "#422c00";
+      notice.style.color = "#ffcc80";
+      notice.style.fontSize = "13px";
+      notice.style.textAlign = "center";
+      notice.style.borderRadius = "12px";
+      notice.style.margin = "8px auto";
+      notice.style.maxWidth = "90%";
+      notice.textContent = "Showing cached messages";
+      container.prepend(notice);
     } else {
-      allMessages = [];
+      container.style.opacity = "1";
+      renderMessages([]);
     }
-    renderInbox(filteredByCategory());
   }
 }
 
-// Triple tap search
-let tapCount = 0;
-document.getElementById('searchBtn').addEventListener('click', () => {
-  tapCount++;
-  if (tapCount >= 3) {
-    searchBar.style.display = searchBar.style.display === 'none' ? 'block' : 'none';
-    tapCount = 0;
+function updateOnlineStatus() {
+  if (navigator.onLine) {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
+  } else {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
   }
-  setTimeout(() => tapCount = 0, 400);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ─── INITIAL LOAD ───
+showEnterPhoneMessage();
+
+// ─── PWA INSTALL PROMPT ───
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    document.getElementById("installBtn").style.display = "block";
+  }, 5000);
+});
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById("installBtn").style.display = "none";
+    }
+    deferredPrompt = null;
+  }
 });
 
-// FAB
-fabBtn.addEventListener('click', () => {
-  alert('Compose new message');
-});
-
-// Bottom nav
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
+// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker registered!', reg))
+      .catch((err) => console.error('Service Worker registration failed:', err));
   });
-});
-
-// Initialize
-tryAutoLogin();
+}
 </script>
 </body>
 </html>
