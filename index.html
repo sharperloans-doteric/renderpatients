@@ -119,16 +119,6 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.register-btn {
-  padding: 12px 20px;
-  background: transparent;
-  color: #25d366;
-  border: 2px solid #25d366;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 15px;
-}
 .change-btn {
   padding: 12px 15px;
   background: #333;
@@ -236,15 +226,14 @@ body {
   <!-- Login Section -->
   <div class="phone-input-container" id="loginContainer">
     <h2>Messages Login</h2>
-    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Phone number">
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
     <button class="load-btn" id="loginBtn">Login</button>
-    <button class="register-btn" onclick="window.location.href='sen.html'">Requesting Account</button>
   </div>
   
   <!-- Phone Search Section (hidden until logged in) -->
   <div class="phone-input-container hidden" id="phoneInputContainer">
-    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
+    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter phone number (e.g., 2547...)">
     <button class="change-btn" id="changeBtn">Change</button>
     <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
@@ -518,7 +507,7 @@ function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
+    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number</div>`;
     return;
   }
   messages.forEach((tx, index) => {
