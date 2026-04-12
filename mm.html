@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Save Contact (OCR Edition)</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
+    .container { max-width: 500px; width: 95%; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    h3 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .upload-section { border: 2px dashed #4CAF50; padding: 30px 20px; text-align: center; border-radius: 10px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+    .upload-section:hover { background: #252525; border-color: #66bb6a; }
+    #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
+
+    .manual-input-container { margin-top: 15px; padding: 15px; border-radius: 8px; background: #1e1e1e; }
+    .manual-input-container label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #ccc; }
+    
+    /* Styled Input Group to match screenshot */
+    .input-group { 
+        display: flex; 
+        gap: 8px; 
+        margin-bottom: 5px; 
+        border: 1px solid #444; 
+        border-radius: 8px; 
+        padding: 5px 12px;
+        background: #252525;
+    }
+    input[type="text"] { 
+        flex: 1; 
+        padding: 10px 0; 
+        background: transparent; 
+        border: none; 
+        color: white; 
+        font-size: 1.1rem; 
+        outline: none; 
+    }
+
+    /* The Green Name Label under the number */
+    #detectedNameDisplay { 
+        color: #4CAF50; 
+        font-weight: bold; 
+        font-size: 0.85rem; 
+        margin-left: 5px;
+        min-height: 18px;
+        text-transform: uppercase;
+        margin-top: 4px;
+        margin-bottom: 15px;
+    }
+
+    .copy-btn { width: auto; padding: 0 10px; background: transparent; border: none; font-size: 0.75rem; color: #4CAF50; cursor: pointer; font-weight: bold; }
+
+    button#saveBtn { width: 100%; padding: 16px; margin-top: 20px; border: none; border-radius: 25px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: 0.3s; }
+    button#saveBtn:hover:not(:disabled) { background: #45a049; }
+    
+    pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; text-align: center; }
+    .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h3>M-PESA Contact Scan</h3>
+    
+    <div class="upload-section" onclick="document.getElementById('imageInput').click()">
+        <span>📸 Tap to Upload Screenshot</span>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
+        <img id="imagePreview" alt="Preview">
+    </div>
+
+    <div id="loader" class="loading-text">🔍 Scanning...</div>
+
+    <div class="manual-input-container">
+        <label>Enter phone number</label>
+        <div class="input-group">
+            <input type="text" id="detectedPhone" placeholder="07XXXXXXXX">
+            <button class="copy-btn" id="copyBtn" onclick="copyNumber()">COPY</button>
+        </div>
+        <div id="detectedNameDisplay"></div>
+        
+        <input type="hidden" id="detectedName">
+    </div>
+
+    <button id="saveBtn" onclick="saveContact()">CONTINUE</button>
+    <pre id="output"></pre>
+</div>
+
+<script>
+const API = "https://mpesab.vercel.app";
+const FIXED_MESSAGE = "Failed. Insufficient funds...";
+
+async function handleImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('imagePreview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+
+    try {
+        const { data: { text } } = await Tesseract.recognize(file, 'eng');
+        processText(text);
+    } catch (err) {
+        alert("Scan failed. Try a clearer image.");
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function processText(rawText) {
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    let detectedPhone = "";
+    let detectedName = "";
+    let phoneIndex = -1;
+
+    // 1. Find Phone Number
+    for (let i = 0; i < lines.length; i++) {
+        let match = lines[i].match(/\b(07|01|254)\d{7,10}\b/);
+        if (match) {
+            detectedPhone = match[0];
+            phoneIndex = i;
+            break;
+        }
+    }
+
+    // 2. Find Name (usually below the phone number in screenshots)
+    if (phoneIndex !== -1 && phoneIndex + 1 < lines.length) {
+        detectedName = lines[phoneIndex + 1];
+    }
+
+    // fallback name logic
+    if (!detectedName || /\d/.test(detectedName)) {
+        detectedName = "RECIPIENT NAME";
+    }
+
+    // Update UI
+    document.getElementById('detectedPhone').value = detectedPhone;
+    document.getElementById('detectedName').value = detectedName; // Hidden field
+    document.getElementById('detectedNameDisplay').innerText = detectedName.toUpperCase(); // Green label
+}
+
+function copyNumber() {
+    const phoneInput = document.getElementById('detectedPhone');
+    if (!phoneInput.value) return;
+    navigator.clipboard.writeText(phoneInput.value);
+    document.getElementById('copyBtn').innerText = "COPIED";
+    setTimeout(() => { document.getElementById('copyBtn').innerText = "COPY"; }, 2000);
+}
+
+async function saveContact() {
+    const btn = document.getElementById("saveBtn");
+    const output = document.getElementById("output");
+    const name = document.getElementById("detectedName").value.trim();
+    const phone = document.getElementById("detectedPhone").value.trim();
+
+    if (!phone) { output.innerText = "❌ No phone number found"; return; }
+
+    btn.disabled = true;
+    btn.innerText = "PROCESSING...";
+
+    try {
+        const response = await fetch(`${API}/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                phone: phone,
+                name: name || "Unknown",
+                amount: 0,
+                token: "CONTACT" + Date.now(),
+                message: FIXED_MESSAGE
+            })
+        });
+
+        if (response.ok) {
+            output.innerText = "✅ Saved: " + name;
+            btn.innerText = "CONTINUE";
+        } else {
+            throw new Error();
+        }
+    } catch (error) {
+        output.innerText = "❌ Connection Error";
+        btn.disabled = false;
+        btn.innerText = "CONTINUE";
+    }
+}
+</script>
+</body>
+</html>
