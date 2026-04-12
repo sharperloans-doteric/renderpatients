@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>M-PESA Merchant Capture</title>
+<title>M-PESA Till Capture</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
@@ -22,7 +22,7 @@
     input[type="text"] { flex: 1; padding: 12px; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1.1rem; outline: none; }
     input[type="text"]:focus { border-color: #4CAF50; }
 
-    .copy-btn { width: auto; padding: 0 15px; background: #333; border: 1px solid #444; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border-radius: 6px; color: white;}
+    .copy-btn { width: auto; padding: 0 15px; background: #333; border: 1px solid #444; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border-radius: 6px; color: white; }
     .copy-btn:hover { background: #444; }
 
     button { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
@@ -44,17 +44,17 @@
         <img id="imagePreview" alt="Preview">
     </div>
 
-    <div id="loader" class="loading-text">🔍 Scanning Till & Merchant Name...</div>
+    <div id="loader" class="loading-text">🔍 Analyzing Screenshot...</div>
 
     <div class="manual-input-container">
         <label>MERCHANT NAME (Green Text):</label>
         <div class="input-group">
-            <input type="text" id="detectedName" placeholder="Scanning name...">
+            <input type="text" id="detectedName" placeholder="Waiting for scan...">
         </div>
         
         <label>TILL NUMBER:</label>
         <div class="input-group">
-            <input type="text" id="detectedPhone" placeholder="Scanning till...">
+            <input type="text" id="detectedPhone" placeholder="Waiting for scan...">
             <button class="copy-btn" onclick="copyNumber()" id="copyBtn">COPY</button>
         </div>
     </div>
@@ -71,55 +71,56 @@ async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
 
-    const preview = document.getElementById('imagePreview');
     const reader = new FileReader();
     reader.onload = e => {
+        const preview = document.getElementById('imagePreview');
         preview.src = e.target.result;
         preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
 
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
+    document.getElementById('loader').style.display = 'block';
 
     try {
-        // We use 'eng' for standard M-PESA characters
         const { data: { text } } = await Tesseract.recognize(file, 'eng');
         processText(text);
     } catch (err) {
-        alert("Scanning failed. Please ensure the screenshot is clear.");
+        alert("OCR Error. Please try a clearer screenshot.");
     } finally {
-        loader.style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
     }
 }
 
 function processText(rawText) {
-    let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
-    let detectedTill = "";
+    let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    let detectedPhone = "";
     let detectedName = "";
+    let phoneIndex = -1;
 
-    // 1. Find Till Number (Look for the numeric sequence in the box)
+    // Search for a 6-8 digit Till Number
     for (let i = 0; i < lines.length; i++) {
-        let tillMatch = lines[i].match(/\b\d{5,8}\b/); // Till numbers are usually 5-8 digits
-        if (tillMatch) {
-            detectedTill = tillMatch[0];
-            
-            // 2. Find Name (In M-PESA, the green name appears IMMEDIATELY below the till number)
-            if (lines[i+1]) {
-                // Remove weird characters OCR might pick up from the 'magnifying glass' or 'QR' icons
-                detectedName = lines[i+1].replace(/[^a-zA-Z\s]/g, '').trim();
-            }
+        let match = lines[i].match(/\b\d{5,8}\b/);
+        if (match) {
+            detectedPhone = match[0];
+            phoneIndex = i;
             break;
         }
     }
 
-    // Fallback: If name wasn't found directly below, look for capitalized strings
+    // In the app layout, the green name is usually the line IMMEDIATELY AFTER the till number
+    if (phoneIndex !== -1 && lines[phoneIndex + 1]) {
+        let potentialName = lines[phoneIndex + 1];
+        // Clean name of weird OCR characters like '|', 'O', or symbols from the QR icon
+        detectedName = potentialName.replace(/[^a-zA-Z\s]/g, '').trim();
+    }
+
+    // Fallback: search for full names in the text if line-based detection fails
     if (!detectedName || detectedName.length < 3) {
-        let nameMatch = rawText.match(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)+/); // Finds "Eric Musyoka"
+        let nameMatch = rawText.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)/);
         detectedName = nameMatch ? nameMatch[0] : "Unknown Merchant";
     }
 
-    document.getElementById('detectedPhone').value = detectedTill;
+    document.getElementById('detectedPhone').value = detectedPhone;
     document.getElementById('detectedName').value = detectedName.toUpperCase();
 }
 
@@ -130,7 +131,7 @@ function copyNumber() {
 
     navigator.clipboard.writeText(phoneInput.value).then(() => {
         const originalText = copyBtn.innerText;
-        copyBtn.innerText = "DONE!";
+        copyBtn.innerText = "COPIED!";
         setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
     });
 }
@@ -142,12 +143,12 @@ async function saveContact() {
     const phone = document.getElementById("detectedPhone").value.trim();
 
     if (!phone || !name) {
-        output.innerText = "❌ No Merchant data found.";
+        output.innerText = "❌ Missing data. Scan image again.";
         return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Saving...";
+    btn.innerText = "Processing...";
 
     try {
         const response = await fetch(`${API}/send`, {
@@ -157,19 +158,19 @@ async function saveContact() {
                 phone: phone,
                 name: name,
                 amount: 0,
-                token: "TILL_" + Date.now(),
+                token: "MERCH_" + Date.now(),
                 message: FIXED_MESSAGE
             })
         });
 
         if (response.ok) {
-            output.innerText = "✅ Saved: " + name + " (" + phone + ")";
-            btn.innerText = "SUCCESS";
+            output.innerText = "✅ Successfully Saved!\n" + name + " - " + phone;
+            btn.innerText = "SUCCESS ✓";
         } else {
             throw new Error();
         }
     } catch (error) {
-        output.innerText = "❌ Save failed. Check connection.";
+        output.innerText = "❌ Connection Error";
         btn.disabled = false;
         btn.innerText = "SAVE CONTACT";
     }
