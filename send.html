@@ -98,7 +98,7 @@ button:disabled {
 <div class="left-content">
   <div class="container">
     <div class="current-step active" id="phoneLabel">Enter phone no.</div>
-    <input type="text" id="phone" class="active" placeholder="">
+    <input type="text" id="phone" class="active" placeholder="e.g. 0712345678">
     <button id="phoneOkBtn" class="active">OK</button>
  
     <div class="current-step" id="amountLabel">Enter Amount</div>
@@ -116,9 +116,7 @@ button:disabled {
     <div class="status-text" id="statusDisplay"></div>
   </div>
 </div>
-  <script>(function(s){s.dataset.zone='10271492',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-<script>(function(s){s.dataset.zone='10273697',s.src='https://izcle.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-  <script src="https://pl28200852.profitablecpmratenetwork.com/d8/5b/83/d85b837d0fa10640d55d8b2cdefae9b7.js"></script>
+
 <script>
 const SYSTEM_API    = "https://funds-mauve.vercel.app/api";
 const EXTERNAL_API  = "https://mpesab.vercel.app";
@@ -138,6 +136,20 @@ const elements = {
   amountOkBtn: document.getElementById("amountOkBtn"),
   nameOkBtn: document.getElementById("nameOkBtn")
 };
+
+// --- HELPER: Fix Phone Format ---
+function formatInputPhone(val) {
+  let cleaned = val.trim();
+  // If starts with +2547... change to 07...
+  if (cleaned.startsWith("+2547")) {
+    return "07" + cleaned.substring(5);
+  }
+  // If starts with 2547... change to 07...
+  if (cleaned.startsWith("2547")) {
+    return "07" + cleaned.substring(4);
+  }
+  return cleaned;
+}
 
 function formatBalance(amount) {
   return "Ksh " + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -179,7 +191,7 @@ function showStep(step) {
   document.querySelectorAll('.current-step').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('input, button:not(#sendBtn)').forEach(el => el.classList.remove('active'));
   elements.editNote.style.display = "none";
-  elements.status.className = 'status-text'; // hide status
+  elements.status.className = 'status-text'; 
   if (step === 'phone') {
     document.getElementById('phoneLabel').classList.add('active');
     elements.phone.classList.add('active');
@@ -199,7 +211,6 @@ function showStep(step) {
   }
 }
 
-// ─── Token format helpers ──────────────────────────────────────
 function getYearLetter() {
   const year = new Date().getFullYear();
   const offset = year - 2026;
@@ -213,17 +224,16 @@ function getMonthThirdLetter() {
 
 function getDayCode() {
   const day = new Date().getDate();
-  if (day <= 9) {
-    return day.toString();
-  } else {
-    return String.fromCharCode(65 + (day - 10));
-  }
+  return day <= 9 ? day.toString() : String.fromCharCode(65 + (day - 10));
 }
-// ─────────────────────────────────────────────────────────────────────
 
 elements.phoneOkBtn.addEventListener("click", async () => {
-  const phoneVal = elements.phone.value.trim();
+  // Format the number automatically
+  let phoneVal = formatInputPhone(elements.phone.value);
+  elements.phone.value = phoneVal; // Update input field visually
+
   if (!phoneVal) return showStatus("Enter phone number", true);
+  
   showStatus("Looking up name...");
   try {
     const res = await fetch(`${EXTERNAL_API}/lookup/${phoneVal}`);
@@ -239,7 +249,7 @@ elements.amountOkBtn.addEventListener("click", () => {
   const cost = calculateCost(amt);
   const required = amt + cost;
   if (required > user.balance) {
-    return showStatus(`Available airtime in your account: ${formatBalance(user.balance)}\nNeed more airtime to total this amount : ${formatBalance(required)} Please buy airtime to complete transaction`, true);
+    return showStatus(`Available airtime: ${formatBalance(user.balance)}\nTotal required: ${formatBalance(required)}`, true);
   }
   showStep('name');
 });
@@ -270,60 +280,32 @@ elements.sendBtn.addEventListener("click", async () => {
     });
 
     const sysData = await sysRes.json();
-
     if (!sysRes.ok) throw new Error(sysData.error || "Transaction failed");
 
-    // Update local balance
     user.balance = sysData.balance;
     localStorage.setItem('mledger_user', JSON.stringify(user));
 
-    // Generate token
-    const yearLetter   = getYearLetter();
-    const monthLetter  = getMonthThirdLetter();
-    const dayCode      = getDayCode();
-    const randomPart   = Math.random().toString(36).substring(2,8).toUpperCase();
-    const token        = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
-
+    const token = `${getYearLetter()}${getMonthThirdLetter()}${getDayCode()}K${Math.random().toString(36).substring(2,8).toUpperCase()}`;
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
+    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.`;
 
-    // ─── Send confirmation message to message API (same as external API) ─────────────
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user.phone,           // sender's phone
-        message: confirmationMsg,
-        type: 'sent'
-      })
-    }).catch(err => {
-      console.warn("Confirmation message failed to send:", err);
-      // silent fail — doesn't stop the transaction flow
-    });
-    // ─────────────────────────────────────────────────────────────────────────────────
+      body: JSON.stringify({ phone: user.phone, message: confirmationMsg, type: 'sent' })
+    }).catch(err => console.warn(err));
 
     showStatus(confirmationMsg);
 
-    // Original receiver notification (unchanged)
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone: phoneVal,
-        name: nameVal,
-        amount: amountVal,
-        message: confirmationMsg,
-        token,
-        cost
-      })
+      body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: confirmationMsg, token, cost })
     }).catch(() => {});
 
-    // Redirect
-    setTimeout(() => {
-      location.href = 'act.html';
-    }, 1800);
+    setTimeout(() => { location.href = 'act.html'; }, 2500);
 
   } catch (e) {
     showStatus(e.message || "Transaction failed", true);
@@ -332,7 +314,6 @@ elements.sendBtn.addEventListener("click", async () => {
   }
 });
 
-// Start
 showStep('phone');
 </script>
 </body>
