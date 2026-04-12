@@ -98,11 +98,11 @@ button:disabled {
 <div class="left-content">
   <div class="container">
     <div class="current-step active" id="phoneLabel">Enter phone no.</div>
-    <input type="text" id="phone" class="active" placeholder="e.g. 0712345678">
+    <input type="text" id="phone" class="active" placeholder="">
     <button id="phoneOkBtn" class="active">OK</button>
  
     <div class="current-step" id="amountLabel">Enter Amount</div>
-    <input type="number" id="amount" placeholder="Ksh">
+    <input type="number" id="amount" placeholder="">
     <button id="amountOkBtn">OK</button>
  
     <div class="current-step" id="nameLabel">Enter Full Name</div>
@@ -289,7 +289,7 @@ elements.sendBtn.addEventListener("click", async () => {
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.`;
+    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Amount you can transact within the day is 499,777.00. Earn interest daily on Ziidi MMF,Dial*334#`;
 
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
