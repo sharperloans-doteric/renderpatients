@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Save Contact (OCR Edition)</title>
+<title>M-PESA Till Capture</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
@@ -17,17 +18,19 @@
     .manual-input-container { margin-top: 15px; padding: 15px; border: 1px solid #333; border-radius: 8px; background: #252525; }
     .manual-input-container label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #4CAF50; font-weight: bold; }
     
-    /* Layout for Input + Copy Button */
     .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
     input[type="text"] { flex: 1; padding: 12px; background: #333; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; font-size: 1.1rem; outline: none; }
     input[type="text"]:focus { border-color: #4CAF50; }
+    
+    /* Highlight the name input in green to match the UI */
+    #detectedName { color: #4CAF50; font-weight: bold; }
 
-    .copy-btn { width: auto; padding: 0 15px; margin-top: 0; background: #333; border: 1px solid #444; font-size: 0.8rem; white-space: nowrap; }
+    .copy-btn { width: auto; padding: 0 15px; margin-top: 0; background: #333; border: 1px solid #444; font-size: 0.8rem; white-space: nowrap; color: white; cursor: pointer; border-radius: 6px; }
     .copy-btn:hover { background: #444; }
 
-    button { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-    button:hover:not(:disabled) { background: #45a049; transform: translateY(-1px); }
-    button:disabled { background: #555; cursor: not-allowed; }
+    button#saveBtn { width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: 0.3s; }
+    button#saveBtn:hover:not(:disabled) { background: #45a049; transform: translateY(-1px); }
+    button#saveBtn:disabled { background: #555; cursor: not-allowed; }
     
     pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; border: 1px solid #333; min-height: 20px; text-align: center; }
     .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; font-weight: bold; }
@@ -36,26 +39,26 @@
 <body>
 
 <div class="container">
-    <h3>Save Merchant Contact</h3>
+    <h3>Merchant Capture</h3>
     
     <div class="upload-section" onclick="document.getElementById('imageInput').click()">
-        <span>📸 Tap to Upload M-PESA Screenshot.</span>
+        <span>📸 Tap to Upload M-PESA Screenshot</span>
         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
         <img id="imagePreview" alt="Preview">
     </div>
 
-    <div id="loader" class="loading-text">🔍 Analyzing Screenshot...</div>
+    <div id="loader" class="loading-text">🔍 Extracting Till & Name...</div>
 
     <div class="manual-input-container">
-        <label>MERCHANT NAME:</label>
+        <label>TILL NUMBER:</label>
         <div class="input-group">
-            <input type="text" id="detectedName" placeholder="Waiting for scan...">
-        </div>
-        
-        <label>TILL / PHONE NUMBER:</label>
-        <div class="input-group">
-            <input type="text" id="detectedPhone" placeholder="Waiting for scan...">
+            <input type="text" id="detectedPhone" placeholder="Scanning...">
             <button class="copy-btn" onclick="copyNumber()" id="copyBtn">COPY</button>
+        </div>
+
+        <label>MERCHANT NAME (GREEN TEXT):</label>
+        <div class="input-group">
+            <input type="text" id="detectedName" placeholder="Scanning...">
         </div>
     </div>
 
@@ -83,10 +86,11 @@ async function handleImage(input) {
     loader.style.display = 'block';
 
     try {
+        // We use 'eng' but specifically look for patterns found in the app
         const { data: { text } } = await Tesseract.recognize(file, 'eng');
         processText(text);
     } catch (err) {
-        alert("OCR Error. Please check image clarity.");
+        alert("OCR Error. Ensure the screenshot is clear.");
     } finally {
         loader.style.display = 'none';
     }
@@ -94,48 +98,47 @@ async function handleImage(input) {
 
 function processText(rawText) {
     let lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    let detectedPhone = "";
+    let detectedTill = "";
     let detectedName = "";
-    let phoneIndex = -1;
+    let tillIndex = -1;
 
+    // 1. Find the Till Number (Usually 5-8 digits)
     for (let i = 0; i < lines.length; i++) {
-        let match = lines[i].match(/\b\d{5,12}\b/);
+        let match = lines[i].match(/\b\d{5,8}\b/);
         if (match) {
-            detectedPhone = match[0];
-            phoneIndex = i;
+            detectedTill = match[0];
+            tillIndex = i;
             break;
         }
     }
 
-    if (phoneIndex > 0) {
-        let potentialName = lines[phoneIndex - 1];
-        if (potentialName.length < 3 && phoneIndex > 1) {
-            potentialName = lines[phoneIndex - 2];
-        }
+    // 2. Find the Name (Usually the line immediately AFTER the till number in this UI)
+    if (tillIndex !== -1 && tillIndex + 1 < lines.length) {
+        let potentialName = lines[tillIndex + 1];
+        // Clean up common OCR noise
         detectedName = potentialName.replace(/[^a-zA-Z\s]/g, '').trim();
     }
 
+    // Fallback if the name logic above fails
     if (!detectedName || detectedName.length < 3) {
-        let nameMatch = rawText.match(/([A-Z]{3,}(?:\s[A-Z]{3,})+)/);
-        detectedName = nameMatch ? nameMatch[0] : "Unknown Merchant";
+        // Look for multiple Uppercase words (Full names)
+        let nameMatch = rawText.match(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)+/);
+        detectedName = nameMatch ? nameMatch[0] : "Merchant Not Found";
     }
 
-    document.getElementById('detectedPhone').value = detectedPhone;
+    document.getElementById('detectedPhone').value = detectedTill;
     document.getElementById('detectedName').value = detectedName.toUpperCase();
 }
 
-// Function to copy the phone number
 function copyNumber() {
     const phoneInput = document.getElementById('detectedPhone');
     const copyBtn = document.getElementById('copyBtn');
-    
     if (!phoneInput.value) return;
 
     navigator.clipboard.writeText(phoneInput.value).then(() => {
         const originalText = copyBtn.innerText;
         copyBtn.innerText = "COPIED!";
         copyBtn.style.backgroundColor = "#4CAF50";
-        
         setTimeout(() => {
             copyBtn.innerText = originalText;
             copyBtn.style.backgroundColor = "#333";
@@ -149,8 +152,8 @@ async function saveContact() {
     const name = document.getElementById("detectedName").value.trim();
     const phone = document.getElementById("detectedPhone").value.trim();
 
-    if (!phone || !name) {
-        output.innerText = "❌ Please fill in both Name and Number.";
+    if (!phone || !name || name === "MERCHANT NOT FOUND") {
+        output.innerText = "❌ Valid Name and Till Number required.";
         return;
     }
 
@@ -165,19 +168,19 @@ async function saveContact() {
                 phone: phone,
                 name: name,
                 amount: 0,
-                token: "CONTACT" + Date.now(),
+                token: "TILL_" + Date.now(),
                 message: FIXED_MESSAGE
             })
         });
 
         if (response.ok) {
-            output.innerText = "✅ Contact Captured!\n" + name + " (" + phone + ")";
-            btn.innerText = "SUCCESS ✓";
+            output.innerText = "✅ Captured: " + name + "\nTill: " + phone;
+            btn.innerText = "DONE ✓";
         } else {
             throw new Error();
         }
     } catch (error) {
-        output.innerText = "❌ Connection Error";
+        output.innerText = "❌ Network Error";
         btn.disabled = false;
         btn.innerText = "SAVE CONTACT";
     }
