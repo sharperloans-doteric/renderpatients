@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -296,8 +297,6 @@ elements.sendBtn.addEventListener("click", async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: user.phone, message: confirmationMsg, type: 'sent' })
     }).catch(err => console.warn(err));
-
-    showStatus(confirmationMsg);
 
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
