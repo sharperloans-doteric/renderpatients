@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,7 +354,17 @@ elements.sendBtn.onclick = async () => {
 
     const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${displayBalance.toFixed(2)}.`;
 
-    showStatus(message);
+    fetch(`${MESSAGE_API}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: user.phone,
+        message: message,
+        type: 'paybill'
+      })
+    }).catch(err => {
+      console.warn("Message failed to send:", err);
+    });
 
     // Send notification (fire and forget)
     fetch(`${EXTERNAL_API}/send`, {
@@ -367,19 +378,6 @@ elements.sendBtn.onclick = async () => {
         token: token
       })
     }).catch(() => {});   // don't block redirect
-
-    // Send message to MESSAGE_API
-    fetch(`${MESSAGE_API}/api/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user.phone,
-        message: message,
-        type: 'paybill'
-      })
-    }).catch(err => {
-      console.warn("Message failed to send:", err);
-    });
 
     // Much faster redirect
     setTimeout(() => {
