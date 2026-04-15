@@ -81,6 +81,9 @@ body {
   display: flex;
   gap: 10px;
 }
+.hidden {
+  display: none !important;
+}
 .phone-input-container.hidden {
   display: none;
 }
@@ -317,29 +320,39 @@ function clearCredentials() {
 }
 
 async function tryAutoLogin() {
+  // Check URL parameter for phone
+  const urlParams = new URLSearchParams(window.location.search);
+  const phoneParam = urlParams.get('phone');
+  
   // Check if user is already logged in via the main app (ksen.html)
   const savedUser = localStorage.getItem('mledger_user');
+  let user = null;
   if (savedUser) {
     try {
-      const user = JSON.parse(savedUser);
-      if (user && user.phone) {
-        isLoggedIn = true;
-        loggedInPhone = user.phone;
-        // Hide login, show header and messages
-        loginContainer.classList.add('hidden');
-        document.querySelector('.messages-header').style.display = 'flex';
-        phoneInputContainer.classList.add('hidden');
-        phoneInput.value = user.phone;
-        // Save credentials for backup
-        saveCredentials(user.phone, 'logged_in');
-        // Auto-load messages for logged-in user
-        loadMessagesByPhone(user.phone);
-        return true;
-      }
+      user = JSON.parse(savedUser);
     } catch (e) {}
+  } else if (phoneParam) {
+    user = { phone: phoneParam };
+  }
+  
+  if (user && user.phone) {
+    isLoggedIn = true;
+    loggedInPhone = user.phone;
+    // Hide login, show header and messages
+    loginContainer.classList.add('hidden');
+    document.querySelector('.messages-header').style.display = 'flex';
+    phoneInputContainer.classList.add('hidden');
+    phoneInput.value = user.phone;
+    noReplyBar.classList.add('hidden');
+    // Save credentials for backup
+    saveCredentials(user.phone, 'logged_in');
+    // Auto-load messages for logged-in user
+    loadMessagesByPhone(user.phone);
+    return true;
   }
   // Show login screen, hide header until logged in
   document.querySelector('.messages-header').style.display = 'none';
+  noReplyBar.classList.add('hidden');
   return false;
 }
 
@@ -351,6 +364,7 @@ const loginBtn = document.getElementById('loginBtn');
 const loginPhone = document.getElementById('loginPhone');
 const loginPassword = document.getElementById('loginPassword');
 const changeBtn = document.getElementById('changeBtn');
+const noReplyBar = document.getElementById('noReplyBar');
 
 loginBtn.addEventListener('click', async () => {
   const phone = loginPhone.value.trim();
@@ -461,7 +475,6 @@ phoneInput.addEventListener('keypress', (e) => {
 });
 
 // ─── TRIPLE TAP ON NO-REPLY BAR ───
-const noReplyBar = document.getElementById('noReplyBar');
 let tapCount = 0;
 let tapTimeout;
 noReplyBar.addEventListener('click', () => {
@@ -574,6 +587,7 @@ function showOfflineMessage() {
       You are offline.<br>Please connect to the internet to load messages.
     </div>
   `;
+  noReplyBar.classList.add('hidden');
 }
 function showEnterPhoneMessage() {
   const container = document.getElementById("messages");
@@ -582,6 +596,7 @@ function showEnterPhoneMessage() {
       Enter a phone number above<br>to view messages
     </div>
   `;
+  noReplyBar.classList.add('hidden');
 }
 async function loadMessagesByPhone(phone) {
   // Check if logged in
