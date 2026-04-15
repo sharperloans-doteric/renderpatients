@@ -72,6 +72,8 @@ body {
   background: #1a1919;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .messages-container {
   flex: 1;
@@ -163,10 +165,10 @@ body {
   background: #000;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  scroll-behavior: auto;
   min-height: 200px;
 }
 .message-bubble {
@@ -588,11 +590,7 @@ function renderMessages(messages) {
     container.appendChild(bubble);
   });
   noReplyBar.classList.remove('hidden');
-  setTimeout(() => {
-    container.scrollTop = container.scrollHeight;
-    const lastMsg = document.getElementById('last-message');
-    if (lastMsg) lastMsg.scrollIntoView({ behavior: 'instant', block: 'end' });
-  }, 100);
+  container.scrollTop = container.scrollHeight;
 }
 function showOfflineMessage() {
   const container = document.getElementById("messages");
