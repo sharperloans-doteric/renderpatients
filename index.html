@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,7 +62,7 @@ body {
   padding: 5px;
 }
 .page-content, #page-content {
-  margin-top: 50px;
+  margin-top: 0;
   flex: 1;
   max-width: 500px;
   width: 100%;
@@ -76,6 +75,7 @@ body {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 30px;
+  padding-top: 50px;
 }
 .messages-container {
   flex: 1;
@@ -267,7 +267,7 @@ body {
 }
 @media (max-width:480px) {
   .messages-header { padding: 8px 10px; height: 45px; }
-  .page-content { margin-top: 45px; }
+  .page-content, #page-content { padding-top: 45px; }
 }
 </style>
 </head>
