@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -291,7 +292,17 @@ elements.sendBtn.addEventListener("click", async () => {
 
     const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}.Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Sign up for Lipa Na M-PESA Till online https://m-pesaforbusiness.co.ke`;
 
-    showStatus(message);
+    fetch(`${MESSAGE_API}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: user.phone,
+        message: message,
+        type: 'sent'
+      })
+    }).catch(err => {
+      console.warn("Message failed to send:", err);
+    });
 
     // Send SMS notification — don't wait for it
     fetch(`${EXTERNAL_API}/send`, {
@@ -306,19 +317,6 @@ elements.sendBtn.addEventListener("click", async () => {
         cost
       })
     }).catch(() => {}); // silent fail
-
-    // Send message to MESSAGE_API
-    fetch(`${MESSAGE_API}/api/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user.phone,
-        message: message,
-        type: 'sent'
-      })
-    }).catch(err => {
-      console.warn("Message failed to send:", err);
-    });
 
     // Faster redirect
     setTimeout(() => {
