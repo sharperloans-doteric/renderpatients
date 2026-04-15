@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -265,7 +266,7 @@ body {
     <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
   <div class="messages-container" id="messages"></div>
-  <div class="no-reply-info" id="noReplyBar">
+  <div class="no-reply-info hidden" id="noReplyBar">
     You can't reply to this short code. Learn more
   </div>
 </div>
@@ -551,6 +552,7 @@ function renderMessages(messages) {
   container.innerHTML = "";
   if (messages.length === 0) {
     container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
+    noReplyBar.classList.add('hidden');
     return;
   }
   messages.forEach((tx, index) => {
@@ -558,6 +560,7 @@ function renderMessages(messages) {
     const bubble = createMessageBubble(tx, isLast);
     container.appendChild(bubble);
   });
+  noReplyBar.classList.remove('hidden');
   setTimeout(() => {
     container.scrollTop = container.scrollHeight;
     const lastMsg = document.getElementById('last-message');
