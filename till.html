@@ -1,349 +1,794 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Send Money - M-Ledger</title>
+<title>Messages</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
 <style>
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-  background: #000000;
-  color: #ffffff;
-  margin: 0;
-  padding: 20px;
-  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  height: 100vh;
   display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.left-content {
+.messages-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  padding: 10px 15px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+}
+.logo { height: 28px; }
+.loader {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #25d366;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+.logo.hidden { display: none; }
+.loader.active { display: block; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.header-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #af5656;
+}
+.more-menu {
+  position: absolute;
+  right: 0.3cm;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+  user-select: none;
+  -webkit-touch-callout: none;
+  padding: 5px;
+}
+.page-content, #page-content {
+  margin-top: 0;
   flex: 1;
-  padding-right: 20px;
-}
-.container {
-  max-width: 450px;
+  max-width: 500px;
   width: 100%;
-  background: #000000;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  margin-left: auto;
+  margin-right: auto;
+  background: #1a1919;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 30px;
+  padding-top: 50px;
 }
-input, button {
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 150px;
+  padding-bottom: 50px;
+}
+.phone-input-container {
+  padding: 15px;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  display: flex;
+  gap: 10px;
+}
+.hidden {
+  display: none !important;
+}
+.phone-input-container.hidden {
+  display: none;
+}
+#loginContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 50px);
+  padding: 30px;
+  background: #000;
+}
+#loginContainer.hidden {
+  display: none;
+}
+#loginContainer .phone-input {
   width: 100%;
-  padding: 12px 16px;
-  margin-top: 8px;
+  max-width: 350px;
+  margin-bottom: 15px;
+}
+#loginContainer .load-btn {
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
+}
+#loginContainer h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #25d366;
+}
+.phone-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+}
+.phone-input:focus {
+  outline: none;
+  border-color: #25d366;
+}
+.load-btn {
+  padding: 12px 20px;
+  background: #25d366;
+  color: #000;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
-  display: none;
-  background: #2a2a2a;
-  color: #ffffff;
-  border: 1px solid #333;
   font-weight: 600;
-}
-input.active, button.active {
-  display: block;
-}
-button {
-  background: #000000;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
-button:hover { background: #111111; }
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.status-text {
-  font-size: 19px;
-  font-weight: 500;
-  text-align: left;
-  margin: 20px 0;
-  padding: 16px;
-  color: #ffffff;
-  background: #1a1a1a;
-  border-radius: 10px;
-  line-height: 1.45;
-  min-height: 80px;
-  display: none;
-}
-.status-text.active {
-  display: block;
-}
-.status-text.error {
-  color: #ff6b6b;
-  background: #2a0000;
-}
-.search-note {
-  font-size: 0.82rem;
-  color: #ffab00;
-  margin-top: 6px;
-  display: none;
-  text-align: center;
-}
-.current-step {
-  font-size: 24px;
+.register-btn {
+  padding: 12px 20px;
+  background: transparent;
+  color: #25d366;
+  border: 2px solid #25d366;
+  border-radius: 8px;
   font-weight: 600;
-  text-align: center;
-  margin: 20px 0;
-  padding: 16px 0;
-  color: #ffffff;
-  display: none;
+  cursor: pointer;
+  margin-top: 15px;
 }
-.current-step.active {
-  display: block;
+.change-btn {
+  padding: 12px 15px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.messages-container {
+  background: #000;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+  padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+.message-bubble {
+  max-width: 95%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  font-size: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  animation: slideInUp 0.4s ease both;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-bubble.hide {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: right;
+}
+.install-btn {
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  background: #25d366;
+  color: #000;
+  padding: 14px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+}
+.no-reply-info {
+  background: #000;
+  color: #aaa;
+  font-size: 13px;
+  padding: 12px;
+  text-align: center;
+  border-radius: 20px 20px 0 0;
+  user-select: none;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+  z-index: 10;
+}
+.no-reply-info.hidden {
+  display: none !important;
+}
+
+#page-content {
+  padding-bottom: 50px;
+}
+.offline-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #ff6b6b;
+  text-align: center;
+  padding: 20px;
+}
+.enter-phone-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (max-width:480px) {
+  .messages-header { padding: 8px 10px; height: 45px; }
+  .page-content, #page-content { padding-top: 45px; }
 }
 </style>
 </head>
 <body>
-<div class="left-content">
-  <div class="container">
-    <div class="current-step active" id="phoneLabel">Enter till no.</div>
-    <input type="text" id="phone" class="active" placeholder="">
-    <button id="phoneOkBtn" class="active">OK</button>
-   
-    <div class="current-step" id="amountLabel">Enter Amount</div>
-    <input type="number" id="amount" placeholder="Ksh">
-    <button id="amountOkBtn">OK</button>
-   
-    <div class="current-step" id="nameLabel">Enter Full Name</div>
-    <div id="editNote" class="search-note">Confirm Name (Edit if incorrect)</div>
-    <input type="text" id="name" placeholder="Full name">
-    <button id="nameOkBtn">OK</button>
-   
-    <div class="current-step" id="optionsLabel">Finalize Transaction</div>
-    <button id="sendBtn">Confirm & Send</button>
-   
-    <div class="status-text" id="statusDisplay"></div>
+<div class="messages-header">
+  <img src="logo.png" class="logo" id="headerLogo">
+  <div class="loader" id="headerLoader"></div>
+  <h1 class="header-title"></h1>
+  <div class="more-menu" id="moreBtn">⋮</div>
+</div>
+<div id="page-content" class="page-content">
+  <!-- Login Section -->
+  <div class="phone-input-container" id="loginContainer">
+    <h2>Messages Login</h2>
+
+    
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
+    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
+    <button class="load-btn" id="loginBtn">Login</button>
+    <button class="register-btn" onclick="window.location.href='sen.html'">Requesting Account</button>
   </div>
+  
+  <!-- Phone Search Section (hidden until logged in) -->
+  <div class="phone-input-container hidden" id="phoneInputContainer">
+    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
+    <button class="change-btn" id="changeBtn">Change</button>
+    <button class="load-btn" id="loadBtn">View Messages</button>
+  </div>
+  <div class="messages-container" id="messages"></div>
+  <div class="no-reply-info hidden" id="noReplyBar">
+    You can't reply to this short code. Learn more
+  </div>
+</div>
+<div class="install-btn" id="installBtn">
+  <span>⬇️</span> Install App
 </div>
 
 <script>
+// Use localhost for local development
+const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-mauve.vercel.app/api";
-const EXTERNAL_API = "https://mpesab.vercel.app";
-const MESSAGE_API = "https://message-server-five.vercel.app";
-let user = JSON.parse(localStorage.getItem('mledger_user'));
-if (!user) location.href = 'index.html';
+const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-const elements = {
-  phone: document.getElementById("phone"),
-  amount: document.getElementById("amount"),
-  name: document.getElementById("name"),
-  editNote: document.getElementById("editNote"),
-  status: document.getElementById("statusDisplay"),
-  sendBtn: document.getElementById("sendBtn"),
-  phoneOkBtn: document.getElementById("phoneOkBtn"),
-  amountOkBtn: document.getElementById("amountOkBtn"),
-  nameOkBtn: document.getElementById("nameOkBtn")
-};
-
-function formatBalance(amount) {
-  return "Ksh " + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
-function formatNumericDate() {
-  const now = new Date();
-  const day = now.getDate().toString().padStart(2, '0');
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const year = now.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-function formatTime12Hour() {
-  const now = new Date();
-  return now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-}
-
-function calculateCost(amt) {
-  if (amt <= 100) return 0;
-  if (amt <= 500) return 0;
-  if (amt <= 1000) return 0;
-  if (amt <= 5000) return 0;
-  if (amt <= 10000) return 0;
-  if (amt <= 20000) return 0;
-  return 0;
-}
-
-function showStatus(msg, isError = false) {
-  elements.status.textContent = msg;
-  elements.status.className = isError ? 'status-text active error' : 'status-text active';
-}
-
-function showStep(step) {
-  document.querySelectorAll('.current-step').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('input, button:not(#sendBtn)').forEach(el => el.classList.remove('active'));
-  elements.editNote.style.display = "none";
-  elements.status.className = 'status-text'; // hide status
-  if (step === 'phone') {
-    document.getElementById('phoneLabel').classList.add('active');
-    elements.phone.classList.add('active');
-    elements.phoneOkBtn.classList.add('active');
-  } else if (step === 'amount') {
-    document.getElementById('amountLabel').classList.add('active');
-    elements.amount.classList.add('active');
-    elements.amountOkBtn.classList.add('active');
-  } else if (step === 'name') {
-    document.getElementById('nameLabel').classList.add('active');
-    elements.name.classList.add('active');
-    elements.nameOkBtn.classList.add('active');
-    if (elements.name.value.trim()) elements.editNote.style.display = "block";
-  } else if (step === 'options') {
-    document.getElementById('optionsLabel').classList.add('active');
-    elements.sendBtn.classList.add('active');
-  }
-}
-
-// ─── Token format helpers ──────────────────────────────────────
-function getYearLetter() {
-  const year = new Date().getFullYear();
-  const offset = year - 2026;                 // 2026 → 0, 2027 → 1, 2028 → 2, ...
-  return String.fromCharCode(85 + offset);    // 85 = 'U' → stays U in 2026, becomes V in 2027
-}
-
-function getMonthThirdLetter() {
-  const thirdLetters = "ABCDEFGHIJKL";
-  return thirdLetters[new Date().getMonth()];
-}
-
-function getDayCode() {
-  const day = new Date().getDate();
-  if (day <= 9) {
-    return day.toString(); // 1 → "1", 2 → "2", ..., 9 → "9"
+function setLoading(isLoading) {
+  const logo = document.getElementById('headerLogo');
+  const loader = document.getElementById('headerLoader');
+  if (isLoading) {
+    logo.classList.add('hidden');
+    loader.classList.add('active');
   } else {
-    // 10 → A, 11 → B, ..., 31 → V
-    return String.fromCharCode(65 + (day - 10));
+    logo.classList.remove('hidden');
+    loader.classList.remove('active');
   }
 }
-// ─────────────────────────────────────────────────────────────────────
 
-elements.phoneOkBtn.addEventListener("click", async () => {
-  const phoneVal = elements.phone.value.trim();
-  if (!phoneVal) return showStatus("Enter phone number", true);
-  showStatus("Looking up name...");
-  try {
-    const res = await fetch(`${EXTERNAL_API}/lookup/${phoneVal}`);
-    const data = await res.json();
-    elements.name.value = data.found && data.name ? data.name : "";
-  } catch {}
-  showStep('amount');
-});
+// ─── AUTO-LOGIN (Remember Me) ───
+let isLoggedIn = false;
+let loggedInPhone = null;
 
-elements.amountOkBtn.addEventListener("click", () => {
-  const amt = parseFloat(elements.amount.value);
-  if (!amt || amt <= 0) return showStatus("Enter a valid amount", true);
-  const cost = calculateCost(amt);
-  const required = amt + cost;
-  if (required > user.balance) {
-    return showStatus(`Balance airtime: ${formatBalance(user.balance)}\nAirtime needed for transcation to be recognized: ${formatBalance(required)} Kindly buy airtime to complete transcation`, true);
+// Check for saved login on page load
+const SAVED_PHONE_KEY = 'mledger_view_phone';
+const SAVED_AUTH_KEY = 'mledger_view_auth';
+
+function getSavedCredentials() {
+  const phone = localStorage.getItem(SAVED_PHONE_KEY);
+  const auth = localStorage.getItem(SAVED_AUTH_KEY);
+  return { phone, auth };
+}
+
+function saveCredentials(phone, auth) {
+  localStorage.setItem(SAVED_PHONE_KEY, phone);
+  localStorage.setItem(SAVED_AUTH_KEY, auth);
+}
+
+function clearCredentials() {
+  localStorage.removeItem(SAVED_PHONE_KEY);
+  localStorage.removeItem(SAVED_AUTH_KEY);
+}
+
+async function tryAutoLogin() {
+  // Check URL parameter for phone
+  const urlParams = new URLSearchParams(window.location.search);
+  const phoneParam = urlParams.get('phone');
+  
+  // Check if user is already logged in via the main app (ksen.html)
+  const savedUser = localStorage.getItem('mledger_user');
+  let user = null;
+  if (savedUser) {
+    try {
+      user = JSON.parse(savedUser);
+    } catch (e) {}
+  } else if (phoneParam) {
+    user = { phone: phoneParam };
   }
-  showStep('name');
-});
+  
+  if (user && user.phone) {
+    isLoggedIn = true;
+    loggedInPhone = user.phone;
+    // Hide login, show header and messages
+    loginContainer.classList.add('hidden');
+    document.querySelector('.messages-header').style.display = 'flex';
+    phoneInputContainer.classList.add('hidden');
+    phoneInput.value = user.phone;
+    noReplyBar.classList.add('hidden');
+    noReplyBar.style.display = 'none';
+    // Save credentials for backup
+    saveCredentials(user.phone, 'logged_in');
+    // Auto-load messages for logged-in user
+    loadMessagesByPhone(user.phone);
+    return true;
+  }
+  // Show login screen, hide header until logged in
+  document.querySelector('.messages-header').style.display = 'none';
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
+  return false;
+}
 
-elements.nameOkBtn.addEventListener("click", () => {
-  if (!elements.name.value.trim()) return showStatus("Please enter full name", true);
-  showStep('options');
-});
+// Try auto-login on page load
+tryAutoLogin();
 
-elements.sendBtn.addEventListener("click", async () => {
-  const phoneVal = elements.phone.value.trim();
-  const amountVal = parseFloat(elements.amount.value);
-  const nameVal = elements.name.value.trim();
-  const cost = calculateCost(amountVal);
+const loginContainer = document.getElementById('loginContainer');
+const loginBtn = document.getElementById('loginBtn');
+const loginPhone = document.getElementById('loginPhone');
+const loginPassword = document.getElementById('loginPassword');
+const changeBtn = document.getElementById('changeBtn');
+const noReplyBar = document.getElementById('noReplyBar');
 
-  elements.sendBtn.innerText = "Processing...";
-  elements.sendBtn.disabled = true;
-
+loginBtn.addEventListener('click', async () => {
+  const phone = loginPhone.value.trim();
+  const password = loginPassword.value.trim();
+  
+  if (!phone || !password) {
+    alert('Please enter both phone number and password');
+    return;
+  }
+  
+  loginBtn.innerText = 'Logging in...';
+  loginBtn.disabled = true;
+  setLoading(true);
+  
   try {
-    const sysRes = await fetch(`${SYSTEM_API}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fromPhone: user.phone,
-        toPhone: phoneVal,
-        amount: amountVal
-      })
-    });
-
-    const sysData = await sysRes.json();
-    if (!sysRes.ok) throw new Error(sysData.error || "Transaction failed");
-
-    // Update balance
-    user.balance = sysData.balance;
-    localStorage.setItem('mledger_user', JSON.stringify(user));
-
-    // ─── Generate new token format ───────────────────────────────
-    const yearLetter  = getYearLetter();
-    const monthLetter = getMonthThirdLetter();
-    const dayCode     = getDayCode();
-    const randomPart  = Math.random().toString(36).substring(2,8).toUpperCase();
-
-    const token = `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
-    // ──────────────────────────────────────────────────────────────
-
-    const dateStr = formatNumericDate();
-    const timeStr = formatTime12Hour();
-
-    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} paid to ${nameVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}.Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Sign up for Lipa Na M-PESA Till online https://m-pesaforbusiness.co.ke`;
-
-    showStatus(message);
-
-    // Send SMS notification — don't wait for it
-    fetch(`${EXTERNAL_API}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone: phoneVal,
-        name: nameVal,
-        amount: amountVal,
-        message,
-        token,
-        cost
-      })
-    }).catch(() => {}); // silent fail
-
-    // Send message to MESSAGE_API
-    fetch(`${MESSAGE_API}/api/messages`, {
+    const res = await fetch(`${SYSTEM_API}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user.phone,
-        message: message,
-        type: 'till'
-      })
-    }).catch(err => {
-      console.warn("Message failed to send:", err);
+      body: JSON.stringify({ phone, password })
     });
+    
+    const data = await res.json();
+    
+    if (res.ok && data.success) {
+      setLoading(false);
+      // Save user to localStorage (like ksen.html does)
+      localStorage.setItem('mledger_user', JSON.stringify(data.user));
+      isLoggedIn = true;
+      loggedInPhone = phone;
+      saveCredentials(phone, password);
+      // Hide login, show messages
+      loginContainer.classList.add('hidden');
+      document.querySelector('.messages-header').style.display = 'flex';
+      phoneInputContainer.classList.add('hidden');
+      // Auto-load messages for the phone number
+      loadMessagesByPhone(phone);
+    } else {
+      setLoading(false);
+      alert(data.error || 'Invalid phone number or password');
+    }
+  } catch (err) {
+    setLoading(false);
+    alert('Login failed. Please try again.');
+    console.error('Login error:', err);
+  }
+  
+  loginBtn.innerText = 'Login';
+  loginBtn.disabled = false;
+});
 
-    // Faster redirect
-    setTimeout(() => {
-      location.href = 'index.html';
-    }, 1800);
-
-  } catch (e) {
-    showStatus(e.message || "Transaction failed", true);
-    elements.sendBtn.innerText = "Try Again";
-    elements.sendBtn.disabled = false;
+loginPassword.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginBtn.click();
   }
 });
 
-// Start
-showStep('phone');
-</script><script>
-  atOptions = {
-    'key' : 'add92e6c2b6848f22158e011e3f17aa1',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://pl28200841.profitablecpmratenetwork.com/df/f1/2c/dff12cecf77d9039de4db7925290ec1b.js"></script>
+loginPhone.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginPassword.focus();
+  }
+});
+
+changeBtn.addEventListener('click', () => {
+  isLoggedIn = false;
+  loggedInPhone = null;
+  clearCredentials();
+  phoneInputContainer.classList.add('hidden');
+  loginContainer.classList.remove('hidden');
+  loginPassword.value = '';
+  document.getElementById('messages').innerHTML = '';
+});
+
+// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
+const moreBtn = document.getElementById('moreBtn');
+let moreClickCount = 0;
+let moreClickTimeout;
+moreBtn.addEventListener('click', (e) => {
+    moreClickCount++;
+    clearTimeout(moreClickTimeout);
+    if (moreClickCount === 3) {
+        loadMessages();
+        moreClickCount = 0;
+    } else {
+        moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);
+    }
+});
+moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ─── LOAD BUTTON CLICK ───
+const loadBtn = document.getElementById('loadBtn');
+const phoneInput = document.getElementById('phoneInput');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+
+loadBtn.addEventListener('click', () => {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    }
+});
+
+phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const phone = phoneInput.value.trim();
+        if (phone) {
+            loadMessagesByPhone(phone);
+        }
+    }
+});
+
+// ─── TRIPLE TAP ON NO-REPLY BAR ───
+let tapCount = 0;
+let tapTimeout;
+noReplyBar.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimeout);
+    if (tapCount === 3) {
+        window.location.href = 'ksen.html';
+        tapCount = 0;
+    } else {
+        tapTimeout = setTimeout(() => { tapCount = 0; }, 400);
+    }
+});
+
+// ─── HELPERS ───
+function extractFirstUrl(text) {
+  const match = text.match(urlRegex);
+  if (!match) return null;
+  let url = match[0].trim();
+  if (url.startsWith('www.')) url = 'https://' + url;
+  url = url.replace(/[.,!?;)\]}>]+$/g, '');
+  return url;
+}
+function isMpesaRelatedLink(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.includes('mpesa') || lower.includes('safaricom');
+}
+function getFaviconUrl(url) {
+  if (!url) return null;
+  try {
+    const domain = new URL(url).origin;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  } catch { return null; }
+}
+function renderMessageContent(text) {
+  let safe = text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+  return safe.replace(urlRegex, (match) => {
+    let full = match.startsWith('www.') ? 'https://' + match : match;
+    return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;
+  });
+}
+function extractTimeFromMessage(message) {
+  const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+  return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function createMessageBubble(tx, isLast) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+  if (isLast) bubble.id = "last-message";
+  const url = extractFirstUrl(tx.message);
+  let previewHtml = '';
+  if (url) {
+    if (isMpesaRelatedLink(url)) {
+      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+        </div>`;
+    } else {
+      const favicon = getFaviconUrl(url);
+      if (favicon) {
+        previewHtml = `<div style="margin-top:8px; display:flex; align-items:center; gap:8px; font-size:12px; opacity:0.85;">
+            <img src="${favicon}" style="width:20px; height:20px;">
+            <span>${new URL(url).hostname}</span>
+          </div>`;
+      }
+    }
+  }
+  bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
+                     previewHtml +
+                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+  enableDoubleTapRemove(bubble);
+  enableLongPressCopy(bubble, tx.message);
+  return bubble;
+}
+
+function enableLongPressCopy(el, message) {
+  let pressTimer;
+  el.addEventListener('touchstart', (e) => {
+    pressTimer = setTimeout(() => {
+      navigator.clipboard.writeText(message).then(() => {
+        const toast = document.createElement('div');
+        toast.textContent = 'Copied to clipboard';
+        toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+      });
+    }, 500);
+  });
+  el.addEventListener('touchend', () => clearTimeout(pressTimer));
+  el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+  el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    pressTimer = setTimeout(() => {
+      navigator.clipboard.writeText(message).then(() => {
+        const toast = document.createElement('div');
+        toast.textContent = 'Copied to clipboard';
+        toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+      });
+    }, 500);
+  });
+  el.addEventListener('mouseup', () => clearTimeout(pressTimer));
+  el.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+}
+function enableDoubleTapRemove(el) {
+  let lastTap = 0;
+  el.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); removeMessage(el); }
+    lastTap = now;
+  });
+  el.addEventListener("dblclick", () => removeMessage(el));
+}
+function removeMessage(el) {
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
+}
+function renderMessages(messages) {
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  if (messages.length === 0) {
+    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
+    noReplyBar.classList.add('hidden');
+    noReplyBar.style.display = 'none';
+    return;
+  }
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
+    const bubble = createMessageBubble(tx, isLast);
+    container.appendChild(bubble);
+  });
+  noReplyBar.classList.remove('hidden');
+  noReplyBar.style.display = 'flex';
+  container.scrollTop = container.scrollHeight;
+}
+function showOfflineMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="offline-message">
+      You are offline.<br>Please connect to the internet to load messages.
+    </div>
+  `;
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
+}
+function showEnterPhoneMessage() {
+  const container = document.getElementById("messages");
+  container.innerHTML = `
+    <div class="enter-phone-message">
+      Enter a phone number above<br>to view messages
+    </div>
+  `;
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
+}
+async function loadMessagesByPhone(phone) {
+  // Check if logged in
+  if (!isLoggedIn) {
+    alert('Please login first');
+    return;
+  }
   
-  <script>(function(s){s.dataset.zone='10271492',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  container.style.opacity = "0.5";
+  setLoading(true);
+  
+  // Hide the phone input container after loading
+  phoneInputContainer.classList.add('hidden');
+  
+  try {
+    // First try the new messages endpoint
+    let res = await fetch(`${API}/api/messages/${phone}`);
+    let data = await res.json();
+    
+    if (data.success && data.messages && data.messages.length > 0) {
+      container.style.opacity = "1";
+      setLoading(false);
+      // Messages are already sorted oldest first (newest at bottom)
+      renderMessages(data.messages);
+      localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
+    } else {
+      // Fallback to transactions endpoint
+      res = await fetch(`${API}/transactions`);
+      if (!res.ok) throw new Error("Network response was not ok");
+      const txData = await res.json();
+      
+      // Filter transactions by phone
+      const filtered = txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
+      
+      container.style.opacity = "1";
+      setLoading(false);
+      if (filtered.length > 0) {
+        // Already sorted oldest first from API, just render
+        renderMessages(filtered);
+        localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
+      } else {
+        renderMessages([]);
+      }
+    }
+  } catch (err) {
+    setLoading(false);
+    console.error('Error loading messages:', err);
+    const cached = localStorage.getItem("cached_messages_" + phone);
+    if (cached) {
+      const data = JSON.parse(cached);
+      container.style.opacity = "1";
+      renderMessages(data);
+      const notice = document.createElement("div");
+      notice.style.padding = "10px 14px";
+      notice.style.background = "#422c00";
+      notice.style.color = "#ffcc80";
+      notice.style.fontSize = "13px";
+      notice.style.textAlign = "center";
+      notice.style.borderRadius = "12px";
+      notice.style.margin = "8px auto";
+      notice.style.maxWidth = "90%";
+      notice.textContent = "Showing cached messages";
+      container.prepend(notice);
+    } else {
+      container.style.opacity = "1";
+      renderMessages([]);
+    }
+  }
+}
+
+function updateOnlineStatus() {
+  if (navigator.onLine) {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
+  } else {
+    const phone = phoneInput.value.trim();
+    if (phone) {
+        loadMessagesByPhone(phone);
+    } else {
+        showEnterPhoneMessage();
+    }
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ─── INITIAL LOAD ───
+showEnterPhoneMessage();
+
+// ─── PWA INSTALL PROMPT ───
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    document.getElementById("installBtn").style.display = "block";
+  }, 5000);
+});
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById("installBtn").style.display = "none";
+    }
+    deferredPrompt = null;
+  }
+});
+
+// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker registered!', reg))
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  });
+}
+</script>
 </body>
 </html>
-
