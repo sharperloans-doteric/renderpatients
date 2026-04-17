@@ -86,7 +86,6 @@ body {
   padding-bottom: 50px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
 }
 .phone-input-container {
   padding: 15px;
@@ -648,9 +647,7 @@ function renderMessages(messages) {
   });
   noReplyBar.classList.remove('hidden');
   noReplyBar.style.display = 'flex';
-  setTimeout(() => {
-    container.scrollTop = container.scrollHeight;
-  }, 50);
+  container.scrollTop = container.scrollHeight;
 }
 function showOfflineMessage() {
   const container = document.getElementById("messages");
