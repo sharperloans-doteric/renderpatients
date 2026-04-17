@@ -640,9 +640,8 @@ function renderMessages(messages) {
     noReplyBar.style.display = 'none';
     return;
   }
-  const reversed = [...messages].reverse();
-  reversed.forEach((tx, index) => {
-    const isLast = index === reversed.length - 1;
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
     const bubble = createMessageBubble(tx, isLast);
     container.appendChild(bubble);
   });
