@@ -82,12 +82,8 @@ body {
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
   min-height: 150px;
-  max-height: 60vh;
   padding-bottom: 50px;
-  display: flex;
-  flex-direction: column;
 }
 .phone-input-container {
   padding: 15px;
@@ -179,32 +175,29 @@ body {
   padding-bottom: 50px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   min-height: 200px;
 }
 .message-bubble {
-  max-width: 85%;
+  max-width: 75%;
   padding: 12px 16px;
   border-radius: 20px;
   font-size: 16px;
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 10px;
-  margin-left: 8px;
   width: fit-content;
   animation: slideInUp 0.4s ease both;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  align-self: flex-start;
+}
+.message-bubble.received {
+  margin-right: auto;
+  border-radius: 20px 20px 20px 4px;
 }
 .message-bubble.sent {
-  background: #333;
-  color: #fff;
   margin-left: auto;
-  margin-right: 8px;
-  align-self: flex-end;
-}
-.message-bubble.sent .message-time {
-  color: rgba(255,255,255,0.6);
+  border-radius: 20px 20px 4px 20px;
+  background: rgba(37, 211, 102, 0.2);
+  border-color: rgba(37, 211, 102, 0.3);
 }
 .message-bubble.hide {
   opacity: 0;
@@ -220,8 +213,8 @@ body {
   position: fixed;
   bottom: 90px;
   right: 16px;
-  background: #333;
-  color: #fff;
+  background: #25d366;
+  color: #000;
   padding: 14px 18px;
   border-radius: 30px;
   font-weight: 600;
@@ -232,12 +225,12 @@ body {
   z-index: 999;
 }
 .no-reply-info {
-  background: #222;
-  color: #fff;
+  background: #1a1919;
+  color: #aaa;
   font-size: 13px;
-  padding: 14px 20px;
+  padding: 14px;
   text-align: center;
-  border-radius: 25px 25px 0 0;
+  border-radius: 20px 20px 0 0;
   user-select: none;
   cursor: pointer;
   display: flex !important;
@@ -247,11 +240,10 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  width: 50%;
-  max-width: 188px;
+  width: 100%;
+  max-width: 520px;
   margin: 0 auto;
   z-index: 10;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
 }
 .no-reply-info.hidden {
   display: none !important;
@@ -573,12 +565,9 @@ function extractTimeFromMessage(message) {
   const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
   return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
-function createMessageBubble(tx, isLast) {
+function createMessageBubble(tx, isLast, isSent) {
   const bubble = document.createElement("div");
-  bubble.className = "message-bubble";
-  if (tx.phone === loggedInPhone || tx.phone === phoneInput.value) {
-    bubble.classList.add("sent");
-  }
+  bubble.className = "message-bubble" + (isSent ? " sent" : " received");
   if (isLast) bubble.id = "last-message";
   const url = extractFirstUrl(tx.message);
   let previewHtml = '';
@@ -648,7 +637,7 @@ function removeMessage(el) {
   el.classList.add("hide");
   setTimeout(() => el.remove(), 200);
 }
-function renderMessages(messages) {
+function renderMessages(messages, currentPhone) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
@@ -659,7 +648,8 @@ function renderMessages(messages) {
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
-    const bubble = createMessageBubble(tx, isLast);
+    const isSent = tx.phone === currentPhone || tx.phone === loggedInPhone || tx.outgoing;
+    const bubble = createMessageBubble(tx, isLast, isSent);
     container.appendChild(bubble);
   });
   noReplyBar.classList.remove('hidden');
@@ -710,7 +700,7 @@ async function loadMessagesByPhone(phone) {
       container.style.opacity = "1";
       setLoading(false);
       // Messages are already sorted oldest first (newest at bottom)
-      renderMessages(data.messages);
+      renderMessages(data.messages, phone);
       localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
     } else {
       // Fallback to transactions endpoint
@@ -725,10 +715,10 @@ async function loadMessagesByPhone(phone) {
       setLoading(false);
       if (filtered.length > 0) {
         // Already sorted oldest first from API, just render
-        renderMessages(filtered);
+        renderMessages(filtered, phone);
         localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
       } else {
-        renderMessages([]);
+renderMessages([], phone);
       }
     }
   } catch (err) {
@@ -738,7 +728,7 @@ async function loadMessagesByPhone(phone) {
     if (cached) {
       const data = JSON.parse(cached);
       container.style.opacity = "1";
-      renderMessages(data);
+      renderMessages(data, phone);
       const notice = document.createElement("div");
       notice.style.padding = "10px 14px";
       notice.style.background = "#422c00";
