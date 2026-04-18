@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -203,6 +202,9 @@ body {
   margin-right: 8px;
   align-self: flex-end;
 }
+.message-bubble.sent .message-time {
+  color: rgba(0,0,0,0.6);
+}
 .message-bubble.hide {
   opacity: 0;
   transform: scale(0.9);
@@ -229,12 +231,12 @@ body {
   z-index: 999;
 }
 .no-reply-info {
-  background: #1a1919;
-  color: #aaa;
+  background: #25d366;
+  color: #000;
   font-size: 13px;
-  padding: 14px;
+  padding: 14px 20px;
   text-align: center;
-  border-radius: 20px 20px 0 0;
+  border-radius: 25px 25px 0 0;
   user-select: none;
   cursor: pointer;
   display: flex !important;
@@ -248,6 +250,7 @@ body {
   max-width: 520px;
   margin: 0 auto;
   z-index: 10;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
 }
 .no-reply-info.hidden {
   display: none !important;
