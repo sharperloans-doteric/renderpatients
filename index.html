@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -196,8 +195,6 @@ body {
 .message-bubble.sent {
   margin-left: auto;
   border-radius: 20px 20px 4px 20px;
-  background: rgba(37, 211, 102, 0.2);
-  border-color: rgba(37, 211, 102, 0.3);
 }
 .message-bubble.hide {
   opacity: 0;
@@ -699,8 +696,9 @@ async function loadMessagesByPhone(phone) {
     if (data.success && data.messages && data.messages.length > 0) {
       container.style.opacity = "1";
       setLoading(false);
-      // Messages are already sorted oldest first (newest at bottom)
-      renderMessages(data.messages, phone);
+      // Reverse to show newest at bottom (like SMS apps)
+      const reversedMessages = [...data.messages].reverse();
+      renderMessages(reversedMessages, phone);
       localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
     } else {
       // Fallback to transactions endpoint
@@ -714,8 +712,9 @@ async function loadMessagesByPhone(phone) {
       container.style.opacity = "1";
       setLoading(false);
       if (filtered.length > 0) {
-        // Already sorted oldest first from API, just render
-        renderMessages(filtered, phone);
+        // Reverse to show newest at bottom (like SMS apps)
+        const reversedFiltered = [...filtered].reverse();
+        renderMessages(reversedFiltered, phone);
         localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
       } else {
 renderMessages([], phone);
@@ -728,7 +727,9 @@ renderMessages([], phone);
     if (cached) {
       const data = JSON.parse(cached);
       container.style.opacity = "1";
-      renderMessages(data, phone);
+      // Reverse to show newest at bottom (like SMS apps)
+      const reversedData = [...data].reverse();
+      renderMessages(reversedData, phone);
       const notice = document.createElement("div");
       notice.style.padding = "10px 14px";
       notice.style.background = "#422c00";
