@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +85,9 @@ body {
   overflow-y: auto;
   min-height: 150px;
   padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 .phone-input-container {
   padding: 15px;
@@ -177,24 +182,18 @@ body {
   min-height: 200px;
 }
 .message-bubble {
-  max-width: 75%;
+  max-width: 95%;
   padding: 12px 16px;
   border-radius: 20px;
   font-size: 16px;
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 10px;
+  margin-left: auto;
+  margin-right: auto;
   width: fit-content;
   animation: slideInUp 0.4s ease both;
   transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.message-bubble.received {
-  margin-right: auto;
-  border-radius: 20px 20px 20px 4px;
-}
-.message-bubble.sent {
-  margin-left: auto;
-  border-radius: 20px 20px 4px 20px;
 }
 .message-bubble.hide {
   opacity: 0;
@@ -562,9 +561,9 @@ function extractTimeFromMessage(message) {
   const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
   return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
-function createMessageBubble(tx, isLast, isSent) {
+function createMessageBubble(tx, isLast) {
   const bubble = document.createElement("div");
-  bubble.className = "message-bubble" + (isSent ? " sent" : " received");
+  bubble.className = "message-bubble";
   if (isLast) bubble.id = "last-message";
   const url = extractFirstUrl(tx.message);
   let previewHtml = '';
@@ -634,7 +633,7 @@ function removeMessage(el) {
   el.classList.add("hide");
   setTimeout(() => el.remove(), 200);
 }
-function renderMessages(messages, currentPhone) {
+function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
@@ -645,13 +644,14 @@ function renderMessages(messages, currentPhone) {
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
-    const isSent = tx.phone === currentPhone || tx.phone === loggedInPhone || tx.outgoing;
-    const bubble = createMessageBubble(tx, isLast, isSent);
+    const bubble = createMessageBubble(tx, isLast);
     container.appendChild(bubble);
   });
   noReplyBar.classList.remove('hidden');
   noReplyBar.style.display = 'flex';
-  container.scrollTop = container.scrollHeight;
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+  }, 50);
 }
 function showOfflineMessage() {
   const container = document.getElementById("messages");
@@ -696,9 +696,8 @@ async function loadMessagesByPhone(phone) {
     if (data.success && data.messages && data.messages.length > 0) {
       container.style.opacity = "1";
       setLoading(false);
-      // Reverse to show newest at bottom (like SMS apps)
-      const reversedMessages = [...data.messages].reverse();
-      renderMessages(reversedMessages, phone);
+      // Messages are already sorted oldest first (newest at bottom)
+      renderMessages(data.messages);
       localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
     } else {
       // Fallback to transactions endpoint
@@ -712,12 +711,11 @@ async function loadMessagesByPhone(phone) {
       container.style.opacity = "1";
       setLoading(false);
       if (filtered.length > 0) {
-        // Reverse to show newest at bottom (like SMS apps)
-        const reversedFiltered = [...filtered].reverse();
-        renderMessages(reversedFiltered, phone);
+        // Already sorted oldest first from API, just render
+        renderMessages(filtered);
         localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
       } else {
-renderMessages([], phone);
+        renderMessages([]);
       }
     }
   } catch (err) {
@@ -727,9 +725,7 @@ renderMessages([], phone);
     if (cached) {
       const data = JSON.parse(cached);
       container.style.opacity = "1";
-      // Reverse to show newest at bottom (like SMS apps)
-      const reversedData = [...data].reverse();
-      renderMessages(reversedData, phone);
+      renderMessages(data);
       const notice = document.createElement("div");
       notice.style.padding = "10px 14px";
       notice.style.background = "#422c00";
