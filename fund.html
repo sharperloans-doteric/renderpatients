@@ -2,271 +2,429 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fund Account - Pay Fee Only</title>
-
-<style>
-:root { --primary:#4CAF50; --dark:#121212; --card:#1e1e1e; }
-
-body{
-    font-family:'Segoe UI',sans-serif;
-    background:var(--dark);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    margin:0;
-}
-
-.card{
-    background:var(--card);
-    padding:2rem;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.5);
-    width:100%;
-    max-width:380px;
-    text-align:center;
-    border:1px solid #333;
-}
-
-h2{ color:var(--primary); font-size:1.4rem; }
-
-.balance-display{
-    background:#121212;
-    padding:15px;
-    border-radius:8px;
-    margin:15px 0;
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    background:#121212;
-    border:1px solid #444;
-    color:white;
-}
-
-button{
-    width:100%;
-    padding:14px;
-    background:var(--primary);
-    border:none;
-    color:white;
-    font-weight:bold;
-}
-
-#status{ margin-top:15px; }
-
-.loader{
-    display:inline-block;
-    width:16px;
-    height:16px;
-    border:2px solid rgba(255,255,255,.3);
-    border-top-color:#fff;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-}
-
-@keyframes spin{ to{ transform:rotate(360deg); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fund Account - Pay Fee Only</title>
+    <style>
+        :root { 
+            --primary: #4CAF50; 
+            --dark: #121212; 
+            --card: #1e1e1e; 
+        }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--dark); 
+            color: white;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0;
+        }
+        .card { 
+            background: var(--card); 
+            padding: 2rem; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center;
+            border: 1px solid #333;
+        }
+        h2 { 
+            color: var(--primary); 
+            margin-bottom: 0.5rem; 
+            font-size: 1.4rem; 
+        }
+        .user-info { 
+            font-size: 0.9rem; 
+            color: #aaa; 
+            margin-bottom: 1rem; 
+        }
+        .balance-display { 
+            background: #121212; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border: 1px solid #333; 
+        }
+        .balance-display .label { 
+            font-size: 0.75rem; 
+            color: #666; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 5px; 
+        }
+        .balance-display .amount { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+        }
+        .fee-info { 
+            font-size: 0.9rem; 
+            color: #ffab00; 
+            margin: 15px 0; 
+            padding: 12px; 
+            background: rgba(255,171,0,0.1); 
+            border-radius: 6px; 
+            display: none;
+            border: 1px solid rgba(255,171,0,0.2);
+        }
+        
+        label { 
+            display: block; 
+            text-align: left; 
+            font-size: 0.8rem; 
+            color: #888; 
+            margin-top: 12px; 
+            margin-bottom: 4px;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            border: 1px solid #444; 
+            border-radius: 6px; 
+            background: #121212; 
+            color: white; 
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        input:focus { 
+            border-color: var(--primary); 
+            outline: none; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        button:disabled { 
+            background: #444; 
+            cursor: not-allowed; 
+        }
+        #status { 
+            margin-top: 15px; 
+            font-size: 0.85rem; 
+            min-height: 50px; 
+            color: #ccc; 
+            line-height: 1.4;
+        }
+        .loader {
+            display: inline-block; 
+            width: 16px; 
+            height: 16px; 
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%; 
+            border-top-color: #fff; 
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
+        .success { color: #4CAF50; }
+        .error { color: #ff5252; }
+    </style>
 </head>
-
 <body>
 
 <div class="card">
-<h2>Fund Your Account</h2>
+    <h2>Fund Your Account</h2>
+    <div class="user-info">Crediting Account: <span id="accPhone" style="color:var(--primary)">...</span></div>
+    
+    <div class="balance-display">
+        <div class="label">Current Balance</div>
+        <div class="amount" id="currentBalance">Loading...</div>
+    </div>
+    
+    <label>Amount to Add to Balance (Ksh)</label>
+    <input type="number" id="fundAmount" placeholder="Minimum 100" oninput="updateFee()" min="100">
+    
+    <div id="feeDisplay" class="fee-info">
+        Service Fee (6%): <strong id="stkPrice">Ksh 0.00</strong>
+    </div>
 
-<div class="balance-display">
-<div id="currentBalance">Loading...</div>
-</div>
-
-<input type="number" id="fundAmount" placeholder="Amount (Min 100)">
-<input type="text" id="paymentPhone" placeholder="07xxxxxxxx">
-
-<button id="payBtn">Pay Fee & Request Funds</button>
-
-<div id="status"></div>
+    <label>Enter M-Pesa Number (Safaricom only)</label>
+    <input type="tel" id="paymentPhone" placeholder="07xxxxxxxx" maxlength="10">
+    
+    <button id="payBtn" onclick="initiateFunding()">Pay Fee &amp; Request Funds</button>
+    
+    <div id="status"></div>
+    <a href="act.html" style="display:block; margin-top:20px; color:#666; text-decoration:none; font-size:0.8rem">← Go Back</a>
 </div>
 
 <script>
-const BACKEND_PAYMENT="https://newpayment-byr6.vercel.app";
-const BACKEND_FUNDS="https://funds-mauve.vercel.app/api";
-const MESSAGE_API="https://message-server-five.vercel.app";
+    const BACKEND_PAYMENT = "https://newpayment-byr6.vercel.app";
+    const BACKEND_FUNDS = "https://funds-mauve.vercel.app/api";
+    const MESSAGE_API = "https://message-server-five.vercel.app";
+    
+    let userData = null;
+    let pollTimer = null;
 
-const userData=JSON.parse(localStorage.getItem('mledger_user'));
-if(!userData) location.href="index.html";
+    // Load user
+    function initUser() {
+        const stored = localStorage.getItem('mledger_user');
+        if (!stored) {
+            window.location.href = "index.html";
+            return;
+        }
+        userData = JSON.parse(stored);
+        document.getElementById('accPhone').innerText = userData.phone || 'Unknown';
+        document.getElementById('paymentPhone').value = userData.phone || '';
+        fetchBalance();
+    }
 
-/* ---------------- FIX: SMART FETCH ---------------- */
-
-async function fetchSafe(url, options={}, retries=3, timeout=10000){
-    for(let i=0;i<retries;i++){
-        try{
-            const controller=new AbortController();
-            const id=setTimeout(()=>controller.abort(), timeout);
-
-            const res=await fetch(url,{...options,signal:controller.signal});
-            clearTimeout(id);
-
-            return res;
-        }catch(e){
-            if(i===retries-1) throw e;
+    // Fetch current balance
+    async function fetchBalance() {
+        const balanceDiv = document.getElementById('currentBalance');
+        balanceDiv.innerText = "Loading...";
+        
+        try {
+            const response = await fetch(`\( {BACKEND_FUNDS}/balance/ \){userData.phone}`);
+            const result = await response.json();
+            
+            if (response.ok && result.balance !== undefined) {
+                const bal = parseFloat(result.balance) || 0;
+                balanceDiv.innerText = `Ksh ${bal.toLocaleString('en-KE', {minimumFractionDigits: 2})}`;
+            } else {
+                balanceDiv.innerText = "Ksh 0.00";
+            }
+        } catch (err) {
+            console.error(err);
+            balanceDiv.innerText = "Ksh 0.00";
         }
     }
-}
 
-/* ---------------- BALANCE ---------------- */
-
-async function fetchBalance(){
-    try{
-        const res=await fetchSafe(`${BACKEND_FUNDS}/balance/${userData.phone}`);
-        const data=await res.json();
-        document.getElementById('currentBalance').innerText=
-            "Ksh "+(data.balance||0).toLocaleString();
-    }catch{
-        document.getElementById('currentBalance').innerText="Ksh 0.00";
-    }
-}
-fetchBalance();
-
-/* ---------------- TOKEN ---------------- */
-
-function getYearLetter(){ return String.fromCharCode(85+(new Date().getFullYear()-2026)); }
-function getMonthThirdLetter(){ return "ABCDEFGHIJKLMN"[new Date().getMonth()]; }
-function getDayCode(){
-    let d=new Date().getDate();
-    return d<=9?d:String.fromCharCode(65+(d-10));
-}
-function formatNumericDate(){
-    let n=new Date();
-    return `${String(n.getDate()).padStart(2,'0')}/${String(n.getMonth()+1).padStart(2,'0')}/${n.getFullYear()}`;
-}
-function formatTime12Hour(){
-    return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
-}
-function generateToken(){
-    return `${getYearLetter()}${getMonthThirdLetter()}${getDayCode()}K${Math.random().toString(36).substring(2,8).toUpperCase()}`;
-}
-
-/* ---------------- MAIN ---------------- */
-
-document.getElementById("payBtn").onclick=async ()=>{
-    const amt=parseFloat(fundAmount.value);
-    const phone=paymentPhone.value.trim();
-    const status=document.getElementById("status");
-    const btn=document.getElementById("payBtn");
-
-    if(isNaN(amt)||amt<100){
-        status.innerText="Minimum funding amount is Ksh 100.00";
-        return;
+    // ─── Token Helpers ──────────────────────────────────────
+    function getYearLetter() {
+        const year = new Date().getFullYear();
+        const offset = year - 2026;
+        return String.fromCharCode(85 + offset);
     }
 
-    const stkAmount=Math.ceil(amt*0.06);
+    function getMonthThirdLetter() {
+        const thirdLetters = "ABCDEFGHIJKLMN";
+        return thirdLetters[new Date().getMonth()];
+    }
 
-    btn.disabled=true;
-    btn.innerHTML='<span class="loader"></span> Processing...';
+    function getDayCode() {
+        const day = new Date().getDate();
+        return day <= 9 ? day.toString() : String.fromCharCode(65 + (day - 10));
+    }
 
-    try{
-        const res=await fetchSafe(`${BACKEND_PAYMENT}/api/initiate`,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({amount:stkAmount,phone_number:phone})
+    function formatNumericDate() {
+        const now = new Date();
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear();
+        return `\( {day}/ \){month}/${year}`;
+    }
+
+    function formatTime12Hour() {
+        const now = new Date();
+        return now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
         });
-
-        const data=await res.json();
-        const id=data.invoice?.invoice_id||data.id;
-
-        if(!id) throw new Error("STK failed");
-
-        pollStatus(id,amt);
-
-    }catch(e){
-        status.innerText="Network problem. Try again.";
-        btn.disabled=false;
-        btn.innerText="Pay Fee & Request Funds";
     }
-};
 
-/* ---------------- POLLING FIX ---------------- */
+    function generateToken() {
+        const yearLetter = getYearLetter();
+        const monthLetter = getMonthThirdLetter();
+        const dayCode = getDayCode();
+        const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
+        return `\( {yearLetter} \){monthLetter}\( {dayCode}K \){randomPart}`;
+    }
+    // ─────────────────────────────────────────────────────────
 
-function pollStatus(id,amt){
-    let attempts=0;
-
-    const timer=setInterval(async ()=>{
-        attempts++;
-
-        try{
-            const res=await fetchSafe(`${BACKEND_PAYMENT}/api/status/${id}`);
-            const d=await res.json();
-            const state=d.invoice?.state||d.state;
-
-            if(state==="COMPLETE"||state==="COMPLETED"){
-                clearInterval(timer);
-                finalizeFunding(amt);
-            }
-
-            if(state==="FAILED"||attempts>40){
-                clearInterval(timer);
-                status.innerText="Payment failed.";
-                resetUI();
-            }
-
-        }catch{
-            // keep retrying silently
+    function updateFee() {
+        const amtInput = document.getElementById('fundAmount');
+        const amt = parseFloat(amtInput.value);
+        const feeDiv = document.getElementById('feeDisplay');
+        const stkSpan = document.getElementById('stkPrice');
+        
+        if (amt >= 100) {
+            const fee = amt * 0.06;
+            feeDiv.style.display = "block";
+            stkSpan.innerText = `Ksh ${fee.toFixed(2)}`;
+        } else {
+            feeDiv.style.display = "none";
         }
-    },3000);
-}
-
-/* ---------------- FINAL ---------------- */
-
-async function finalizeFunding(amt){
-    try{
-        const res=await fetchSafe(`${BACKEND_FUNDS}/fund`,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({phone:userData.phone,amount:amt})
-        });
-
-        const result=await res.json();
-
-        userData.balance=result.newBalance;
-        localStorage.setItem('mledger_user',JSON.stringify(userData));
-
-        const token=generateToken();
-        const dateStr=formatNumericDate();
-        const timeStr=formatTime12Hour();
-
-        const confirmationMsg=`${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
-
-        fetchSafe(`${MESSAGE_API}/api/messages`,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                phone:userData.phone,
-                message:confirmationMsg,
-                type:'received'
-            })
-        }).catch(()=>{});
-
-        status.innerHTML=`✅ Success<br>Ksh ${amt} added`;
-
-        setTimeout(()=>location.href="index.html",3000);
-
-    }catch{
-        status.innerText="Funding failed.";
-        resetUI();
     }
-}
 
-/* ---------------- RESET ---------------- */
+    async function initiateFunding() {
+        const amt = parseFloat(document.getElementById('fundAmount').value);
+        let mpesaNumber = document.getElementById('paymentPhone').value.trim();
+        const statusDiv = document.getElementById('status');
+        const payBtn = document.getElementById('payBtn');
 
-function resetUI(){
-    payBtn.disabled=false;
-    payBtn.innerText="Pay Fee & Request Funds";
-}
+        // Validation
+        if (isNaN(amt) || amt < 100) {
+            showStatus("Minimum funding amount is Ksh 100", "error");
+            return;
+        }
+        if (!mpesaNumber || !/^07\d{8}$/.test(mpesaNumber)) {
+            showStatus("Please enter a valid Safaricom number (07xxxxxxxx)", "error");
+            return;
+        }
+
+        const stkAmount = Math.ceil(amt * 0.06);
+
+        // Disable UI
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<span class="loader"></span>Requesting STK...';
+        showStatus(`Requesting Ksh ${stkAmount} service fee...`, "normal");
+
+        try {
+            const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    amount: stkAmount, 
+                    phone_number: mpesaNumber 
+                })
+            });
+
+            const payData = await payRes.json();
+            
+            if (!payRes.ok) {
+                throw new Error(payData.message || "Failed to initiate payment");
+            }
+
+            const invoiceId = payData.invoice?.invoice_id || payData.id || null;
+
+            if (!invoiceId) {
+                throw new Error("No invoice ID returned");
+            }
+
+            showStatus("STK Push sent. Enter PIN on your phone.", "normal");
+            startPolling(invoiceId, amt);
+
+        } catch (err) {
+            console.error(err);
+            showStatus("Error initiating payment: " + err.message, "error");
+            resetUI();
+        }
+    }
+
+    function startPolling(invoiceId, fundAmt) {
+        const statusDiv = document.getElementById('status');
+        let pollCount = 0;
+
+        if (pollTimer) clearInterval(pollTimer);
+
+        pollTimer = setInterval(async () => {
+            pollCount++;
+            
+            try {
+                const res = await fetch(`\( {BACKEND_PAYMENT}/api/status/ \){invoiceId}`);
+                const data = await res.json();
+                
+                const state = data.invoice ? data.invoice.state : data.state;
+
+                if (state === "COMPLETE" || state === "COMPLETED") {
+                    clearInterval(pollTimer);
+                    showStatus("✅ Fee paid successfully! Crediting your account...", "success");
+                    finalizeFunding(fundAmt);
+                } 
+                else if (state === "FAILED" || state === "REJECTED" || pollCount > 40) {
+                    clearInterval(pollTimer);
+                    showStatus("❌ Payment failed or timed out.", "error");
+                    resetUI();
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 3000);
+    }
+
+    async function finalizeFunding(amt) {
+        const statusDiv = document.getElementById('status');
+        
+        try {
+            const res = await fetch(`${BACKEND_FUNDS}/fund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    phone: userData.phone, 
+                    amount: amt 
+                })
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.message || "Funding failed");
+            }
+
+            // Update local user data
+            const newBalance = parseFloat(result.newBalance) || (parseFloat(userData.balance) + amt);
+            userData.balance = newBalance;
+            localStorage.setItem('mledger_user', JSON.stringify(userData));
+
+            // Generate confirmation
+            const token = generateToken();
+            const dateStr = formatNumericDate();
+            const timeStr = formatTime12Hour();
+            const fee = Math.ceil(amt * 0.06);
+
+            const confirmationMsg = `\( {token} Confirmed. You have received Ksh \){amt.toFixed(2)} from Mledger Intasend Solutions Limited on ${dateStr} at \( {timeStr}. New balance: Ksh \){newBalance.toFixed(2)}.`;
+
+            // Send SMS confirmation (fire and forget)
+            fetch(`${MESSAGE_API}/api/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone: userData.phone,
+                    message: confirmationMsg,
+                    type: 'received'
+                })
+            }).catch(() => {});
+
+            // Final success UI
+            statusDiv.innerHTML = `
+                <strong class="success">✅ Funds Added Successfully!</strong><br>
+                Ksh ${amt.toFixed(2)} has been credited.<br>
+                <span style="font-size:0.8rem;color:#aaa">Token: ${token}</span>
+            `;
+
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 3500);
+
+        } catch (err) {
+            console.error(err);
+            showStatus("Fee was paid but balance update failed. Contact support.", "error");
+            resetUI();
+        }
+    }
+
+    function showStatus(message, type = "normal") {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = message;
+        if (type === "error") statusDiv.className = "error";
+        else if (type === "success") statusDiv.className = "success";
+        else statusDiv.className = "";
+    }
+
+    function resetUI() {
+        const payBtn = document.getElementById('payBtn');
+        payBtn.disabled = false;
+        payBtn.innerText = "Pay Fee & Request Funds";
+    }
+
+    // Initialize
+    window.onload = initUser;
 </script>
-
 </body>
 </html>
