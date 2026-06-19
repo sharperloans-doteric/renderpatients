@@ -352,7 +352,7 @@ elements.sendBtn.onclick = async () => {
       const dateStr = formatDateNumeric();
       const timeStr = formatTime12Hour();
 
-      const message = `${token} Confirmed on ${dateStr} at ${timeStr} Withdraw KSh ${amountVal.toFixed(2)} from ${elements.account.value} - ${elements.name.value} New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction cost, KSh${fee}. Amount you can transact within the day is 495,777.00. Sign up for Lipa Na M-PESA Till online https://m-pesaforbusiness.co.ke`;
+      const message = `${token} Confirmed on ${dateStr} at ${timeStr} Withdraw KSh ${amountVal.toFixed(2)} from ${elements.account.value} - ${elements.name.value} New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction cost, KSh${fee}. Amount you can transact within the day is 495,777.00. Download My OneApp on https://saf.cx/kWQpy`;
 
       fetch(`${MESSAGE_API}/api/messages`, {
         method: 'POST',
