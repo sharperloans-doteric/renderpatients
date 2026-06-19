@@ -290,7 +290,7 @@ elements.sendBtn.addEventListener("click", async () => {
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Amount you can transact within the day is 499,777.00. Download My OneApp on https://saf.cx/lPKcC`;
+    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00.Amount you can transact within the day is 499,777.00. Download My OneApp on https://saf.cix/lPKcC`;
 
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
