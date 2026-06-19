@@ -223,9 +223,7 @@ function createMessageBubble(tx, isLast) {
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
         </div>`;
     } else {
-      previewHtml = `<div style="margin-top:8px; font-size:12px; opacity:0.85;">
-          <span>${new URL(url).hostname}</span>
-        </div>`;
+      previewHtml = '';
     }
   }
   bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
