@@ -289,7 +289,7 @@
                     else if (code === 1032) {
                         clearInterval(pollTimer);
                         statusDiv.style.color = "#ff5252";
-                        statusDiv.innerText = "❌ Payment was cancelled.<br>Please try again.";
+                        statusDiv.innerText = "❌ Payment was cancelled.Please try again.";
                         resetUI();
                         return;
                     }
@@ -308,7 +308,7 @@
                 if (attempts >= maxAttempts) {
                     clearInterval(pollTimer);
                     statusDiv.style.color = "#ff5252";
-                    statusDiv.innerText = "⏰ Request timed out.<br>Check your M-Pesa or try again.";
+                    statusDiv.innerText = "⏰ Request timed out.Check your M-Pesa or try again.";
                     resetUI();
                 }
             } catch (err) {
