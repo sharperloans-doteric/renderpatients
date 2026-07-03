@@ -139,10 +139,13 @@
                 const decoded = decodeRef(ref);
                 if (decoded) {
                     localStorage.setItem('referred_by', decoded);
+                    showSection('regSection');
+                    document.getElementById('referralChoice').style.display = 'none';
+                    document.getElementById('rReferrer').style.display = 'none';
                 }
             }
             const referredBy = localStorage.getItem('referred_by');
-            if (referredBy) {
+            if (referredBy && !ref) {
                 const refInput = document.getElementById('rReferrer');
                 const refChoice = document.getElementById('referralChoice');
                 if (refChoice && refInput) {
@@ -151,32 +154,6 @@
                     refInput.style.display = 'block';
                 }
             }
-        }
-
-        function shareReferral() {
-            const user = JSON.parse(localStorage.getItem('mledger_user') || '{}');
-            const phone = user.phone || user.phone_number || user.msisdn || '';
-            if (!phone) {
-                document.getElementById('referralStatus').innerText = "Please login first to get your referral link.";
-                document.getElementById('referralStatus').style.color = "#ff5252";
-                return;
-            }
-            const encoded = encodeRef(phone);
-            const link = `https://zunzun.vercel.app/ksen.html?ref=${encoded}`;
-            navigator.clipboard.writeText(link).then(() => {
-                document.getElementById('referralStatus').innerText = "Referral link copied! Share it with friends.";
-                document.getElementById('referralStatus').style.color = "#4CAF50";
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'M-Ledger Referral',
-                        text: 'Join M-Ledger using my referral link!',
-                        url: link
-                    });
-                }
-            }).catch(() => {
-                document.getElementById('referralStatus').innerText = "Your referral link: " + link;
-                document.getElementById('referralStatus').style.color = "#4CAF50";
-            });
         }
 
         function checkBioStatus() {
