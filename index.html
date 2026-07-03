@@ -3,7 +3,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -609,8 +608,9 @@ function renderMessages(messages, anchorId = null) {
     noReplyBar.style.display = 'flex';
     return;
   }
-  messages.forEach((tx, index) => {
-    const isLast = index === messages.length - 1;
+  const reversed = [...messages].reverse();
+  reversed.forEach((tx, index) => {
+    const isLast = index === reversed.length - 1;
     const bubble = createMessageBubble(tx, isLast);
     container.appendChild(bubble);
   });
