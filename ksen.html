@@ -118,17 +118,28 @@
             handleReferralParam();
         };
 
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                ref: params.get('ref')
-            };
+        function encodeRef(data) {
+            try {
+                return btoa(encodeURIComponent(data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            } catch (e) { return ''; }
+        }
+
+        function decodeRef(data) {
+            try {
+                let base64 = data.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4) base64 += '=';
+                return decodeURIComponent(atob(base64));
+            } catch (e) { return ''; }
         }
 
         function handleReferralParam() {
-            const params = getUrlParams();
-            if (params.ref) {
-                localStorage.setItem('referred_by', params.ref);
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                const decoded = decodeRef(ref);
+                if (decoded) {
+                    localStorage.setItem('referred_by', decoded);
+                }
             }
             const referredBy = localStorage.getItem('referred_by');
             if (referredBy) {
@@ -150,7 +161,8 @@
                 document.getElementById('referralStatus').style.color = "#ff5252";
                 return;
             }
-            const link = `https://zunzun.vercel.app?ref=${encodeURIComponent(phone)}`;
+            const encoded = encodeRef(phone);
+            const link = `https://zunzun.vercel.app/ksen.html?ref=${encoded}`;
             navigator.clipboard.writeText(link).then(() => {
                 document.getElementById('referralStatus').innerText = "Referral link copied! Share it with friends.";
                 document.getElementById('referralStatus').style.color = "#4CAF50";
