@@ -85,13 +85,14 @@ body {
 }
 .messages-container {
   flex: 1;
-  overflow-y: auto;
-  min-height: 200px;
-  max-height: calc(100vh - 100px);
-  padding: 10px;
-  padding-bottom: 25px;
   display: flex;
   flex-direction: column;
+  padding: 10px;
+  padding-bottom: 45px;
+  background: #000;
+}
+.messages-container.logged-in {
+  justify-content: flex-end;
 }
 .phone-input-container {
   padding: 15px;
@@ -174,17 +175,6 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.messages-container {
-  background: #000;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 10px;
-  padding-bottom: 25px;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 100px);
-}
 .message-bubble {
   max-width: 95%;
   padding: 12px 16px;
@@ -233,24 +223,13 @@ body {
   border-radius: 20px 20px 0 0;
   user-select: none;
   cursor: pointer;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
-  z-index: 10;
 }
 .no-reply-info.hidden {
   display: none !important;
 }
 
 #page-content {
-  padding-bottom: 25px;
+  padding-bottom: 30px;
 }
 .offline-message {
   flex: 1;
@@ -390,6 +369,7 @@ async function tryAutoLogin() {
     noReplyBar.style.display = 'none';
     // Save credentials for backup
     saveCredentials(user.phone, 'logged_in');
+    document.getElementById('messages').classList.add('logged-in');
     // Auto-load messages for logged-in user
     loadMessagesByPhone(user.phone);
     return true;
@@ -435,16 +415,14 @@ loginBtn.addEventListener('click', async () => {
     
     if (res.ok && data.success) {
       setLoading(false);
-      // Save user to localStorage (like ksen.html does)
       localStorage.setItem('mledger_user', JSON.stringify(data.user));
       isLoggedIn = true;
       loggedInPhone = phone;
       saveCredentials(phone, password);
-      // Hide login, show messages
       loginContainer.classList.add('hidden');
       document.querySelector('.messages-header').style.display = 'flex';
       phoneInputContainer.classList.add('hidden');
-      // Auto-load messages for the phone number
+      document.getElementById('messages').classList.add('logged-in');
       loadMessagesByPhone(phone);
     } else {
       setLoading(false);
@@ -476,10 +454,13 @@ changeBtn.addEventListener('click', () => {
   isLoggedIn = false;
   loggedInPhone = null;
   clearCredentials();
-  phoneInputContainer.classList.add('hidden');
   loginContainer.classList.remove('hidden');
-  loginPassword.value = '';
+  phoneInputContainer.classList.add('hidden');
+  document.getElementById('messages').classList.remove('logged-in');
   document.getElementById('messages').innerHTML = '';
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
+  loginPassword.value = '';
 });
 
 // ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
@@ -624,8 +605,9 @@ function removeMessage(el) {
   el.classList.add("hide");
   setTimeout(() => el.remove(), 200);
 }
-function renderMessages(messages) {
+function renderMessages(messages, anchorId = null) {
   const container = document.getElementById("messages");
+  const page = document.getElementById('page-content');
   container.innerHTML = "";
   if (messages.length === 0) {
     container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
@@ -641,9 +623,14 @@ function renderMessages(messages) {
   });
   noReplyBar.classList.remove('hidden');
   noReplyBar.style.display = 'flex';
-  setTimeout(() => {
-    container.scrollTop = container.scrollHeight;
-  }, 50);
+  if (anchorId) {
+    const anchor = document.getElementById(anchorId);
+    if (anchor) {
+      setTimeout(() => anchor.scrollIntoView({ block: 'end' }), 50);
+    }
+  } else {
+    setTimeout(() => { page.scrollTop = page.scrollHeight; }, 50);
+  }
 }
 function showOfflineMessage() {
   const container = document.getElementById("messages");
