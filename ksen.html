@@ -73,9 +73,9 @@
         <div id="choiceSection" style="display:none">
             <h2>Karibu Tena!</h2>
             
-            <button onclick="goTo('act.html')">Login</button>
+            <button type="button" onclick="goTo('act.html')">Login</button>
             
-            <button onclick="shareReferral()" style="background: #FF9800; margin-top: 10px;">
+            <button type="button" onclick="shareReferral()" style="background: #FF9800; margin-top: 10px;">
                 📤 Refer & Earn
             </button>
             
@@ -153,6 +153,38 @@
                     refInput.value = referredBy;
                     refInput.style.display = 'block';
                 }
+            }
+        }
+
+        function shareReferral() {
+            const user = JSON.parse(localStorage.getItem('mledger_user') || '{}');
+            const phone = user.phone || user.phone_number || user.msisdn || '';
+            const statusEl = document.getElementById('referralStatus');
+            if (!phone) {
+                statusEl.innerText = "Please login first to get your referral link.";
+                statusEl.style.color = "#ff5252";
+                return;
+            }
+            try {
+                const encoded = encodeRef(phone);
+                const link = `https://zunzun.vercel.app/ksen.html?ref=${encoded}`;
+                navigator.clipboard.writeText(link).then(() => {
+                    statusEl.innerText = "Referral link copied! Share it with friends.";
+                    statusEl.style.color = "#4CAF50";
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'M-Ledger Referral',
+                            text: 'Join M-Ledger using my referral link!',
+                            url: link
+                        }).catch(() => {});
+                    }
+                }).catch(() => {
+                    statusEl.innerText = "Your referral link: " + link;
+                    statusEl.style.color = "#4CAF50";
+                });
+            } catch (e) {
+                statusEl.innerText = "Error generating referral link.";
+                statusEl.style.color = "#ff5252";
             }
         }
 
