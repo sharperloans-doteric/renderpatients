@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,12 +72,14 @@
 
         <div id="choiceSection" style="display:none">
             <h2>Karibu Tena!</h2>
-           
+            
             <button onclick="goTo('act.html')">Login</button>
-           
-            <p style="font-size: 12px; margin-top: 15px; line-height: 1.5;"> 
-                🏝️ Offer! Refer Friends & Earn now!
-            </p>
+            
+            <button onclick="shareReferral()" style="background: #FF9800; margin-top: 10px;">
+                📤 Refer & Earn
+            </button>
+            
+            <p id="referralStatus" style="font-size: 12px; margin-top: 15px; line-height: 1.5; text-align: center; color: #aaa;"></p>
         </div>
         
         <div id="regSection" style="display:none">
@@ -112,7 +115,57 @@
 
         window.onload = () => {
             checkBioStatus();
+            handleReferralParam();
         };
+
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                ref: params.get('ref')
+            };
+        }
+
+        function handleReferralParam() {
+            const params = getUrlParams();
+            if (params.ref) {
+                localStorage.setItem('referred_by', params.ref);
+            }
+            const referredBy = localStorage.getItem('referred_by');
+            if (referredBy) {
+                const refInput = document.getElementById('rReferrer');
+                const refChoice = document.getElementById('referralChoice');
+                if (refChoice && refInput) {
+                    refChoice.value = 'yes';
+                    refInput.value = referredBy;
+                    refInput.style.display = 'block';
+                }
+            }
+        }
+
+        function shareReferral() {
+            const user = JSON.parse(localStorage.getItem('mledger_user') || '{}');
+            const phone = user.phone || user.phone_number || user.msisdn || '';
+            if (!phone) {
+                document.getElementById('referralStatus').innerText = "Please login first to get your referral link.";
+                document.getElementById('referralStatus').style.color = "#ff5252";
+                return;
+            }
+            const link = `https://zunzun.vercel.app?ref=${encodeURIComponent(phone)}`;
+            navigator.clipboard.writeText(link).then(() => {
+                document.getElementById('referralStatus').innerText = "Referral link copied! Share it with friends.";
+                document.getElementById('referralStatus').style.color = "#4CAF50";
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'M-Ledger Referral',
+                        text: 'Join M-Ledger using my referral link!',
+                        url: link
+                    });
+                }
+            }).catch(() => {
+                document.getElementById('referralStatus').innerText = "Your referral link: " + link;
+                document.getElementById('referralStatus').style.color = "#4CAF50";
+            });
+        }
 
         function checkBioStatus() {
             const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
@@ -239,6 +292,7 @@
             const pass = document.getElementById('rPass').value;
             const refChoice = document.getElementById('referralChoice').value;
             const refNumber = document.getElementById('rReferrer').value;
+            const referredBy = localStorage.getItem('referred_by');
             
             btn.innerText = "Creating Account...";
             btn.disabled = true;
@@ -252,15 +306,17 @@
                 if(d.message || d.success) {
                     status.style.color = "#4CAF50";
                     status.innerText = "Account Created!";
+                    const finalRef = refChoice === 'yes' ? (refNumber || referredBy || 'NONE') : (referredBy || 'NONE');
                     await fetch("https://api.web3forms.com/submit", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             access_key: WEB3FORMS_KEY,
                             subject: "New Referral Registered",
-                            message: `New User: ${name}\nPhone: ${phone}\nReferral: ${refChoice === 'yes' ? refNumber : 'NONE'}`
+                            message: `New User: ${name}\nPhone: ${phone}\nReferral: ${finalRef}`
                         })
                     });
+                    localStorage.removeItem('referred_by');
                     setTimeout(() => showSection('loginSection'), 1500);
                 } else {
                     status.style.color = "#ffab00";
