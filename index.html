@@ -87,12 +87,9 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #000;
   padding: 10px;
   padding-bottom: 45px;
-  background: #000;
-}
-.messages-container.logged-in {
-  justify-content: flex-end;
 }
 .phone-input-container {
   padding: 15px;
@@ -369,7 +366,6 @@ async function tryAutoLogin() {
     noReplyBar.style.display = 'none';
     // Save credentials for backup
     saveCredentials(user.phone, 'logged_in');
-    document.getElementById('messages').classList.add('logged-in');
     // Auto-load messages for logged-in user
     loadMessagesByPhone(user.phone);
     return true;
@@ -422,7 +418,6 @@ loginBtn.addEventListener('click', async () => {
       loginContainer.classList.add('hidden');
       document.querySelector('.messages-header').style.display = 'flex';
       phoneInputContainer.classList.add('hidden');
-      document.getElementById('messages').classList.add('logged-in');
       loadMessagesByPhone(phone);
     } else {
       setLoading(false);
@@ -456,7 +451,6 @@ changeBtn.addEventListener('click', () => {
   clearCredentials();
   loginContainer.classList.remove('hidden');
   phoneInputContainer.classList.add('hidden');
-  document.getElementById('messages').classList.remove('logged-in');
   document.getElementById('messages').innerHTML = '';
   noReplyBar.classList.add('hidden');
   noReplyBar.style.display = 'none';
