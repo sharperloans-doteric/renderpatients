@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16a34a">
+<title>Install App</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+body{
+    background:#f5f5f5;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.card{
+    width:90%;
+    max-width:380px;
+    background:#fff;
+    padding:30px;
+    border-radius:15px;
+    text-align:center;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+h2{
+    color:#16a34a;
+    margin-bottom:15px;
+}
+p{
+    color:#555;
+    margin-bottom:20px;
+}
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:#16a34a;
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+}
+button:hover{
+    background:#15803d;
+}
+#manual{
+    display:none;
+    margin-top:15px;
+    font-size:14px;
+    color:#666;
+}
+</style>
+</head>
+<body>
+
+<div class="card" id="installCard">
+    <h2>Install App</h2>
+    <p>You must install this app before continuing.</p>
+
+    <button id="installBtn">Install App</button>
+
+    <div id="manual">
+        If no install popup appears, open your browser menu and tap
+        <b>Add to Home Screen</b> or <b>Install App</b>.
+    </div>
+</div>
+
+<script>
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+}
+
+// If running as installed PWA, redirect
+const installed =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+if (installed) {
+    window.location.href = "home.html"; // Change to your main page
+}
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+document.getElementById("installBtn").addEventListener("click", async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+
+        if (result.outcome === "accepted") {
+            location.reload();
+        }
+    } else {
+        document.getElementById("manual").style.display = "block";
+    }
+});
+</script>
+
+</body>
+</html>
