@@ -1,114 +1,212 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#16a34a">
 <title>Install App</title>
-
-<link rel="manifest" href="manifest.json">
 
 <style>
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Arial,sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
 }
+
 body{
-    background:#f5f5f5;
+    background:#eef7e8;
+    color:#333;
+}
+
+header{
+    background:linear-gradient(135deg,#2e7d32,#d4af37);
+    color:#fff;
+    text-align:center;
+    padding:25px 15px;
+}
+
+header h1{
+    font-size:30px;
+    margin-bottom:8px;
+}
+
+.container{
+    max-width:900px;
+    margin:25px auto;
+    padding:15px;
+}
+
+.card{
+    background:#fff;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 6px 15px rgba(0,0,0,.08);
+    border-left:8px solid #2e7d32;
+}
+
+.card h2{
+    color:#2e7d32;
+    margin-bottom:15px;
+}
+
+.step{
+    display:flex;
+    margin:18px 0;
+}
+
+.number{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#2e7d32;
+    color:#fff;
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
+    font-weight:bold;
+    margin-right:15px;
+    flex-shrink:0;
 }
-.card{
-    width:90%;
-    max-width:380px;
-    background:#fff;
-    padding:30px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0 10px 25px rgba(0,0,0,.15);
-}
-h2{
-    color:#16a34a;
-    margin-bottom:15px;
-}
-p{
-    color:#555;
-    margin-bottom:20px;
-}
-button{
+
+.content{
+    background:#f8fff4;
+    padding:15px;
+    border-radius:10px;
     width:100%;
-    padding:14px;
-    border:none;
-    border-radius:8px;
-    background:#16a34a;
-    color:#fff;
-    font-size:16px;
-    cursor:pointer;
+    line-height:1.8;
 }
-button:hover{
-    background:#15803d;
+
+.note{
+    background:#fff8dc;
+    border-left:6px solid #d4af37;
+    padding:18px;
+    border-radius:10px;
+    margin-top:20px;
 }
-#manual{
-    display:none;
-    margin-top:15px;
-    font-size:14px;
-    color:#666;
+
+footer{
+    text-align:center;
+    padding:20px;
+    color:#555;
 }
 </style>
+
 </head>
 <body>
 
-<div class="card" id="installCard">
-    <h2>Install App</h2>
-    <p>You must install this app before continuing.</p>
+<header>
+<h1>Install the App</h1>
+<p>Quick Guide for Android & iPhone</p>
+</header>
 
-    <button id="installBtn">Install App</button>
+<div class="container">
 
-    <div id="manual">
-        If no install popup appears, open your browser menu and tap
-        <b>Add to Home Screen</b> or <b>Install App</b>.
-    </div>
+<div class="card">
+
+<h2>Install on Android (Chrome)</h2>
+
+<div class="step">
+<div class="number">1</div>
+<div class="content">
+Open the website using <b>Google Chrome</b>.
+</div>
 </div>
 
-<script>
-// Register Service Worker
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-}
+<div class="step">
+<div class="number">2</div>
+<div class="content">
+Wait a few seconds until the page finishes loading completely.
+</div>
+</div>
 
-// If running as installed PWA, redirect
-const installed =
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true;
+<div class="step">
+<div class="number">3</div>
+<div class="content">
+If an <b>Install App</b> popup appears, tap <b>Install</b>.
+</div>
+</div>
 
-if (installed) {
-    window.location.href = "home.html"; // Change to your main page
-}
+<div class="step">
+<div class="number">4</div>
+<div class="content">
+If no popup appears, tap the <b>⋮ (three dots)</b> in the top-right corner of Chrome.
+</div>
+</div>
 
-let deferredPrompt;
+<div class="step">
+<div class="number">5</div>
+<div class="content">
+Tap <b>Install App</b> or <b>Add to Home screen</b>.
+</div>
+</div>
 
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-});
+<div class="step">
+<div class="number">6</div>
+<div class="content">
+Tap <b>Install</b> and wait a few seconds.
+</div>
+</div>
 
-document.getElementById("installBtn").addEventListener("click", async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const result = await deferredPrompt.userChoice;
+<div class="step">
+<div class="number">7</div>
+<div class="content">
+The app icon will appear on your home screen. Open it just like any other application.
+</div>
+</div>
 
-        if (result.outcome === "accepted") {
-            location.reload();
-        }
-    } else {
-        document.getElementById("manual").style.display = "block";
-    }
-});
-</script>
+</div>
+
+<div class="card">
+
+<h2>Install on iPhone (Safari)</h2>
+
+<div class="step">
+<div class="number">1</div>
+<div class="content">
+Open the website using <b>Safari</b>.
+</div>
+</div>
+
+<div class="step">
+<div class="number">2</div>
+<div class="content">
+Tap the <b>Share</b> button at the bottom of the screen.
+</div>
+</div>
+
+<div class="step">
+<div class="number">3</div>
+<div class="content">
+Scroll down and tap <b>Add to Home Screen</b>.
+</div>
+</div>
+
+<div class="step">
+<div class="number">4</div>
+<div class="content">
+Tap <b>Add</b>. The app will appear on your Home Screen.
+</div>
+</div>
+
+</div>
+
+<div class="note">
+<b>Important:</b>
+<ul style="margin-top:10px;padding-left:20px;line-height:1.8;">
+<li>Use a supported browser such as Chrome (Android) or Safari (iPhone).</li>
+<li>Ensure you have an internet connection during installation.</li>
+<li>Once installed, launch the app from your Home Screen for the best experience.</li>
+<li>If the install option does not appear, refresh the page and try again after a few seconds.</li>
+</ul>
+</div>
+
+</div>
+
+<footer>
+© 2026 • Progressive Web App Installation Guide
+</footer>
 
 </body>
 </html>
