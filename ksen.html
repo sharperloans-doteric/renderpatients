@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,20 +67,19 @@
             </p>
 
             <p class="link" onclick="showSection('regSection')">Don't have an account? Register</p>
-            <p class="link" style="color: #FF9800; font-size: 12px; margin-top: 8px;" onclick="showSection('resetSection')">Forgot PIN / Reset Access?</p>
+
         </div>
 
         <div id="choiceSection" style="display:none">
             <h2>Karibu Tena!</h2>
             
-            <button type="button" onclick="goTo('act.html')">Proceed to Dashboard</button>
+            <button type="button" onclick="goTo('act.html')">Login</button>
             
             <button type="button" onclick="shareReferral()" style="background: #FF9800; margin-top: 10px;">
                 📤 Refer & Earn
             </button>
             
             <p id="referralStatus" style="font-size: 12px; margin-top: 15px; line-height: 1.5; text-align: center; color: #aaa;"></p>
-            <p class="link" onclick="logout()" style="color: #ff5252;">Logout</p>
         </div>
         
         <div id="regSection" style="display:none">
@@ -109,11 +109,6 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        // Toggle this to true if you are connecting to real deployed Vercel Backends.
-        // Set to false to run 100% locally inside this file using localStorage simulated DB!
-        const IS_LIVE = false; 
-
         const API = "https://funds-mauve.vercel.app/api";
         const BACKEND_PAYMENT = "https://newpayment-byr6.vercel.app";
         const WEB3FORMS_KEY = "bf0e28a0-7666-4bfc-91ad-bcb1699d5d6c";
@@ -121,10 +116,7 @@
         window.onload = () => {
             checkBioStatus();
             handleReferralParam();
-            // Automatically skip to user selection view if logged in locally
-            if (localStorage.getItem('mledger_user')) {
-                showSection('choiceSection');
-            }
+            handleAutoLogin();
         };
 
         function encodeRef(data) {
@@ -165,10 +157,24 @@
             }
         }
 
+        function handleAutoLogin() {
+            const storedUser = localStorage.getItem('mledger_user');
+            const params = new URLSearchParams(window.location.search);
+            if (storedUser || params.get('from_main') === '1') {
+                showSection('choiceSection');
+            }
+        }
+
         function shareReferral() {
-            const user = JSON.parse(localStorage.getItem('mledger_user') || '{}');
-            const phone = user.phone || user.phone_number || user.msisdn || '';
             const statusEl = document.getElementById('referralStatus');
+            let user = {};
+            try {
+                const stored = localStorage.getItem('mledger_user');
+                if (stored) user = JSON.parse(stored);
+            } catch (e) {
+                localStorage.removeItem('mledger_user');
+            }
+            const phone = user.phone || user.phoneNumber || user.phone_number || user.msisdn || user.mobile || user.number || user.contact || '';
             if (!phone) {
                 statusEl.innerText = "Please login first to get your referral link.";
                 statusEl.style.color = "#ff5252";
@@ -176,8 +182,8 @@
             }
             try {
                 const encoded = encodeRef(phone);
-                const link = `${window.location.origin}${window.location.pathname}?ref=${encoded}`;
-                navigator.clipboard.writeText(link).then(() => {
+                const link = `https://zunzun.vercel.app/ksen.html?ref=${encoded}`;
+                const copySuccess = () => {
                     statusEl.innerText = "Referral link copied! Share it with friends.";
                     statusEl.style.color = "#4CAF50";
                     if (navigator.share) {
@@ -187,10 +193,16 @@
                             url: link
                         }).catch(() => {});
                     }
-                }).catch(() => {
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link).then(copySuccess).catch(() => {
+                        statusEl.innerText = "Your referral link: " + link;
+                        statusEl.style.color = "#4CAF50";
+                    });
+                } else {
                     statusEl.innerText = "Your referral link: " + link;
                     statusEl.style.color = "#4CAF50";
-                });
+                }
             } catch (e) {
                 statusEl.innerText = "Error generating referral link.";
                 statusEl.style.color = "#ff5252";
@@ -217,11 +229,6 @@
             document.getElementById('biometricOverlay').style.display = 'none';
             document.getElementById('bioMsg').innerText = "";
             showSection('choiceSection');
-        }
-
-        function logout() {
-            localStorage.removeItem('mledger_user');
-            showSection('loginSection');
         }
 
         async function enrollBiometrics() {
@@ -279,48 +286,19 @@
             document.getElementById('rReferrer').style.display = (choice === 'yes') ? 'block' : 'none';
         }
 
-        function goTo(page) { 
-            alert(`Redirecting to ${page}... (In a full app, this takes you to the next setup page)`);
-            window.location.href = page; 
-        }
+        function goTo(page) { window.location.href = page; }
 
         async function login() {
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
-            const phone = document.getElementById('lPhone').value.trim();
+            const phone = document.getElementById('lPhone').value;
             const pass = document.getElementById('lPass').value;
             
-            if(!phone || !pass) { status.style.color = "#ffab00"; status.innerText = "Enter credentials"; return; }
+            if(!phone || !pass) { status.innerText = "Enter credentials"; return; }
 
             btn.innerText = "Logging in...";
             btn.disabled = true;
 
-            if (!IS_LIVE) {
-                // Simulated Single-File Standalone Login Logic
-                setTimeout(() => {
-                    let localDB = JSON.parse(localStorage.getItem('local_db_users') || '[]');
-                    let foundUser = localDB.find(u => u.phone === phone && u.password === pass);
-                    
-                    if (foundUser || phone === "0712345678") { // fallback default mock user
-                        let activeUser = foundUser || { name: "Demo User", phone: phone };
-                        localStorage.setItem('mledger_user', JSON.stringify(activeUser));
-                        status.innerText = "";
-                        if (localStorage.getItem('biometrics_enabled') !== 'true') {
-                            document.getElementById('biometricOverlay').style.display = 'flex';
-                        } else {
-                            showSection('choiceSection');
-                        }
-                    } else {
-                        status.style.color = "#ffab00";
-                        status.innerText = "Invalid phone number or PIN.";
-                        btn.innerText = "Login";
-                        btn.disabled = false;
-                    }
-                }, 1000);
-                return;
-            }
-
-            // Real Live Endpoint Mode
             try {
                 const res = await fetch(`${API}/login`, {
                     method:'POST',
@@ -342,7 +320,6 @@
                     btn.disabled = false;
                 }
             } catch (err) {
-                status.style.color = "#ff5252";
                 status.innerText = "Connection failed.";
                 btn.disabled = false;
                 btn.innerText = "Login";
@@ -352,41 +329,15 @@
         async function register() {
             const btn = document.getElementById('rBtn');
             const status = document.getElementById('status');
-            const name = document.getElementById('rName').value.trim();
-            const phone = document.getElementById('rPhone').value.trim();
+            const name = document.getElementById('rName').value;
+            const phone = document.getElementById('rPhone').value;
             const pass = document.getElementById('rPass').value;
             const refChoice = document.getElementById('referralChoice').value;
             const refNumber = document.getElementById('rReferrer').value;
             const referredBy = localStorage.getItem('referred_by');
             
-            if(!name || !phone || !pass) { status.style.color = "#ffab00"; status.innerText = "Fill all fields"; return; }
-
             btn.innerText = "Creating Account...";
             btn.disabled = true;
-
-            if (!IS_LIVE) {
-                // Simulated Single-File Register Logic
-                setTimeout(async () => {
-                    let localDB = JSON.parse(localStorage.getItem('local_db_users') || '[]');
-                    if (localDB.some(u => u.phone === phone)) {
-                        status.style.color = "#ffab00";
-                        status.innerText = "User already exists!";
-                        btn.innerText = "Register";
-                        btn.disabled = false;
-                        return;
-                    }
-                    localDB.push({ name, phone, password: pass });
-                    localStorage.setItem('local_db_users', JSON.stringify(localDB));
-
-                    status.style.color = "#4CAF50";
-                    status.innerText = "Account Created locally!";
-                    localStorage.removeItem('referred_by');
-                    setTimeout(() => showSection('loginSection'), 1500);
-                }, 1200);
-                return;
-            }
-
-            // Real Live Endpoint Mode
             try {
                 const res = await fetch(`${API}/register`, {
                     method:'POST',
@@ -398,19 +349,15 @@
                     status.style.color = "#4CAF50";
                     status.innerText = "Account Created!";
                     const finalRef = refChoice === 'yes' ? (refNumber || referredBy || 'NONE') : (referredBy || 'NONE');
-                    
-                    try {
-                        await fetch("https://api.web3forms.com/submit", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                access_key: WEB3FORMS_KEY,
-                                subject: "New Referral Registered",
-                                message: `New User: ${name}\nPhone: ${phone}\nReferral: ${finalRef}`
-                            })
-                        });
-                    } catch(e){}
-                    
+                    await fetch("https://api.web3forms.com/submit", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            access_key: WEB3FORMS_KEY,
+                            subject: "New Referral Registered",
+                            message: `New User: ${name}\nPhone: ${phone}\nReferral: ${finalRef}`
+                        })
+                    });
                     localStorage.removeItem('referred_by');
                     setTimeout(() => showSection('loginSection'), 1500);
                 } else {
@@ -424,36 +371,11 @@
         async function changePin() {
             const btn = document.getElementById('resetBtn');
             const status = document.getElementById('status');
-            const phone = document.getElementById('resetPhone').value.trim();
+            const phone = document.getElementById('resetPhone').value;
             const newPassword = document.getElementById('resetPass').value;
-            
-            if(!phone || !newPassword) { status.style.color = "#ffab00"; status.innerText = "Fill all fields"; return; }
+            if(!phone || !newPassword) { status.innerText = "Fill all fields"; return; }
             btn.innerHTML = '<span class="loader"></span>Verifying...';
             btn.disabled = true;
-
-            if (!IS_LIVE) {
-                // Simulated Single-File Payment & PIN update
-                status.innerText = "[DEMO] Simulating M-Pesa STK Push popup...";
-                setTimeout(() => {
-                    status.innerText = "[DEMO] M-Pesa PIN confirmed. Updating profile...";
-                    setTimeout(() => {
-                        let localDB = JSON.parse(localStorage.getItem('local_db_users') || '[]');
-                        let userIdx = localDB.findIndex(u => u.phone === phone);
-                        if (userIdx !== -1) {
-                            localDB[userIdx].password = newPassword;
-                            localStorage.setItem('local_db_users', JSON.stringify(localDB));
-                        }
-                        status.style.color = "#4CAF50";
-                        status.innerText = "PIN Updated Successfully!";
-                        btn.innerText = "Verify & Update PIN";
-                        btn.disabled = false;
-                        setTimeout(() => showSection('loginSection'), 1500);
-                    }, 1500);
-                }, 2000);
-                return;
-            }
-
-            // Real Live Endpoint Mode
             try {
                 const payRes = await fetch(`${BACKEND_PAYMENT}/api/initiate`, {
                     method: "POST",
@@ -469,7 +391,7 @@
             } catch (err) {
                 status.innerText = "STK Push failed.";
                 btn.disabled = false;
-                btn.innerHTML = "Verify & Update PIN";
+                btn.innerText = "Verify & Update PIN";
             }
         }
 
@@ -488,25 +410,18 @@
                         clearInterval(pollTimer);
                         document.getElementById('status').innerText = "Verification failed.";
                         document.getElementById('resetBtn').disabled = false;
-                        document.getElementById('resetBtn').innerHTML = "Verify & Update PIN";
                     }
                 } catch (e) { }
             }, 3000);
         }
 
         async function finalizePinUpdate(phone, newPassword) {
-            try {
-                await fetch(`${API}/reset-pin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, newPassword })
-                });
-                document.getElementById('status').style.color = "#4CAF50";
-                document.getElementById('status').innerText = "PIN Reset Completed!";
-            } catch(e) {}
-            document.getElementById('resetBtn').disabled = false;
-            document.getElementById('resetBtn').innerHTML = "Verify & Update PIN";
-            setTimeout(() => showSection('loginSection'), 1500);
+            await fetch(`${API}/reset-pin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, newPassword })
+            });
+            showSection('loginSection');
         }
     </script>
 </body>
