@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -181,6 +182,7 @@ body {
   padding-bottom: 25px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   max-height: calc(100vh - 100px);
 }
 .message-bubble {
@@ -629,9 +631,6 @@ function renderMessages(messages) {
   container.innerHTML = "";
   if (messages.length === 0) {
     container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
-    noReplyBar.classList.add('hidden');
-    noReplyBar.style.display = 'none';
-    return;
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
