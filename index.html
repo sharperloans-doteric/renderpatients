@@ -315,7 +315,7 @@ body {
   </div>
   <div class="messages-container" id="messages"></div>
   <div class="no-reply-info hidden" id="noReplyBar">
-    You can't reply to this short code. Learn more
+    Sender can't accept replies. contact them directly.Learn more
   </div>
 </div>
 <div class="install-btn" id="installBtn">
@@ -630,7 +630,7 @@ function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">No messages found for this phone number,please transcact to get you messages!</div>`;
+    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
