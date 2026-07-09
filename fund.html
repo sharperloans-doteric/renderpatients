@@ -171,7 +171,7 @@
             const dateStr = formatNumericDate();
             const timeStr = formatTime12Hour();
             
-            const message = `${token} Confirmed. Your account balance was: M-PESA Account : Ksh${balance.toFixed(2)} Business Account:Ksh0.00 on ${dateStr})at ${timeStr}. Transaction cost, Ksh0.00. Get a Lipa Na M-PESA Till online: https://m-pesaforbusiness.co.ke`;
+            const message = `${token} Confirmed. Your account balance was: M-PESA Account : Ksh${balance.toFixed(2)} Business Account:Ksh 0.00 on ${dateStr} at ${timeStr}. Transaction cost, Ksh0.00. Get a Lipa Na M-PESA Till online: https://m-pesaforbusiness.co.ke/`;
             
             const msgPayload = JSON.stringify({
                 phone: userData.phone,
