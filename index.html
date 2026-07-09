@@ -284,6 +284,71 @@ body {
   .messages-header { padding: 8px 10px; height: 45px; }
   .page-content, #page-content { padding-top: 45px; }
 }
+
+/* ─── TOP MESSAGE NOTIFICATION (SMS/WhatsApp style) ─── */
+.msg-notification {
+  position: fixed;
+  top: 58px;
+  left: 50%;
+  transform: translate(-50%, -160%);
+  width: calc(100% - 24px);
+  max-width: 476px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+  padding: 12px 16px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.msg-notification.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.msg-notif-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #25d366;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #000;
+}
+.msg-notif-content { flex: 1; min-width: 0; }
+.msg-notif-title {
+  font-size: 11px;
+  color: #25d366;
+  font-weight: 600;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.msg-notif-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #fff;
+}
+.msg-notif-body {
+  font-size: 13px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width:480px) {
+  .msg-notification { top: 53px; }
+}
 </style>
 </head>
 <body>
@@ -321,6 +386,8 @@ body {
 <div class="install-btn" id="installBtn">
   <span>⬇️</span> Install App
 </div>
+
+<div id="notificationContainer"></div>
 
 <script>
 // Use localhost for local development
@@ -475,6 +542,9 @@ loginPhone.addEventListener('keypress', (e) => {
 });
 
 changeBtn.addEventListener('click', () => {
+  stopPolling();
+  currentPhone = null;
+  loadedSigs = new Set();
   isLoggedIn = false;
   loggedInPhone = null;
   clearCredentials();
@@ -663,6 +733,88 @@ function showEnterPhoneMessage() {
   noReplyBar.classList.add('hidden');
   noReplyBar.style.display = 'none';
 }
+// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
+let currentPhone = null;
+let loadedSigs = new Set();
+let pollInterval = null;
+
+function sigOf(tx) {
+  return (tx.message || '') + '|' + (tx.phone || '');
+}
+
+async function fetchMessages(phone) {
+  let res = await fetch(`${API}/api/messages/${phone}`);
+  let data = await res.json();
+  if (data.success && data.messages && data.messages.length > 0) {
+    return data.messages;
+  }
+  res = await fetch(`${API}/transactions`);
+  if (!res.ok) throw new Error("Network response was not ok");
+  const txData = await res.json();
+  return txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
+}
+
+function scrollMessagesToBottom() {
+  const container = document.getElementById("messages");
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+}
+
+function showMessageNotification(messages) {
+  const box = document.getElementById("notificationContainer");
+  const latest = messages[messages.length - 1];
+  const notif = document.createElement("div");
+  notif.className = "msg-notification";
+  const title = messages.length > 1 ? `${messages.length} new messages` : "New message";
+  const body = latest.message || "";
+  notif.innerHTML = `
+    <div class="msg-notif-icon">💬</div>
+    <div class="msg-notif-content">
+      <div class="msg-notif-title">${title}</div>
+      <div class="msg-notif-name">${currentPhone || 'Messages'}</div>
+      <div class="msg-notif-body">${renderMessageContent(body)}</div>
+    </div>`;
+  box.appendChild(notif);
+  requestAnimationFrame(() => notif.classList.add("show"));
+
+  const dismiss = () => {
+    notif.classList.remove("show");
+    setTimeout(() => notif.remove(), 400);
+  };
+  notif.addEventListener("click", () => {
+    scrollMessagesToBottom();
+    dismiss();
+  });
+  setTimeout(dismiss, 4000);
+}
+
+function startPolling() {
+  stopPolling();
+  if (!currentPhone) return;
+  pollInterval = setInterval(async () => {
+    if (!navigator.onLine || !currentPhone) return;
+    try {
+      const messages = await fetchMessages(currentPhone);
+      const newOnes = messages.filter(m => !loadedSigs.has(sigOf(m)));
+      if (newOnes.length > 0) {
+        newOnes.forEach(m => loadedSigs.add(sigOf(m)));
+        localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));
+        const container = document.getElementById("messages");
+        newOnes.forEach((tx, i) => {
+          const isLast = (i === newOnes.length - 1);
+          container.appendChild(createMessageBubble(tx, isLast));
+        });
+        scrollMessagesToBottom();
+        showMessageNotification(newOnes);
+      }
+    } catch (e) { /* keep polling silently */ }
+  }, 5000);
+}
+
+function stopPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = null;
+}
+
 async function loadMessagesByPhone(phone) {
   // Check if logged in
   if (!isLoggedIn) {
@@ -670,6 +822,7 @@ async function loadMessagesByPhone(phone) {
     return;
   }
   
+  currentPhone = phone;
   const container = document.getElementById("messages");
   container.innerHTML = "";
   container.style.opacity = "0.5";
@@ -679,35 +832,13 @@ async function loadMessagesByPhone(phone) {
   phoneInputContainer.classList.add('hidden');
   
   try {
-    // First try the new messages endpoint
-    let res = await fetch(`${API}/api/messages/${phone}`);
-    let data = await res.json();
-    
-    if (data.success && data.messages && data.messages.length > 0) {
-      container.style.opacity = "1";
-      setLoading(false);
-      // Messages are already sorted oldest first (newest at bottom)
-      renderMessages(data.messages);
-      localStorage.setItem("cached_messages_" + phone, JSON.stringify(data.messages));
-    } else {
-      // Fallback to transactions endpoint
-      res = await fetch(`${API}/transactions`);
-      if (!res.ok) throw new Error("Network response was not ok");
-      const txData = await res.json();
-      
-      // Filter transactions by phone
-      const filtered = txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
-      
-      container.style.opacity = "1";
-      setLoading(false);
-      if (filtered.length > 0) {
-        // Already sorted oldest first from API, just render
-        renderMessages(filtered);
-        localStorage.setItem("cached_messages_" + phone, JSON.stringify(filtered));
-      } else {
-        renderMessages([]);
-      }
-    }
+    const messages = await fetchMessages(phone);
+    container.style.opacity = "1";
+    setLoading(false);
+    loadedSigs = new Set(messages.map(sigOf));
+    renderMessages(messages);
+    localStorage.setItem("cached_messages_" + phone, JSON.stringify(messages));
+    startPolling();
   } catch (err) {
     setLoading(false);
     console.error('Error loading messages:', err);
@@ -715,6 +846,7 @@ async function loadMessagesByPhone(phone) {
     if (cached) {
       const data = JSON.parse(cached);
       container.style.opacity = "1";
+      loadedSigs = new Set(data.map(sigOf));
       renderMessages(data);
       const notice = document.createElement("div");
       notice.style.padding = "10px 14px";
@@ -729,8 +861,10 @@ async function loadMessagesByPhone(phone) {
       container.prepend(notice);
     } else {
       container.style.opacity = "1";
+      loadedSigs = new Set();
       renderMessages([]);
     }
+    startPolling();
   }
 }
 
