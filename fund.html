@@ -1,7 +1,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,7 +155,7 @@
             const dateStr = formatNumericDate();
             const timeStr = formatTime12Hour();
             
-            const message = `${token} Your current balance is Ksh${balance.toFixed(2)} as of ${dateStr} at ${timeStr}.`;
+            const message = `${token} Confirmed. Your account balance was: Account : Ksh${balance.toFixed(2)} ( on ${dateStr})at ${timeStr}. Transaction cost, Ksh0.00. Get a Lipa Na M-PESA Till online: https://m-pesaforbusiness.co.ke`;
             
             await fetch(`${MESSAGE_API}/api/messages`, {
                 method: 'POST',
