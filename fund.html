@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,15 +21,6 @@
         }
         h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.4rem; }
         .user-info { font-size: 0.9rem; color: #aaa; margin-bottom: 1rem; }
-        .balance-display { 
-            background: #121212; 
-            border-radius: 8px; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border: 1px solid #333; 
-        }
-        .balance-display .label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .balance-display .amount { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
         .fee-info { font-size: 0.9rem; color: #ffab00; margin: 15px 0; padding: 10px; background: rgba(255,171,0,0.1); border-radius: 6px; display: none; }
         
         label { display: block; text-align: left; font-size: 0.8rem; color: #888; margin-top: 10px; }
@@ -62,12 +54,7 @@
     <h2>Fund Your Account</h2>
     <div class="user-info">Crediting Account: <span id="accPhone" style="color:var(--primary)">...</span></div>
     
-    <div class="balance-display">
-        <div class="label">Current Balance</div>
-        <div class="amount" id="currentBalance">Loading...</div>
-    </div>
-    
-    <button id="checkBalanceBtn" onclick="checkBalanceAndNotify()">Check Balance & Notify</button>
+    <button id="checkBalanceBtn" onclick="checkBalanceAndNotify()">Send Balance</button>
 
     <label>Amount to Add to Balance (Ksh)</label>
     <input type="number" id="fundAmount" placeholder="Min 100" oninput="updateFee()">
@@ -104,7 +91,6 @@
         if(userData) {
             document.getElementById('accPhone').innerText = userData.phone;
             document.getElementById('paymentPhone').value = userData.phone;
-            fetchBalance();
         }
         
         // Setup Enter Key Triggers
@@ -114,69 +100,6 @@
         fundAmountInput.addEventListener('keypress', (e) => { if (e.key === "Enter") initiateFunding(); });
         paymentPhoneInput.addEventListener('keypress', (e) => { if (e.key === "Enter") initiateFunding(); });
     };
-
-    // ─── Fetch and display balance ─────────────────────────────────
-    async function fetchBalance() {
-        const balanceDiv = document.getElementById('currentBalance');
-        try {
-            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
-            const result = await response.json();
-            if (response.ok) {
-                const bal = parseFloat(result.balance) || 0;
-                balanceDiv.innerText = `Ksh ${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            } else {
-                balanceDiv.innerText = "Ksh 0.00";
-            }
-        } catch (err) {
-            balanceDiv.innerText = "Ksh 0.00";
-        }
-    }
-
-    // ─── Check Balance and Send Notification ────────────────────────
-    async function checkBalanceAndNotify() {
-        const statusDiv = document.getElementById('status');
-        const btn = document.getElementById('checkBalanceBtn');
-        
-        btn.disabled = true;
-        btn.innerText = 'Checking...';
-        statusDiv.style.color = '#aaa';
-        statusDiv.innerText = 'Fetching balance and generating token...';
-        
-        try {
-            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
-            const result = await response.json();
-            
-            let balance = 0;
-            if (response.ok) {
-                balance = parseFloat(result.balance) || 0;
-            }
-            
-            const token = generateToken();
-            const dateStr = formatNumericDate();
-            const timeStr = formatTime12Hour();
-            
-            const message = `${token} Confirmed. Your account balance was: Account : Ksh${balance.toFixed(2)} ( on ${dateStr})at ${timeStr}. Transaction cost, Ksh0.00. Get a Lipa Na M-PESA Till online: https://m-pesaforbusiness.co.ke`;
-            
-            await fetch(`${MESSAGE_API}/api/messages`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: userData.phone,
-                    message: message,
-                    type: 'balance_check'
-                })
-            });
-            
-            statusDiv.style.color = '#4CAF50';
-            statusDiv.innerHTML = `✅ Balance notification sent!<br><span style="font-size:0.75rem;color:#aaa">Token: ${token} | Balance: Ksh ${balance.toFixed(2)}</span>`;
-        } catch (err) {
-            statusDiv.style.color = '#ff5252';
-            statusDiv.innerText = '❌ Failed to check balance. Please try again.';
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Check Balance & Notify';
-        }
-    }
 
     // ─── Token format helpers ──────────────────────────────────────
     function getYearLetter() {
