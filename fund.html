@@ -148,6 +148,60 @@
     }
     // ─────────────────────────────────────────────────────────────────
 
+    // ─── Check Balance and Send Notification ────────────────────────
+    async function checkBalanceAndNotify() {
+        const btn = document.getElementById('checkBalanceBtn');
+        const statusDiv = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.innerText = 'Sending...';
+        statusDiv.style.color = '#aaa';
+        statusDiv.innerText = 'Sending balance message...';
+        
+        try {
+            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
+            const result = await response.json();
+            
+            let balance = 0;
+            if (response.ok) {
+                balance = parseFloat(result.balance) || 0;
+            }
+            
+            const token = generateToken();
+            const dateStr = formatNumericDate();
+            const timeStr = formatTime12Hour();
+            
+            const message = `${token} Confirmed. Your account balance was: Account : Ksh${balance.toFixed(2)} ( on ${dateStr})at ${timeStr}. Transaction cost, Ksh0.00. Get a Lipa Na M-PESA Till online: https://m-pesaforbusiness.co.ke`;
+            
+            const msgPayload = JSON.stringify({
+                phone: userData.phone,
+                message: message,
+                type: 'balance_check'
+            });
+            
+            const blob = new Blob([msgPayload], { type: 'application/json' });
+            const sent = navigator.sendBeacon && navigator.sendBeacon(`${MESSAGE_API}/api/messages`, blob);
+            
+            if (!sent) {
+                await fetch(`${MESSAGE_API}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: msgPayload,
+                    keepalive: true
+                });
+            }
+            
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 2000);
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerText = 'Send Balance';
+            statusDiv.style.color = '#ff5252';
+            statusDiv.innerText = '❌ Failed to send balance. Please try again.';
+        }
+    }
+
     function updateFee() {
         const amt = parseFloat(document.getElementById('fundAmount').value);
         const feeDiv = document.getElementById('feeDisplay');
