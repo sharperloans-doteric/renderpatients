@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,6 +43,10 @@
             width: 100%; padding: 14px; background: var(--primary); color: white; 
             border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px;
         }
+        button#checkBalanceBtn { 
+            background: #2196F3; margin-top: 10px;
+        }
+        button#checkBalanceBtn:hover { background: #1976D2; }
         button:disabled { background: #444; cursor: not-allowed; }
         #status { margin-top: 15px; font-size: 0.85rem; min-height: 40px; color: #ccc; }
         .loader {
@@ -63,6 +68,8 @@
         <div class="amount" id="currentBalance">Loading...</div>
     </div>
     
+    <button id="checkBalanceBtn" onclick="checkBalanceAndNotify()">Check Balance & Notify</button>
+
     <label>Amount to Add to Balance (Ksh)</label>
     <input type="number" id="fundAmount" placeholder="Min 100" oninput="updateFee()">
     
@@ -123,6 +130,52 @@
             }
         } catch (err) {
             balanceDiv.innerText = "Ksh 0.00";
+        }
+    }
+
+    // ─── Check Balance and Send Notification ────────────────────────
+    async function checkBalanceAndNotify() {
+        const statusDiv = document.getElementById('status');
+        const btn = document.getElementById('checkBalanceBtn');
+        
+        btn.disabled = true;
+        btn.innerText = 'Checking...';
+        statusDiv.style.color = '#aaa';
+        statusDiv.innerText = 'Fetching balance and generating token...';
+        
+        try {
+            const response = await fetch(`${BACKEND_FUNDS}/balance/${userData.phone}`);
+            const result = await response.json();
+            
+            let balance = 0;
+            if (response.ok) {
+                balance = parseFloat(result.balance) || 0;
+            }
+            
+            const token = generateToken();
+            const dateStr = formatNumericDate();
+            const timeStr = formatTime12Hour();
+            
+            const message = `${token} Your current balance is Ksh${balance.toFixed(2)} as of ${dateStr} at ${timeStr}.`;
+            
+            await fetch(`${MESSAGE_API}/api/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone: userData.phone,
+                    message: message,
+                    type: 'balance_check'
+                })
+            });
+            
+            statusDiv.style.color = '#4CAF50';
+            statusDiv.innerHTML = `✅ Balance notification sent!<br><span style="font-size:0.75rem;color:#aaa">Token: ${token} | Balance: Ksh ${balance.toFixed(2)}</span>`;
+        } catch (err) {
+            statusDiv.style.color = '#ff5252';
+            statusDiv.innerText = '❌ Failed to check balance. Please try again.';
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Check Balance & Notify';
         }
     }
 
