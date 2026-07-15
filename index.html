@@ -4,7 +4,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -650,6 +649,7 @@ function createMessageBubble(tx, isLast) {
   bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
                      previewHtml +
                      `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+  enableDoubleTapRemove(bubble);
   enableLongPressCopy(bubble, tx.message);
   return bubble;
 }
@@ -683,6 +683,19 @@ function enableLongPressCopy(el, message) {
   });
   el.addEventListener('mouseup', () => clearTimeout(pressTimer));
   el.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+}
+function enableDoubleTapRemove(el) {
+  let lastTap = 0;
+  el.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); removeMessage(el); }
+    lastTap = now;
+  });
+  el.addEventListener("dblclick", () => removeMessage(el));
+}
+function removeMessage(el) {
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
 }
 function renderMessages(messages) {
   const container = document.getElementById("messages");
