@@ -204,6 +204,35 @@ body {
   opacity: 0;
   transform: scale(0.9);
 }
+.msg-context-menu {
+  position: fixed;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: flex;
+  gap: 4px;
+  animation: fadeIn 0.15s ease;
+}
+.msg-context-menu button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.msg-context-menu button:hover {
+  background: #333;
+}
+.msg-context-menu button.ctx-delete {
+  color: #ff6b6b;
+}
 .message-time {
   font-size: 11px;
   opacity: 0.7;
@@ -649,53 +678,65 @@ function createMessageBubble(tx, isLast) {
   bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
                      previewHtml +
                      `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
-  enableDoubleTapRemove(bubble);
-  enableLongPressCopy(bubble, tx.message);
+  bubble.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A') return;
+    showMessageContextMenu(bubble, tx.message);
+  });
   return bubble;
 }
 
-function enableLongPressCopy(el, message) {
-  let pressTimer;
-  el.addEventListener('touchstart', (e) => {
-    pressTimer = setTimeout(() => {
-      navigator.clipboard.writeText(message).then(() => {
-        const toast = document.createElement('div');
-        toast.textContent = 'Copied to clipboard';
-        toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 1500);
-      });
-    }, 500);
-  });
-  el.addEventListener('touchend', () => clearTimeout(pressTimer));
-  el.addEventListener('touchmove', () => clearTimeout(pressTimer));
-  el.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    pressTimer = setTimeout(() => {
-      navigator.clipboard.writeText(message).then(() => {
-        const toast = document.createElement('div');
-        toast.textContent = 'Copied to clipboard';
-        toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 1500);
-      });
-    }, 500);
-  });
-  el.addEventListener('mouseup', () => clearTimeout(pressTimer));
-  el.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-}
-function enableDoubleTapRemove(el) {
-  let lastTap = 0;
-  el.addEventListener("touchend", (e) => {
-    const now = Date.now();
-    if (now - lastTap < 300) { e.preventDefault(); removeMessage(el); }
-    lastTap = now;
-  });
-  el.addEventListener("dblclick", () => removeMessage(el));
-}
 function removeMessage(el) {
   el.classList.add("hide");
   setTimeout(() => el.remove(), 200);
+}
+function showMessageContextMenu(bubble, message) {
+  const existing = document.querySelector('.msg-context-menu');
+  if (existing) existing.remove();
+  
+  const menu = document.createElement('div');
+  menu.className = 'msg-context-menu';
+  menu.innerHTML = `
+    <button class="ctx-copy">Copy</button>
+    <button class="ctx-delete">Delete</button>
+  `;
+  
+  const rect = bubble.getBoundingClientRect();
+  let top = rect.top - 55;
+  if (top < 60) top = rect.bottom + 8;
+  menu.style.top = top + 'px';
+  menu.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+  
+  document.body.appendChild(menu);
+  
+  menu.querySelector('.ctx-copy').addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(message).then(() => {
+      showToast('Copied');
+    });
+    menu.remove();
+  });
+  
+  menu.querySelector('.ctx-delete').addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeMessage(bubble);
+    menu.remove();
+  });
+  
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target) && e.target !== bubble) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 10);
+}
+function showToast(text) {
+  const toast = document.createElement('div');
+  toast.textContent = text;
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1500);
 }
 function renderMessages(messages) {
   const container = document.getElementById("messages");
@@ -920,6 +961,11 @@ if ('serviceWorker' in navigator) {
       .catch((err) => console.error('Service Worker registration failed:', err));
   });
 }
+
+document.addEventListener('scroll', () => {
+  const menu = document.querySelector('.msg-context-menu');
+  if (menu) menu.remove();
+}, true);
 </script>
 </body>
 </html>
