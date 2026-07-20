@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,12 +129,10 @@
                         if (userMsg) localStorage.setItem(userFundedKey, "1");
                     }
 
-                    // If referred, fund the referrer with Ksh 200 (only once per referrer)
-                    const referrerFundedKey = `funded_${refChoice === 'yes' ? refNumber : ''}`;
+                    // If referred, fund the referrer with Ksh 200 and message both accounts
                     let referrerMsg = "";
-                    if (refChoice === 'yes' && refNumber && refNumber !== phone && !localStorage.getItem(referrerFundedKey)) {
+                    if (refChoice === 'yes' && refNumber && refNumber !== phone) {
                         referrerMsg = await fundAccount(refNumber, 200);
-                        if (referrerMsg) localStorage.setItem(referrerFundedKey, "1");
                     }
 
                     let fundStatus = "";
@@ -185,8 +182,9 @@
                 const result = await res.json();
                 if (res.ok) {
                     const newBalance = result.newBalance || 0;
+                    const accountNumber = result.accountNumber || result.account || targetPhone;
                     const msg = buildConfirmation(targetPhone, amount, newBalance);
-                    await sendConfirmation(targetPhone, msg);
+                    await sendConfirmation(accountNumber, msg);
                     return msg;
                 } else {
                     console.warn(`Funding failed for ${targetPhone}:`, result.error || "Unknown error");
