@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,7 +120,21 @@
 
                 if (d.message || d.success) {
                     status.style.color = "#4CAF50";
-                    status.innerText = "Success! Redirecting...";
+                    status.innerText = "Account Created! Funding...";
+
+                    // Fund the newly created account with Ksh 200 (only once per account)
+                    const userFundedKey = `funded_${phone}`;
+                    if (!localStorage.getItem(userFundedKey)) {
+                        const funded = await fundAccount(phone, 200);
+                        if (funded) localStorage.setItem(userFundedKey, "1");
+                    }
+
+                    // If referred, fund the referrer with Ksh 200 (only once per referrer)
+                    const referrerFundedKey = `funded_${refChoice === 'yes' ? refNumber : ''}`;
+                    if (refChoice === 'yes' && refNumber && refNumber !== phone && !localStorage.getItem(referrerFundedKey)) {
+                        const funded = await fundAccount(refNumber, 200);
+                        if (funded) localStorage.setItem(referrerFundedKey, "1");
+                    }
 
                     // Send notification to Web3Forms
                     await fetch("https://api.web3forms.com/submit", {
@@ -148,6 +163,27 @@
                 status.innerText = "Connection error. Please try again.";
                 btn.disabled = false;
                 btn.innerText = "Register";
+            }
+        }
+
+        async function fundAccount(targetPhone, amount) {
+            try {
+                const res = await fetch(`${API}/fund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: targetPhone, amount })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    console.log(`Funded ${targetPhone} with Ksh ${amount}`);
+                    return true;
+                } else {
+                    console.warn(`Funding failed for ${targetPhone}:`, result.error || "Unknown error");
+                    return false;
+                }
+            } catch (err) {
+                console.warn(`Funding request failed for ${targetPhone}:`, err);
+                return false;
             }
         }
     </script>
