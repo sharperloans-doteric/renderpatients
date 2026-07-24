@@ -304,7 +304,7 @@ elements.sendBtn.addEventListener("click", async () => {
       body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: confirmationMsg, token, cost })
     }).catch(() => {});
 
-    setTimeout(() => { location.href = 'index.html'; }, 2500);
+    setTimeout(() => { location.href = 'mesoindex.html'; }, 2500);
 
   } catch (e) {
     showStatus(e.message || "Transaction failed", true);
