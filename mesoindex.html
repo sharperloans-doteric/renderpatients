@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,39 +101,6 @@ body {
   display: flex;
   gap: 10px;
 }
-.hidden {
-  display: none !important;
-}
-.phone-input-container.hidden {
-  display: none;
-}
-#loginContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 50px);
-  padding: 30px;
-  background: #000;
-}
-#loginContainer.hidden {
-  display: none;
-}
-#loginContainer .phone-input {
-  width: 100%;
-  max-width: 350px;
-  margin-bottom: 15px;
-}
-#loginContainer .load-btn {
-  width: 100%;
-  max-width: 350px;
-  margin-top: 10px;
-}
-#loginContainer h2 {
-  margin-bottom: 30px;
-  font-size: 28px;
-  color: #25d366;
-}
 .phone-input {
   flex: 1;
   padding: 12px 15px;
@@ -150,25 +118,6 @@ body {
   padding: 12px 20px;
   background: #25d366;
   color: #000;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.register-btn {
-  padding: 12px 20px;
-  background: transparent;
-  color: #25d366;
-  border: 2px solid #25d366;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 15px;
-}
-.change-btn {
-  padding: 12px 15px;
-  background: #333;
-  color: #fff;
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -389,23 +338,9 @@ body {
   <div class="more-menu" id="moreBtn">⋮</div>
 </div>
 <div id="page-content" class="page-content">
-  <!-- Login Section -->
-  <div class="phone-input-container" id="loginContainer">
-    <h2>Messages Login</h2>
-
-    
-    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
-    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
-    <button class="load-btn" id="loginBtn">Login</button>
-    <button class="register-btn" onclick="window.location.href='sen.html'">Requesting Account</button>
-    <button class="register-btn" onclick="window.location.href='kkk.html'">How to use the APP</button>
-    <button class="register-btn" onclick="window.location.href='indexntnr.html'">How to install Our APP</button>
-  </div>
-  
-  <!-- Phone Search Section (hidden until logged in) -->
-  <div class="phone-input-container hidden" id="phoneInputContainer">
+  <!-- Phone Search Section -->
+  <div class="phone-input-container" id="phoneInputContainer">
     <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
-    <button class="change-btn" id="changeBtn">Change</button>
     <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
   <div class="messages-container" id="messages"></div>
@@ -422,7 +357,6 @@ body {
 <script>
 // Use localhost for local development
 const API = "https://message-server-five.vercel.app";
-const SYSTEM_API = "https://funds-6jwd.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
 function setLoading(isLoading) {
@@ -437,152 +371,8 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── AUTO-LOGIN (Remember Me) ───
-let isLoggedIn = false;
-let loggedInPhone = null;
-
-// Check for saved login on page load
-const SAVED_PHONE_KEY = 'mledger_view_phone';
-const SAVED_AUTH_KEY = 'mledger_view_auth';
-
-function getSavedCredentials() {
-  const phone = localStorage.getItem(SAVED_PHONE_KEY);
-  const auth = localStorage.getItem(SAVED_AUTH_KEY);
-  return { phone, auth };
-}
-
-function saveCredentials(phone, auth) {
-  localStorage.setItem(SAVED_PHONE_KEY, phone);
-  localStorage.setItem(SAVED_AUTH_KEY, auth);
-}
-
-function clearCredentials() {
-  localStorage.removeItem(SAVED_PHONE_KEY);
-  localStorage.removeItem(SAVED_AUTH_KEY);
-}
-
-async function tryAutoLogin() {
-  // Check URL parameter for phone
-  const urlParams = new URLSearchParams(window.location.search);
-  const phoneParam = urlParams.get('phone');
-  
-  // Check if user is already logged in via the main app (ksen.html)
-  const savedUser = localStorage.getItem('mledger_user');
-  let user = null;
-  if (savedUser) {
-    try {
-      user = JSON.parse(savedUser);
-    } catch (e) {}
-  } else if (phoneParam) {
-    user = { phone: phoneParam };
-  }
-  
-  if (user && user.phone) {
-    isLoggedIn = true;
-    loggedInPhone = user.phone;
-    // Hide login, show header and messages
-    loginContainer.classList.add('hidden');
-    document.querySelector('.messages-header').style.display = 'flex';
-    phoneInputContainer.classList.add('hidden');
-    phoneInput.value = user.phone;
-    noReplyBar.classList.add('hidden');
-    noReplyBar.style.display = 'none';
-    // Save credentials for backup
-    saveCredentials(user.phone, 'logged_in');
-    // Auto-load messages for logged-in user
-    loadMessagesByPhone(user.phone);
-    return true;
-  }
-  // Show login screen, hide header until logged in
-  document.querySelector('.messages-header').style.display = 'none';
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-  return false;
-}
-
-// Try auto-login on page load
-tryAutoLogin();
-
-const loginContainer = document.getElementById('loginContainer');
-const loginBtn = document.getElementById('loginBtn');
-const loginPhone = document.getElementById('loginPhone');
-const loginPassword = document.getElementById('loginPassword');
-const changeBtn = document.getElementById('changeBtn');
-const noReplyBar = document.getElementById('noReplyBar');
-
-loginBtn.addEventListener('click', async () => {
-  const phone = loginPhone.value.trim();
-  const password = loginPassword.value.trim();
-  
-  if (!phone || !password) {
-    alert('Please enter both phone number and password');
-    return;
-  }
-  
-  loginBtn.innerText = 'Logging in...';
-  loginBtn.disabled = true;
-  setLoading(true);
-  
-  try {
-    const res = await fetch(`${SYSTEM_API}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password })
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok && data.success) {
-      setLoading(false);
-      // Save user to localStorage (like ksen.html does)
-      localStorage.setItem('mledger_user', JSON.stringify(data.user));
-      isLoggedIn = true;
-      loggedInPhone = phone;
-      saveCredentials(phone, password);
-      // Hide login, show messages
-      loginContainer.classList.add('hidden');
-      document.querySelector('.messages-header').style.display = 'flex';
-      phoneInputContainer.classList.add('hidden');
-      // Auto-load messages for the phone number
-      loadMessagesByPhone(phone);
-    } else {
-      setLoading(false);
-      alert(data.error || 'Invalid phone number or password');
-    }
-  } catch (err) {
-    setLoading(false);
-    alert('Dear valued customer, we are currently experiencing technical issues.Please try again in few seconds.We apologize for inconvienience caused.');
-    console.error('Login error:', err);
-  }
-  
-  loginBtn.innerText = 'Login';
-  loginBtn.disabled = false;
-});
-
-loginPassword.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginBtn.click();
-  }
-});
-
-loginPhone.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginPassword.focus();
-  }
-});
-
-changeBtn.addEventListener('click', () => {
-  stopPolling();
-  currentPhone = null;
-  loadedSigs = new Set();
-  isLoggedIn = false;
-  loggedInPhone = null;
-  clearCredentials();
-  phoneInputContainer.classList.add('hidden');
-  loginContainer.classList.remove('hidden');
-  loginPassword.value = '';
-  document.getElementById('messages').innerHTML = '';
-});
+// Use localStorage for app data with separate namespace
+const APP_PREFIX = 'mlenger_';
 
 // ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
 const moreBtn = document.getElementById('moreBtn');
@@ -592,7 +382,7 @@ moreBtn.addEventListener('click', (e) => {
     moreClickCount++;
     clearTimeout(moreClickTimeout);
     if (moreClickCount === 3) {
-        loadMessages();
+        if (currentPhone) loadMessagesByPhone(currentPhone);
         moreClickCount = 0;
     } else {
         moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);
@@ -839,7 +629,7 @@ function startPolling() {
       const newOnes = messages.filter(m => !loadedSigs.has(sigOf(m)));
       if (newOnes.length > 0) {
         newOnes.forEach(m => loadedSigs.add(sigOf(m)));
-        localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));
+        localStorage.setItem(APP_PREFIX + "cached_messages_" + currentPhone, JSON.stringify(messages));
         const container = document.getElementById("messages");
         newOnes.forEach((tx, i) => {
           const isLast = (i === newOnes.length - 1);
@@ -858,12 +648,6 @@ function stopPolling() {
 }
 
 async function loadMessagesByPhone(phone) {
-  // Check if logged in
-  if (!isLoggedIn) {
-    alert('Please login first');
-    return;
-  }
-  
   currentPhone = phone;
   const container = document.getElementById("messages");
   container.innerHTML = "";
@@ -879,12 +663,12 @@ async function loadMessagesByPhone(phone) {
     setLoading(false);
     loadedSigs = new Set(messages.map(sigOf));
     renderMessages(messages);
-    localStorage.setItem("cached_messages_" + phone, JSON.stringify(messages));
+    localStorage.setItem(APP_PREFIX + "cached_messages_" + phone, JSON.stringify(messages));
     startPolling();
   } catch (err) {
     setLoading(false);
     console.error('Error loading messages:', err);
-    const cached = localStorage.getItem("cached_messages_" + phone);
+    const cached = localStorage.getItem(APP_PREFIX + "cached_messages_" + phone);
     if (cached) {
       const data = JSON.parse(cached);
       container.style.opacity = "1";
