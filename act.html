@@ -6,159 +6,539 @@
     <title>SIM ToolKit</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000000;
-            color: #ffffff;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: clamp(16px, 4.2vw, 20px);
-            line-height: 1.5;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .container {
-            flex: 1;
-            padding: clamp(30px, 8vw, 60px) clamp(16px, 5vw, 30px) clamp(20px, 6vw, 40px);
-            text-align: left;
-        }
-        .menu-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .menu-item {
-            padding: clamp(14px, 4vw, 22px) 0;
-            cursor: pointer;
-            user-select: none;
-        }
-        .menu-item:hover,
-        .menu-item:active {
-            background: #111111;
-        }
-        .menu-item.special {
-            color: #ffffff;
+        :root {
+            --bg: #0a0a0f;
+            --card: #14141c;
+            --card-hover: #1c1c28;
+            --border: #2a2a3a;
+            --text: #f0f0f5;
+            --muted: #9a9ab0;
+            --green: #00c853;
+            --green-dark: #00a844;
+            --blue: #2979ff;
+            --purple: #aa00ff;
+            --orange: #ff6d00;
+            --pink: #f50057;
+            --cyan: #00e5ff;
+            --yellow: #ffd600;
+            --red: #ff1744;
         }
 
-        /* Modal styling for both menus */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 16px;
+            line-height: 1.4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(ellipse at top left, rgba(0, 200, 83, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(41, 121, 255, 0.08) 0%, transparent 50%);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 18px 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(20,20,28,0.95) 0%, transparent 100%);
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.35);
+        }
+
+        .logo-text span {
+            background: linear-gradient(90deg, var(--green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main container */
+        .container {
+            flex: 1;
+            padding: 18px 14px 30px;
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--muted);
+            margin: 18px 0 10px 4px;
+            font-weight: 600;
+        }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 15px 16px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 14px 0 0 14px;
+            transition: width 0.22s ease;
+        }
+
+        .menu-item:hover,
+        .menu-item:active {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .menu-item:active {
+            transform: translateY(0);
+        }
+
+        /* Accent colors for each item */
+        .menu-item.green::before { background: var(--green); }
+        .menu-item.blue::before { background: var(--blue); }
+        .menu-item.purple::before { background: var(--purple); }
+        .menu-item.orange::before { background: var(--orange); }
+        .menu-item.pink::before { background: var(--pink); }
+        .menu-item.cyan::before { background: var(--cyan); }
+        .menu-item.yellow::before { background: var(--yellow); }
+        .menu-item.red::before { background: var(--red); }
+
+        .menu-item.green:hover { border-color: rgba(0, 200, 83, 0.4); }
+        .menu-item.blue:hover { border-color: rgba(41, 121, 255, 0.4); }
+        .menu-item.purple:hover { border-color: rgba(170, 0, 255, 0.4); }
+        .menu-item.orange:hover { border-color: rgba(255, 109, 0, 0.4); }
+        .menu-item.pink:hover { border-color: rgba(245, 0, 87, 0.4); }
+        .menu-item.cyan:hover { border-color: rgba(0, 229, 255, 0.4); }
+        .menu-item.yellow:hover { border-color: rgba(255, 214, 0, 0.4); }
+        .menu-item.red:hover { border-color: rgba(255, 23, 68, 0.4); }
+
+        .icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .menu-item.green .icon-box { background: rgba(0, 200, 83, 0.15); color: var(--green); }
+        .menu-item.blue .icon-box { background: rgba(41, 121, 255, 0.15); color: var(--blue); }
+        .menu-item.purple .icon-box { background: rgba(170, 0, 255, 0.15); color: var(--purple); }
+        .menu-item.orange .icon-box { background: rgba(255, 109, 0, 0.15); color: var(--orange); }
+        .menu-item.pink .icon-box { background: rgba(245, 0, 87, 0.15); color: var(--pink); }
+        .menu-item.cyan .icon-box { background: rgba(0, 229, 255, 0.15); color: var(--cyan); }
+        .menu-item.yellow .icon-box { background: rgba(255, 214, 0, 0.15); color: var(--yellow); }
+        .menu-item.red .icon-box { background: rgba(255, 23, 68, 0.15); color: var(--red); }
+
+        .item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .item-desc {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .arrow {
+            color: var(--muted);
+            font-size: 1.1rem;
+            opacity: 0.6;
+            transition: transform 0.2s ease, opacity 0.2s;
+        }
+
+        .menu-item:hover .arrow {
+            opacity: 1;
+            transform: translateX(3px);
+        }
+
+        /* Special highlight for My Account */
+        .menu-item.special {
+            background: linear-gradient(135deg, rgba(0, 200, 83, 0.12), rgba(0, 229, 255, 0.08));
+            border-color: rgba(0, 200, 83, 0.35);
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.92);
-            z-index: 10;
-            align-items: flex-start;
-            justify-content: flex-start;
-            padding: clamp(40px, 10vw, 80px) clamp(16px, 5vw, 30px) 0;
-        }
-        .sub-content {
-            background: #000000;
-            border: 1px solid #222222;
-            width: 100%;
-            max-width: 380px;
-            padding: clamp(20px, 6vw, 28px) clamp(14px, 4vw, 20px);
-            color: #ffffff;
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            text-align: left;
-        }
-        .sub-title {
-            color: #ffffff;
-            font-weight: bold;
-            margin-bottom: clamp(16px, 5vw, 24px);
-            font-size: clamp(16px, 4.2vw, 20px);
-        }
-        .sub-item {
-            padding: clamp(14px, 4vw, 20px) 0;
-            cursor: pointer;
-        }
-        .sub-item:hover {
-            background: #111111;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+            animation: fadeIn 0.25s ease;
         }
 
-        @media (min-width: 768px) {
-            body {
-                font-size: 22px;
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .sub-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 480px;
+            padding: 22px 16px 30px;
+            color: var(--text);
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sub-title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .sub-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .sub-item:hover {
+            background: var(--card-hover);
+            border-color: rgba(0, 200, 83, 0.4);
+            transform: translateX(4px);
+        }
+
+        .sub-item .sub-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: rgba(0, 200, 83, 0.12);
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .sub-item span {
+            font-weight: 500;
+            font-size: 0.92rem;
+        }
+
+        /* Footer note */
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.7rem;
+            color: var(--muted);
+            opacity: 0.7;
+        }
+
+        @media (min-width: 480px) {
             .container {
-                max-width: 500px;
-                margin: 0;
+                padding: 24px 20px 40px;
+            }
+            .menu-item {
+                padding: 16px 18px;
             }
             .sub-content {
-                max-width: 420px;
+                border-radius: 20px;
+                margin-bottom: 20px;
             }
             .modal {
-                padding-left: clamp(20px, 8vw, 100px);
+                align-items: center;
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">📡</div>
+            <div class="logo-text">SIM <span>ToolKit</span></div>
+        </div>
+        <div class="subtitle">Quick Access • Secure • Fast</div>
+    </div>
 
     <div class="container">
+        <div class="section-label">Main Services</div>
         <ul class="menu-list">
-            <li class="menu-item">SIM ToolKit</li>
-            <li class="menu-item" onclick="location.href='send.html'">Send Money</li>
-            <li class="menu-item" onclick="location.href='withdraw.html'">Withdraw Cash</li>
-            <li class="menu-item" onclick="location.href='fund.html'">Buy Airtime</li>
-            <li class="menu-item">Loans and Savings</li>
-            <li class="menu-item" onclick="toggleModal('lipaModal', true)">Lipa na M-PESA</li>
-            <li class="menu-item special" onclick="toggleModal('accountModal', true)">My Account</li>
-              <li class="menu-item" onclick="location.href='mesoindex.html'">messages</li>
-            <li class="menu-item" onclick="location.href='ksen.html'">Referals and earnings</li>
+            <li class="menu-item green" onclick="location.href='send.html'">
+                <div class="icon-box">💸</div>
+                <div class="item-content">
+                    <div class="item-title">Send Money</div>
+                    <div class="item-desc">Transfer to any number</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item blue" onclick="location.href='withdraw.html'">
+                <div class="icon-box">🏧</div>
+                <div class="item-content">
+                    <div class="item-title">Withdraw Cash</div>
+                    <div class="item-desc">Agent or ATM withdrawal</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item orange" onclick="location.href='fund.html'">
+                <div class="icon-box">📱</div>
+                <div class="item-content">
+                    <div class="item-title">Buy Airtime</div>
+                    <div class="item-desc">Top-up for self or others</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item purple">
+                <div class="icon-box">💰</div>
+                <div class="item-content">
+                    <div class="item-title">Loans and Savings</div>
+                    <div class="item-desc">M-Shwari, Fuliza & more</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item cyan" onclick="toggleModal('lipaModal', true)">
+                <div class="icon-box">🏪</div>
+                <div class="item-content">
+                    <div class="item-title">Lipa na M-PESA</div>
+                    <div class="item-desc">Paybill • Till • Pochi</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+        </ul>
+
+        <div class="section-label">Account & Tools</div>
+        <ul class="menu-list">
+            <li class="menu-item special green" onclick="toggleModal('accountModal', true)">
+                <div class="icon-box">👤</div>
+                <div class="item-content">
+                    <div class="item-title">My Account</div>
+                    <div class="item-desc">Scans, messages & tools</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item pink" onclick="location.href='mesoindex.html'">
+                <div class="icon-box">💬</div>
+                <div class="item-content">
+                    <div class="item-title">Messages</div>
+                    <div class="item-desc">View transaction history</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
+
+            <li class="menu-item yellow" onclick="location.href='ksen.html'">
+                <div class="icon-box">🎁</div>
+                <div class="item-content">
+                    <div class="item-title">Referrals & Earnings</div>
+                    <div class="item-desc">Invite friends & earn</div>
+                </div>
+                <div class="arrow">›</div>
+            </li>
         </ul>
     </div>
 
+    <!-- Lipa na M-PESA Modal -->
     <div id="lipaModal" class="modal" onclick="closeOnOutsideClick(event, 'lipaModal')">
-        <div class="sub-content">
-            <div class="sub-title">Lipa na M-PESA</div>
-            <div class="sub-item" onclick="location.href='paybill.html'">Paybill Number</div>
-            <div class="sub-item" onclick="location.href='till.html'">Till Number</div>
-            <div class="sub-item" onclick="location.href='pochi.html'">Pochi la Biashara</div>
+        <div class="sub-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="sub-title">🏪 Lipa na M-PESA</div>
+                <button class="close-btn" onclick="toggleModal('lipaModal', false)">×</button>
+            </div>
+            <div class="sub-item" onclick="location.href='paybill.html'">
+                <div class="sub-icon">📋</div>
+                <span>Paybill Number</span>
+            </div>
+            <div class="sub-item" onclick="location.href='till.html'">
+                <div class="sub-icon">🏪</div>
+                <span>Till Number</span>
+            </div>
+            <div class="sub-item" onclick="location.href='pochi.html'">
+                <div class="sub-icon">💼</div>
+                <span>Pochi la Biashara</span>
+            </div>
         </div>
     </div>
 
+    <!-- My Account Modal -->
     <div id="accountModal" class="modal" onclick="closeOnOutsideClick(event, 'accountModal')">
-        <div class="sub-content">
-            <div class="sub-title">My Account</div>
-            <div class="sub-item" onclick="location.href='tillse.html'">Till scan using airtelmoney</div>
-            <div class="sub-item" onclick="location.href='se.html'">Send scan using airtelmoney</div>
-            <div class="sub-item" onclick="location.href='w.html'">Withdrawal scan</div>
-            <div class="sub-item" onclick="location.href='me.html'">Message Capture</div>
-            <div class="sub-item" onclick="location.href='mm.html'">Send and pochi scan </div>
-            
-            <div class="sub-item" onclick="location.href='ttil.html'">Till scan M </div>
-         
+        <div class="sub-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="sub-title">👤 My Account</div>
+                <button class="close-btn" onclick="toggleModal('accountModal', false)">×</button>
+            </div>
+            <div class="sub-item" onclick="location.href='tillse.html'">
+                <div class="sub-icon">📡</div>
+                <span>Till scan using Airtel Money</span>
+            </div>
+            <div class="sub-item" onclick="location.href='se.html'">
+                <div class="sub-icon">📤</div>
+                <span>Send scan using Airtel Money</span>
+            </div>
+            <div class="sub-item" onclick="location.href='w.html'">
+                <div class="sub-icon">🏧</div>
+                <span>Withdrawal scan</span>
+            </div>
+            <div class="sub-item" onclick="location.href='me.html'">
+                <div class="sub-icon">📝</div>
+                <span>Message Capture</span>
+            </div>
+            <div class="sub-item" onclick="location.href='mm.html'">
+                <div class="sub-icon">🔄</div>
+                <span>Send and Pochi scan</span>
+            </div>
+            <div class="sub-item" onclick="location.href='ttil.html'">
+                <div class="sub-icon">🔍</div>
+                <span>Till scan M</span>
+            </div>
         </div>
     </div>
+
+    <div class="footer">SIM ToolKit • Secure Access</div>
 
     <script>
-        // Generic function to show/hide modals
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
             modal.style.display = show ? 'flex' : 'none';
+            document.body.style.overflow = show ? 'hidden' : '';
         }
 
-        // Close modal if user clicks outside the content box
         function closeOnOutsideClick(event, modalId) {
             if (event.target.id === modalId) {
                 toggleModal(modalId, false);
             }
         }
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                toggleModal('lipaModal', false);
+                toggleModal('accountModal', false);
+            }
+        });
     </script>
-    
+
+    <!-- Ads scripts kept as original -->
     <script>
-  atOptions = {
-    'key' : '5c29cf8965fdda07888a3ab31fd6608b',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/5c29cf8965fdda07888a3ab31fd6608b/invoke.js"></script>
-   <script>(function(s){s.dataset.zone='10273697',s.src='https://izcle.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-<script>(function(s){s.dataset.zone='10271492',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+        atOptions = {
+            'key': '5c29cf8965fdda07888a3ab31fd6608b',
+            'format': 'iframe',
+            'height': 50,
+            'width': 320,
+            'params': {}
+        };
+    </script>
+    <script src="https://www.highperformanceformat.com/5c29cf8965fdda07888a3ab31fd6608b/invoke.js"></script>
+    <script>(function(s){s.dataset.zone='10273697',s.src='https://izcle.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <script>(function(s){s.dataset.zone='10271492',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 </body>
 </html>
