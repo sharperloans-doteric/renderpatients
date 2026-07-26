@@ -83,16 +83,6 @@ body {
   padding-bottom: 30px;
   padding-top: 50px;
 }
-.messages-container {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 200px;
-  max-height: calc(100vh - 100px);
-  padding: 10px;
-  padding-bottom: 25px;
-  display: flex;
-  flex-direction: column;
-}
 .phone-input-container {
   padding: 15px;
   background: #201f1f;
@@ -177,6 +167,7 @@ body {
 .messages-container {
   background: #000;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
@@ -184,7 +175,6 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  max-height: calc(100vh - 100px);
 }
 .message-bubble {
   max-width: 95%;
