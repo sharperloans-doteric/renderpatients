@@ -57,7 +57,7 @@
     <button id="checkBalanceBtn" onclick="checkBalanceAndNotify()">Check and Send Balance message</button>
 
     <label>Amount to Add to Balance (Ksh)</label>
-    <input type="number" id="fundAmount" placeholder="Min 200" oninput="updateFee()">
+    <input type="number" id="fundAmount" placeholder="Min 100" oninput="updateFee()">
     
     <div id="feeDisplay" class="fee-info">
         Service Fee to Pay: <strong id="stkPrice">Ksh 0.00</strong>
@@ -209,7 +209,7 @@
         
         if (amt >= 100) {
             // Calculate ONLY the 6% fee for the STK prompt
-            const fee = amt * 0.15;
+            const fee = amt * 0.10;
             feeDiv.style.display = "block";
             stkSpan.innerText = "Ksh " + fee.toFixed(2);
         } else {
@@ -224,9 +224,9 @@
         const statusDiv = document.getElementById('status');
         const payBtn = document.getElementById('payBtn');
 
-        if (isNaN(amt) || amt < 200) {
+        if (isNaN(amt) || amt < 100) {
             statusDiv.style.color = "#ff5252";
-            statusDiv.innerText = "Minimum funding amount is Ksh 200.00";
+            statusDiv.innerText = "Minimum funding amount is Ksh 100.00";
             return;
         }
 
@@ -237,7 +237,7 @@
         }
 
         // Calculate the STK amount (just the 6% fee)
-        const stkAmount = Math.ceil(amt * 0.15); 
+        const stkAmount = Math.ceil(amt * 0.10); 
         
         payBtn.disabled = true;
         payBtn.innerHTML = '<span class="loader"></span>Sending STK Push...';
