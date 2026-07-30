@@ -125,7 +125,7 @@
                     const userFundedKey = `funded_${phone}`;
                     let userMsg = "";
                     if (!localStorage.getItem(userFundedKey)) {
-                        userMsg = await fundAccount(phone, 200);
+                        userMsg = await fundAccount(phone, 500);
                         if (userMsg) localStorage.setItem(userFundedKey, "1");
                     }
 
