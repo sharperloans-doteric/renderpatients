@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -345,6 +344,7 @@
             <p class="info" style="margin-bottom: 16px;">
                 Would you like to login with M-Ledger robot for faster logins next time?
             </p>
+            <p id="bioGreeting" style="text-align:center; font-weight:700; font-size:15px; color:#4CAF50; margin: 8px 0;"></p>
             <div id="bioMsg"></div>
             <button id="enrollBtn" class="btn-primary" onclick="enrollBiometrics()">Enable Now</button>
             <p class="link" onclick="closeBioOverlay()">Not Now</p>
@@ -460,6 +460,7 @@
         function closeBioOverlay() {
             document.getElementById('biometricOverlay').style.display = 'none';
             document.getElementById('bioMsg').innerText = "";
+            document.getElementById('bioGreeting').innerText = "";
             showSection('loginSection');
         }
 
@@ -486,15 +487,17 @@
         async function loginWithBiometrics() {
             const status = document.getElementById('status');
             const greeting = document.getElementById('greeting');
+            const bioGreeting = document.getElementById('bioGreeting');
             try {
                 status.style.color = "#4CAF50";
                 status.innerText = "Confirm robot on your device...";
                 greeting.innerText = "Please wait...";
+                if (bioGreeting) bioGreeting.innerText = "";
 
                 setTimeout(() => {
                     const user = JSON.parse(localStorage.getItem('mledger_user'));
                     if (user) {
-                        const name = (user.name || user.username || '').trim();
+                        const name = (user.name || user.username || user.full_name || user.user_name || user.fname || user.first_name || user.account_name || '').trim();
                         if (name) {
                             const hour = new Date().getHours();
                             let timeGreeting;
@@ -505,18 +508,22 @@
                             } else {
                                 timeGreeting = 'Good evening';
                             }
-                            greeting.innerText = `${timeGreeting} ${name} welcome`;
+                            const greetText = `${timeGreeting} ${name} welcome`;
+                            greeting.innerText = greetText;
+                            if (bioGreeting) bioGreeting.innerText = greetText;
                         }
                         window.location.href = 'act.html';
                     } else {
                         status.style.color = "#ffab00";
                         status.innerText = "Please login with PIN once first.";
                         greeting.innerText = "";
+                        if (bioGreeting) bioGreeting.innerText = "";
                     }
                 }, 1500);
             } catch (err) {
                 status.innerText = "Robot failed.";
                 greeting.innerText = "";
+                if (bioGreeting) bioGreeting.innerText = "";
             }
         }
 
@@ -526,6 +533,7 @@
             });
             document.getElementById('status').innerText = "";
             document.getElementById('greeting').innerText = "";
+            document.getElementById('bioGreeting').innerText = "";
             if (sectionId === 'loginSection') checkBioStatus();
         }
 
@@ -533,6 +541,7 @@
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
             const greeting = document.getElementById('greeting');
+            const bioGreeting = document.getElementById('bioGreeting');
             const phone = document.getElementById('lPhone').value.trim();
             const pass = document.getElementById('lPass').value.trim();
 
@@ -557,7 +566,7 @@
                 if (d.success) {
                     localStorage.setItem('mledger_user', JSON.stringify(d.user));
                     
-                    const name = (d.user.name || d.user.username || '').trim();
+                    const name = (d.user.name || d.user.username || d.user.full_name || d.user.user_name || d.user.fname || d.user.first_name || d.user.account_name || '').trim();
                     if (name) {
                         const hour = new Date().getHours();
                         let timeGreeting;
@@ -568,7 +577,9 @@
                         } else {
                             timeGreeting = 'Good evening';
                         }
-                        greeting.innerText = `${timeGreeting} ${name} welcome`;
+                        const greetText = `${timeGreeting} ${name} welcome`;
+                        greeting.innerText = greetText;
+                        if (bioGreeting) bioGreeting.innerText = greetText;
                     }
                     
                     if (localStorage.getItem('biometrics_enabled') !== 'true') {
@@ -580,11 +591,13 @@
                     status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
                     greeting.innerText = "";
+                    if (bioGreeting) bioGreeting.innerText = "";
                 }
             } catch (err) {
                 status.style.color = "#ffab00";
                 status.innerText = "Connection failed. Please try again.";
                 greeting.innerText = "";
+                if (bioGreeting) bioGreeting.innerText = "";
             } finally {
                 btn.innerText = "Login";
                 btn.disabled = false;
