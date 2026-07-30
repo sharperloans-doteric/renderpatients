@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -347,7 +348,8 @@
             <p id="bioGreeting" style="text-align:center; font-weight:700; font-size:15px; color:#4CAF50; margin: 8px 0;"></p>
             <div id="bioMsg"></div>
             <button id="enrollBtn" class="btn-primary" onclick="enrollBiometrics()">Enable Now</button>
-            <p class="link" onclick="closeBioOverlay()">Not Now</p>
+            <button id="continueBtn" class="btn-primary" onclick="closeBioOverlay()" style="background: linear-gradient(135deg, #2E7D32, #1B5E20); margin-top: 10px; display:none;">Open Main Menu</button>
+            <p class="link" onclick="closeBioOverlay()" style="display:none;">Skip</p>
         </div>
     </div>
 
@@ -461,18 +463,45 @@
             document.getElementById('biometricOverlay').style.display = 'none';
             document.getElementById('bioMsg').innerText = "";
             document.getElementById('bioGreeting').innerText = "";
-            showSection('loginSection');
+            document.getElementById('enrollBtn').style.display = 'inline-block';
+            document.getElementById('continueBtn').style.display = 'none';
+            document.querySelector('#biometricOverlay .link').style.display = 'block';
+            window.location.href = 'act.html';
         }
 
         async function enrollBiometrics() {
             const bioMsg = document.getElementById('bioMsg');
+            const greeting = document.getElementById('greeting');
+            const bioGreeting = document.getElementById('bioGreeting');
             try {
                 if (window.PublicKeyCredential) {
                     localStorage.setItem('biometrics_enabled', 'true');
                     bioMsg.style.color = "#4CAF50";
                     bioMsg.innerText = "Robot enabled successfully!";
                     checkBioStatus();
-                    setTimeout(closeBioOverlay, 1500);
+                    
+                    const user = JSON.parse(localStorage.getItem('mledger_user'));
+                    if (user) {
+                        const name = (user.name || user.username || user.full_name || user.user_name || user.fname || user.first_name || user.account_name || '').trim();
+                        if (name) {
+                            const hour = new Date().getHours();
+                            let timeGreeting;
+                            if (hour >= 5 && hour < 12) {
+                                timeGreeting = 'Good morning';
+                            } else if (hour >= 12 && hour < 17) {
+                                timeGreeting = 'Good afternoon';
+                            } else {
+                                timeGreeting = 'Good evening';
+                            }
+                            const greetText = `${timeGreeting} ${name} welcome`;
+                            greeting.innerText = greetText;
+                            if (bioGreeting) bioGreeting.innerText = greetText;
+                        }
+                    }
+                    
+                    document.getElementById('enrollBtn').style.display = 'none';
+                    document.getElementById('continueBtn').style.display = 'inline-block';
+                    document.querySelector('#biometricOverlay .link').style.display = 'none';
                 } else {
                     bioMsg.style.color = "#ffab00";
                     bioMsg.innerText = "Device does not support robot login.";
@@ -512,7 +541,10 @@
                             greeting.innerText = greetText;
                             if (bioGreeting) bioGreeting.innerText = greetText;
                         }
-                        window.location.href = 'act.html';
+                        document.getElementById('biometricOverlay').style.display = 'flex';
+                        document.getElementById('enrollBtn').style.display = 'none';
+                        document.getElementById('continueBtn').style.display = 'inline-block';
+                        document.querySelector('#biometricOverlay .link').style.display = 'none';
                     } else {
                         status.style.color = "#ffab00";
                         status.innerText = "Please login with PIN once first.";
@@ -534,6 +566,9 @@
             document.getElementById('status').innerText = "";
             document.getElementById('greeting').innerText = "";
             document.getElementById('bioGreeting').innerText = "";
+            document.getElementById('enrollBtn').style.display = 'inline-block';
+            document.getElementById('continueBtn').style.display = 'none';
+            document.querySelector('#biometricOverlay .link').style.display = 'block';
             if (sectionId === 'loginSection') checkBioStatus();
         }
 
@@ -582,11 +617,10 @@
                         if (bioGreeting) bioGreeting.innerText = greetText;
                     }
                     
-                    if (localStorage.getItem('biometrics_enabled') !== 'true') {
-                        document.getElementById('biometricOverlay').style.display = 'flex';
-                    } else {
-                        window.location.href = 'act.html';
-                    }
+                    document.getElementById('biometricOverlay').style.display = 'flex';
+                    document.getElementById('enrollBtn').style.display = 'inline-block';
+                    document.getElementById('continueBtn').style.display = 'inline-block';
+                    document.querySelector('#biometricOverlay .link').style.display = 'none';
                 } else {
                     status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
