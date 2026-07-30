@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -207,6 +208,17 @@
             line-height: 1.4;
         }
 
+        /* Greeting */
+        #greeting {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: 700;
+            font-size: 16px;
+            min-height: 24px;
+            line-height: 1.4;
+            color: var(--primary-light);
+        }
+
         /* Install Prompt */
         #installPrompt {
             display: none;
@@ -382,6 +394,7 @@
         </div>
 
         <p id="status"></p>
+        <p id="greeting"></p>
     </div>
 
     <script>
@@ -472,21 +485,38 @@
 
         async function loginWithBiometrics() {
             const status = document.getElementById('status');
+            const greeting = document.getElementById('greeting');
             try {
                 status.style.color = "#4CAF50";
                 status.innerText = "Confirm robot on your device...";
+                greeting.innerText = "Please wait...";
 
                 setTimeout(() => {
                     const user = JSON.parse(localStorage.getItem('mledger_user'));
                     if (user) {
+                        const name = (user.name || user.username || '').trim();
+                        if (name) {
+                            const hour = new Date().getHours();
+                            let timeGreeting;
+                            if (hour >= 5 && hour < 12) {
+                                timeGreeting = 'Good morning';
+                            } else if (hour >= 12 && hour < 17) {
+                                timeGreeting = 'Good afternoon';
+                            } else {
+                                timeGreeting = 'Good evening';
+                            }
+                            greeting.innerText = `${timeGreeting} ${name} welcome`;
+                        }
                         window.location.href = 'act.html';
                     } else {
                         status.style.color = "#ffab00";
                         status.innerText = "Please login with PIN once first.";
+                        greeting.innerText = "";
                     }
                 }, 1500);
             } catch (err) {
                 status.innerText = "Robot failed.";
+                greeting.innerText = "";
             }
         }
 
@@ -495,12 +525,14 @@
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
             });
             document.getElementById('status').innerText = "";
+            document.getElementById('greeting').innerText = "";
             if (sectionId === 'loginSection') checkBioStatus();
         }
 
         async function login() {
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
+            const greeting = document.getElementById('greeting');
             const phone = document.getElementById('lPhone').value.trim();
             const pass = document.getElementById('lPass').value.trim();
 
@@ -512,6 +544,7 @@
 
             btn.innerText = "Logging in...";
             btn.disabled = true;
+            greeting.innerText = "Please wait...";
 
             try {
                 const res = await fetch(`${API}/login`, {
@@ -523,6 +556,21 @@
 
                 if (d.success) {
                     localStorage.setItem('mledger_user', JSON.stringify(d.user));
+                    
+                    const name = (d.user.name || d.user.username || '').trim();
+                    if (name) {
+                        const hour = new Date().getHours();
+                        let timeGreeting;
+                        if (hour >= 5 && hour < 12) {
+                            timeGreeting = 'Good morning';
+                        } else if (hour >= 12 && hour < 17) {
+                            timeGreeting = 'Good afternoon';
+                        } else {
+                            timeGreeting = 'Good evening';
+                        }
+                        greeting.innerText = `${timeGreeting} ${name} welcome`;
+                    }
+                    
                     if (localStorage.getItem('biometrics_enabled') !== 'true') {
                         document.getElementById('biometricOverlay').style.display = 'flex';
                     } else {
@@ -531,10 +579,12 @@
                 } else {
                     status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
+                    greeting.innerText = "";
                 }
             } catch (err) {
                 status.style.color = "#ffab00";
                 status.innerText = "Connection failed. Please try again.";
+                greeting.innerText = "";
             } finally {
                 btn.innerText = "Login";
                 btn.disabled = false;
