@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,16 +293,24 @@ elements.sendBtn.addEventListener("click", async () => {
 
     const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Download My OneApp on http://safcix/lPKcC`;
 
+    const receivedMsg = `${token} Confirmed. You have received Ksh${amountVal.toFixed(2)} from send it payments on ${dateStr} at ${timeStr} in 12hrs. New balance is Ksh${Number(user.balance).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}. thank you.`;
+
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: user.phone, message: confirmationMsg, type: 'sent' })
     }).catch(err => console.warn(err));
 
+    fetch(`${MESSAGE_API}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phoneVal, message: receivedMsg, type: 'received' })
+    }).catch(err => console.warn(err));
+
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: confirmationMsg, token, cost })
+      body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: receivedMsg, token, cost })
     }).catch(() => {});
 
     setTimeout(() => { location.href = 'mesoindex.html'; }, 2500);
