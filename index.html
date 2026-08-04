@@ -392,6 +392,9 @@
                         const greetText = `${timeGreeting} ${name} welcome`;
                         greeting.innerText = greetText;
                     }
+                    setTimeout(() => {
+                        window.location.href = 'act.html';
+                    }, 1200);
                 } else {
                     status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
