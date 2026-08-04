@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -168,23 +169,6 @@
             padding: 12px 8px;
         }
 
-        /* Quick bio button special style */
-        #quickBioBtn {
-            background: linear-gradient(135deg, rgba(46, 125, 50, 0.15), rgba(76, 175, 80, 0.08));
-            border: 1.5px solid var(--primary-light);
-            color: var(--primary-light);
-            margin-top: 12px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-
-        #quickBioBtn:hover {
-            background: linear-gradient(135deg, rgba(46, 125, 50, 0.25), rgba(76, 175, 80, 0.15));
-        }
-
         .link {
             text-align: center;
             margin-top: 16px;
@@ -263,66 +247,8 @@
             border: none;
         }
 
-        /* Biometric Overlay */
-        #biometricOverlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 12, 5, 0.92);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(6px);
-        }
-
-        .bio-card {
-            background: var(--card);
-            padding: 32px 28px;
-            border-radius: 24px;
-            text-align: center;
-            width: 85%;
-            max-width: 340px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .bio-icon {
-            font-size: 52px;
-            color: var(--primary-light);
-            margin-bottom: 16px;
-        }
-
-        .bio-card h3 {
-            color: var(--primary-light);
-            margin-bottom: 10px;
-            font-size: 1.25rem;
-        }
-
-        #bioMsg {
-            font-size: 14px;
-            margin: 12px 0 8px;
-            min-height: 20px;
-        }
-
-        .loader {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
+
 </head>
 <body>
     <!-- Install Prompt -->
@@ -337,21 +263,7 @@
         </div>
     </div>
 
-    <!-- Biometric Overlay -->
-    <div id="biometricOverlay">
-        <div class="bio-card">
-            <div class="bio-icon">☝️</div>
-            <h3>Enable Sendt--it Robot Login</h3>
-            <p class="info" style="margin-bottom: 16px;">
-                Would you like to login with Send--it robot for faster logins next time?
-            </p>
-            <p id="bioGreeting" style="text-align:center; font-weight:700; font-size:15px; color:#4CAF50; margin: 8px 0;"></p>
-            <div id="bioMsg"></div>
-            <button id="enrollBtn" class="btn-primary" onclick="enrollBiometrics()">Enable Now</button>
-            <button id="continueBtn" class="btn-primary" onclick="closeBioOverlay()" style="background: linear-gradient(135deg, #2E7D32, #1B5E20); margin-top: 10px; display:none;">Open Main Menu</button>
-            <p class="link" onclick="closeBioOverlay()" style="display:none;">Skip</p>
-        </div>
-    </div>
+
 
     <div class="box">
         <div id="loginSection">
@@ -364,11 +276,6 @@
             <!-- Main Login Button -->
             <button id="lBtn" class="btn-primary" onclick="login()">Login</button>
 
-            <!-- Quick Bio Login (appears when enabled) -->
-            <button id="quickBioBtn" class="btn-secondary" onclick="loginWithBiometrics()">
-                <span>☝️</span> Login with Send--it Robot
-            </button>
-
             <!-- Side-by-side secondary buttons -->
             <div class="btn-row">
                 <button class="btn-secondary" onclick="window.location.href='sen.html'">
@@ -378,10 +285,6 @@
                     How to Install App
                 </button>
             </div>
-
-            <p id="disableBioLink" class="link" style="display:none; color:#ef5350; text-decoration:none; font-size:13px;" onclick="disableBiometrics()">
-                Disable Send--it Robot
-            </p>
         </div>
 
         <div id="resetSection" style="display:none">
@@ -439,144 +342,18 @@
             document.getElementById('installPrompt').style.display = 'none';
         }
 
-        window.onload = () => {
-            checkBioStatus();
-        };
-
-        function checkBioStatus() {
-            const isEnabled = localStorage.getItem('biometrics_enabled') === 'true';
-            document.getElementById('quickBioBtn').style.display = isEnabled ? 'flex' : 'none';
-            document.getElementById('disableBioLink').style.display = isEnabled ? 'block' : 'none';
-        }
-
-        function disableBiometrics() {
-            if (confirm("Are you sure you want to disable robotic login?")) {
-                localStorage.removeItem('biometrics_enabled');
-                checkBioStatus();
-                document.getElementById('status').style.color = "#ffab00";
-                document.getElementById('status').innerText = "Robotic disabled.";
-                setTimeout(() => { document.getElementById('status').innerText = ""; }, 2000);
-            }
-        }
-
-        function closeBioOverlay() {
-            document.getElementById('biometricOverlay').style.display = 'none';
-            document.getElementById('bioMsg').innerText = "";
-            document.getElementById('bioGreeting').innerText = "";
-            document.getElementById('enrollBtn').style.display = 'inline-block';
-            document.getElementById('continueBtn').style.display = 'none';
-            document.querySelector('#biometricOverlay .link').style.display = 'block';
-            window.location.href = 'act.html';
-        }
-
-        async function enrollBiometrics() {
-            const bioMsg = document.getElementById('bioMsg');
-            const greeting = document.getElementById('greeting');
-            const bioGreeting = document.getElementById('bioGreeting');
-            try {
-                if (window.PublicKeyCredential) {
-                    localStorage.setItem('biometrics_enabled', 'true');
-                    bioMsg.style.color = "#4CAF50";
-                    bioMsg.innerText = "Robot enabled successfully!";
-                    checkBioStatus();
-                    
-                    const user = JSON.parse(localStorage.getItem('mledger_user'));
-                    if (user) {
-                        const name = (user.name || user.username || user.full_name || user.user_name || user.fname || user.first_name || user.account_name || '').trim();
-                        if (name) {
-                            const hour = new Date().getHours();
-                            let timeGreeting;
-                            if (hour >= 5 && hour < 12) {
-                                timeGreeting = 'Good morning';
-                            } else if (hour >= 12 && hour < 17) {
-                                timeGreeting = 'Good afternoon';
-                            } else {
-                                timeGreeting = 'Good evening';
-                            }
-                            const greetText = `${timeGreeting} ${name} welcome`;
-                            greeting.innerText = greetText;
-                            if (bioGreeting) bioGreeting.innerText = greetText;
-                        }
-                    }
-                    
-                    document.getElementById('enrollBtn').style.display = 'none';
-                    document.getElementById('continueBtn').style.display = 'inline-block';
-                    document.querySelector('#biometricOverlay .link').style.display = 'none';
-                } else {
-                    bioMsg.style.color = "#ffab00";
-                    bioMsg.innerText = "Device does not support robot login.";
-                    setTimeout(closeBioOverlay, 2000);
-                }
-            } catch (e) {
-                console.error(e);
-                closeBioOverlay();
-            }
-        }
-
-        async function loginWithBiometrics() {
-            const status = document.getElementById('status');
-            const greeting = document.getElementById('greeting');
-            const bioGreeting = document.getElementById('bioGreeting');
-            try {
-                status.style.color = "#4CAF50";
-                status.innerText = "Confirm robot on your device...";
-                greeting.innerText = "Please wait...";
-                if (bioGreeting) bioGreeting.innerText = "";
-
-                setTimeout(() => {
-                    const user = JSON.parse(localStorage.getItem('mledger_user'));
-                    if (user) {
-                        const name = (user.name || user.username || user.full_name || user.user_name || user.fname || user.first_name || user.account_name || '').trim();
-                        if (name) {
-                            const hour = new Date().getHours();
-                            let timeGreeting;
-                            if (hour >= 5 && hour < 12) {
-                                timeGreeting = 'Good morning';
-                            } else if (hour >= 12 && hour < 17) {
-                                timeGreeting = 'Good afternoon';
-                            } else {
-                                timeGreeting = 'Good evening';
-                            }
-                            const greetText = `${timeGreeting} ${name} welcome`;
-                            greeting.innerText = greetText;
-                            if (bioGreeting) bioGreeting.innerText = greetText;
-                        }
-                        document.getElementById('biometricOverlay').style.display = 'flex';
-                        document.getElementById('enrollBtn').style.display = 'none';
-                        document.getElementById('continueBtn').style.display = 'inline-block';
-                        document.querySelector('#biometricOverlay .link').style.display = 'none';
-                    } else {
-                        status.style.color = "#ffab00";
-                        status.innerText = "Please login with PIN once first.";
-                        greeting.innerText = "";
-                        if (bioGreeting) bioGreeting.innerText = "";
-                    }
-                }, 1500);
-            } catch (err) {
-                status.innerText = "Robot failed.";
-                greeting.innerText = "";
-                if (bioGreeting) bioGreeting.innerText = "";
-            }
-        }
-
         function showSection(sectionId) {
             ['loginSection', 'resetSection'].forEach(id => {
                 document.getElementById(id).style.display = (id === sectionId) ? 'block' : 'none';
             });
             document.getElementById('status').innerText = "";
             document.getElementById('greeting').innerText = "";
-            document.getElementById('bioGreeting').innerText = "";
-            document.getElementById('enrollBtn').style.display = 'inline-block';
-            document.getElementById('continueBtn').style.display = 'none';
-            document.querySelector('#biometricOverlay .link').style.display = 'block';
-            if (sectionId === 'loginSection') checkBioStatus();
         }
 
         async function login() {
             const btn = document.getElementById('lBtn');
             const status = document.getElementById('status');
             const greeting = document.getElementById('greeting');
-            const bioGreeting = document.getElementById('bioGreeting');
             const phone = document.getElementById('lPhone').value.trim();
             const pass = document.getElementById('lPass').value.trim();
 
@@ -614,24 +391,16 @@
                         }
                         const greetText = `${timeGreeting} ${name} welcome`;
                         greeting.innerText = greetText;
-                        if (bioGreeting) bioGreeting.innerText = greetText;
                     }
-                    
-                    document.getElementById('biometricOverlay').style.display = 'flex';
-                    document.getElementById('enrollBtn').style.display = 'inline-block';
-                    document.getElementById('continueBtn').style.display = 'inline-block';
-                    document.querySelector('#biometricOverlay .link').style.display = 'none';
                 } else {
                     status.style.color = "#ffab00";
                     status.innerText = d.error || "Login failed";
                     greeting.innerText = "";
-                    if (bioGreeting) bioGreeting.innerText = "";
                 }
             } catch (err) {
                 status.style.color = "#ffab00";
                 status.innerText = "Connection failed. Please try again.";
                 greeting.innerText = "";
-                if (bioGreeting) bioGreeting.innerText = "";
             } finally {
                 btn.innerText = "Login";
                 btn.disabled = false;
