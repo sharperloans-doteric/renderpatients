@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -910,14 +911,7 @@ async function loadMessagesByPhone(phone) {
 
 function updateOnlineStatus() {
   if (navigator.onLine) {
-    const phone = phoneInput.value.trim();
-    if (phone) {
-        loadMessagesByPhone(phone);
-    } else {
-        showEnterPhoneMessage();
-    }
-  } else {
-    // Silently keep showing already-loaded messages - do not clear or reload
+    showEnterPhoneMessage();
   }
 }
 window.addEventListener('online', updateOnlineStatus);
