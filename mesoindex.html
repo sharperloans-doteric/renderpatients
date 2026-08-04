@@ -4,7 +4,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -910,9 +909,7 @@ async function loadMessagesByPhone(phone) {
 }
 
 function updateOnlineStatus() {
-  if (navigator.onLine) {
-    showEnterPhoneMessage();
-  }
+  // Keep existing messages visible regardless of online/offline changes
 }
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
