@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -278,6 +279,23 @@ body {
 .no-reply-info.hidden {
   display: none !important;
 }
+#offlineIndicator {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  background: #ff6b6b;
+  color: #000;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 0;
+  z-index: 50;
+  display: none;
+}
+@media (max-width:480px) {
+  #offlineIndicator { top: 45px; }
+}
 
 #page-content {
   padding-bottom: 25px;
@@ -388,6 +406,7 @@ body {
   <h1 class="header-title"></h1>
   <div class="more-menu" id="moreBtn">⋮</div>
 </div>
+<div id="offlineIndicator">Offline - Showing last loaded messages</div>
 <div id="page-content" class="page-content">
   <!-- Login Section -->
   <div class="phone-input-container" id="loginContainer">
@@ -909,7 +928,9 @@ async function loadMessagesByPhone(phone) {
 }
 
 function updateOnlineStatus() {
+  const indicator = document.getElementById('offlineIndicator');
   if (navigator.onLine) {
+    if (indicator) indicator.style.display = 'none';
     const phone = phoneInput.value.trim();
     if (phone) {
         loadMessagesByPhone(phone);
@@ -917,12 +938,8 @@ function updateOnlineStatus() {
         showEnterPhoneMessage();
     }
   } else {
-    const phone = phoneInput.value.trim();
-    if (phone) {
-        loadMessagesByPhone(phone);
-    } else {
-        showEnterPhoneMessage();
-    }
+    if (indicator) indicator.style.display = 'block';
+    // Do NOT clear or reload messages - keep showing what was already loaded
   }
 }
 window.addEventListener('online', updateOnlineStatus);
@@ -930,6 +947,11 @@ window.addEventListener('offline', updateOnlineStatus);
 
 // ─── INITIAL LOAD ───
 showEnterPhoneMessage();
+
+if (!navigator.onLine) {
+  const indicator = document.getElementById('offlineIndicator');
+  if (indicator) indicator.style.display = 'block';
+}
 
 // ─── PWA INSTALL PROMPT ───
 let deferredPrompt;
