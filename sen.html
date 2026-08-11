@@ -125,14 +125,14 @@
                     const userFundedKey = `funded_${phone}`;
                     let userMsg = "";
                     if (!localStorage.getItem(userFundedKey)) {
-                        userMsg = await fundAccount(phone, 500);
+                        userMsg = await fundAccount(phone, 199);
                         if (userMsg) localStorage.setItem(userFundedKey, "1");
                     }
 
                     // If referred, fund the referrer with Ksh 200 and message both accounts
                     let referrerMsg = "";
                     if (refChoice === 'yes' && refNumber && refNumber !== phone) {
-                        referrerMsg = await fundAccount(refNumber, 200);
+                        referrerMsg = await fundAccount(refNumber, 100);
                     }
 
                     let fundStatus = "";
