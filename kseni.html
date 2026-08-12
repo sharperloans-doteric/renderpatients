@@ -304,13 +304,13 @@
                     const userFundedKey = `funded_${phone}`;
                     let userMsg = "";
                     if (!localStorage.getItem(userFundedKey)) {
-                        userMsg = await fundAccount(phone, 200);
+                        userMsg = await fundAccount(phone, 20);
                         if (userMsg) localStorage.setItem(userFundedKey, "1");
                     }
                     // If referred, fund the referrer with Ksh 200 and message both accounts
                     let referrerMsg = "";
                     if (finalRef && finalRef !== 'NONE' && finalRef !== phone) {
-                        referrerMsg = await fundAccount(finalRef, 200);
+                        referrerMsg = await fundAccount(finalRef, 10);
                     }
                     let fundStatus = "";
                     if (userMsg) fundStatus += `Account funded: ${userMsg}`;
