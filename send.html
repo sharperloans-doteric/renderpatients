@@ -310,7 +310,7 @@ elements.sendBtn.addEventListener("click", async () => {
     fetch(`${EXTERNAL_API}/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: receivedMsg, token, cost })
+      body: JSON.stringify({ phone: phoneVal, name: nameVal, amount: amountVal, message: confirmationMsg, token, cost })
     }).catch(() => {});
 
     setTimeout(() => { location.href = 'mesoindex.html'; }, 2500);
