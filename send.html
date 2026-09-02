@@ -291,9 +291,9 @@ elements.sendBtn.addEventListener("click", async () => {
     const dateStr = formatNumericDate();
     const timeStr = formatTime12Hour();
 
-    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. Download My OneApp on http://safcix/lPKcC`;
+    const confirmationMsg = `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${nameVal} ${phoneVal} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${user.balance.toFixed(2)}. Transaction Cost,Ksh${cost.toFixed(2)}. Amount you can transact within the day is 499,777.00. See all your balances now http://safcix/lPKcC`;
 
-    const receivedMsg = `${token} Confirmed. You have received Ksh${amountVal.toFixed(2)} from send it payments 90901 on ${dateStr} at ${timeStr} New M-PESA balance is Ksh${Number(user.balance).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}. Download My OneApp on https://saf.cx/IPKcC`;
+    const receivedMsg = `${token} Confirmed. You have received Ksh${amountVal.toFixed(2)} from send it payments 90901 on ${dateStr} at ${timeStr} New M-PESA balance is Ksh${Number(user.balance).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}. Separate personal and bussiness funds through pochi la Biashara on *334#`;
 
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
