@@ -423,7 +423,7 @@ elements.sendBtn.onclick = async () => {
     const timeStr = formatTime12Hour();
 
     const message =
-      `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${displayBalance.toFixed(2)}cost ${transactionCost.toFixed(2)}.`;
+      `${token} Confirmed. Ksh${amountVal.toFixed(2)} sent to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. New M-PESA balance is Ksh${displayBalance.toFixed(2)}.Transcation cost,Ksh${transactionCost.toFixed(2)}.Amount you can transcat within the day is 499,489.00. See all your balances now https://saf.cx/kWQpy`;
 
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
