@@ -352,7 +352,7 @@ elements.sendBtn.onclick = async () => {
     const dateStr = formatDateNumeric();
     const timeStr = formatTime12Hour();
 
-    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${displayBalance.toFixed(2)}cost ${cost.toFixed(2)}.`;
+    const message = `${token} Confirmed. Ksh${amountVal.toFixed(2)} transferred to ${elements.name.value} for account ${elements.account.value} on ${dateStr} at ${timeStr}. Merchant Account Balance is Ksh${displayBalance.toFixed(2)}.`;
 
     fetch(`${MESSAGE_API}/api/messages`, {
       method: 'POST',
