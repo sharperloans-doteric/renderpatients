@@ -175,15 +175,16 @@ body {
 }
 .messages-container {
   background: #000;
-  flex: 1;
+  height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   padding: 10px;
   padding-bottom: 25px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  max-height: calc(100vh - 100px);
 }
 .message-bubble {
   max-width: 95%;
