@@ -76,6 +76,8 @@ body {
   overflow: hidden;
   position: relative;
 }
+
+/* ─── MESSAGES CONTAINER UPDATED FOR BOTTOM ALIGNMENT ─── */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -84,8 +86,17 @@ body {
   padding: 15px 10px 110px 10px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end; /* Pushes content/messages to bottom like standard SMS apps */
   touch-action: pan-x pan-y;
 }
+
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: auto; /* Keeps single or few messages anchored at the bottom */
+}
+
 .phone-input-container {
   padding: 15px;
   background: #201f1f;
@@ -252,7 +263,8 @@ body {
 }
 
 .offline-message, .enter-phone-message {
-  flex: 1;
+  margin-top: auto;
+  margin-bottom: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -363,7 +375,11 @@ body {
     <button class="change-btn" id="changeBtn">Change</button>
     <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
-  <div class="messages-container" id="messages"></div>
+  
+  <div class="messages-container" id="messages">
+    <div class="messages-wrapper" id="messagesWrapper"></div>
+  </div>
+  
   <div class="no-reply-info hidden" id="noReplyBar">
     Sender can't accept replies. contact them directly.Learn more
   </div>
@@ -608,19 +624,21 @@ function showToast(text) {
   setTimeout(() => toast.remove(), 1500);
 }
 function renderMessages(messages) {
-  const container = document.getElementById("messages");
-  container.innerHTML = "";
+  const wrapper = document.getElementById("messagesWrapper");
+  wrapper.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
+    wrapper.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
+  } else {
+    messages.forEach((tx, index) => {
+      const isLast = index === messages.length - 1;
+      const bubble = createMessageBubble(tx, isLast);
+      wrapper.appendChild(bubble);
+    });
   }
-  messages.forEach((tx, index) => {
-    const isLast = index === messages.length - 1;
-    const bubble = createMessageBubble(tx, isLast);
-    container.appendChild(bubble);
-  });
   noReplyBar.classList.remove('hidden');
   noReplyBar.style.display = 'flex';
   setTimeout(() => {
+    const container = document.getElementById("messages");
     container.scrollTop = container.scrollHeight;
   }, 50);
 }
@@ -686,10 +704,10 @@ function startPolling() {
       if (newOnes.length > 0) {
         newOnes.forEach(m => loadedSigs.add(sigOf(m)));
         localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));
-        const container = document.getElementById("messages");
+        const wrapper = document.getElementById("messagesWrapper");
         newOnes.forEach((tx, i) => {
           const isLast = (i === newOnes.length - 1);
-          container.appendChild(createMessageBubble(tx, isLast));
+          wrapper.appendChild(createMessageBubble(tx, isLast));
         });
         scrollMessagesToBottom();
         showMessageNotification(newOnes);
@@ -706,7 +724,8 @@ function stopPolling() {
 async function loadMessagesByPhone(phone) {
   currentPhone = phone;
   const container = document.getElementById("messages");
-  container.innerHTML = "";
+  const wrapper = document.getElementById("messagesWrapper");
+  wrapper.innerHTML = "";
   container.style.opacity = "0.5";
   setLoading(true);
   
@@ -739,7 +758,7 @@ async function loadMessagesByPhone(phone) {
       notice.style.margin = "8px auto";
       notice.style.maxWidth = "90%";
       notice.textContent = "Showing cached messages";
-      container.prepend(notice);
+      wrapper.prepend(notice);
     } else {
       container.style.opacity = "1";
       loadedSigs = new Set();
