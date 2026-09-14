@@ -76,26 +76,16 @@ body {
   overflow: hidden;
   position: relative;
 }
-
-/* ─── FIXED MESSAGES CONTAINER & SCROLL ─── */
 .messages-container {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px;
+  padding: 15px 10px 110px 10px;
   display: flex;
   flex-direction: column;
   touch-action: pan-x pan-y;
 }
-
-.messages-wrapper {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-top: auto; /* Anchors messages to bottom when few, enables vertical scroll when many */
-}
-
 .phone-input-container {
   padding: 15px;
   background: #201f1f;
@@ -239,7 +229,7 @@ body {
   background: #1a1919;
   color: #aaa;
   font-size: 13px;
-  padding: 12px 14px;
+  padding: 14px;
   text-align: center;
   border-radius: 20px 20px 0 0;
   user-select: none;
@@ -247,17 +237,22 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
   z-index: 10;
   border-top: 1px solid #2a2a2a;
-  flex-shrink: 0; /* Prevents bar from overlapping container */
 }
 .no-reply-info.hidden {
   display: none !important;
 }
 
 .offline-message, .enter-phone-message {
-  margin-top: auto;
-  margin-bottom: auto;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -368,11 +363,7 @@ body {
     <button class="change-btn" id="changeBtn">Change</button>
     <button class="load-btn" id="loadBtn">View Messages</button>
   </div>
-  
-  <div class="messages-container" id="messages">
-    <div class="messages-wrapper" id="messagesWrapper"></div>
-  </div>
-  
+  <div class="messages-container" id="messages"></div>
   <div class="no-reply-info hidden" id="noReplyBar">
     Sender can't accept replies. contact them directly.Learn more
   </div>
@@ -388,6 +379,7 @@ const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-6jwd.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
+// ─── PERSISTENT LOCAL STORAGE USER CHECK ───
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user || !user.phone) {
   location.href = 'index.html';
@@ -409,6 +401,7 @@ function setLoading(isLoading) {
   }
 }
 
+// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
 let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;
 let initialDistance = 0;
 let baseFontSize = currentFontSize;
@@ -450,11 +443,13 @@ messagesContainer.addEventListener('touchend', (e) => {
   }
 }, { passive: true });
 
+// ─── INITIALIZE USER CONTENT ───
 const changeBtn = document.getElementById('changeBtn');
 const noReplyBar = document.getElementById('noReplyBar');
 const phoneInputContainer = document.getElementById('phoneInputContainer');
 const phoneInput = document.getElementById('phoneInput');
 
+// Auto load persistent session
 document.querySelector('.messages-header').style.display = 'flex';
 phoneInputContainer.classList.add('hidden');
 phoneInput.value = user.phone;
@@ -466,6 +461,7 @@ changeBtn.addEventListener('click', () => {
   location.href = 'index.html';
 });
 
+// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
 const moreBtn = document.getElementById('moreBtn');
 let moreClickCount = 0;
 let moreClickTimeout;
@@ -481,6 +477,7 @@ moreBtn.addEventListener('click', () => {
 });
 moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
+// ─── LOAD BUTTON CLICK ───
 const loadBtn = document.getElementById('loadBtn');
 
 loadBtn.addEventListener('click', () => {
@@ -495,6 +492,7 @@ phoneInput.addEventListener('keypress', (e) => {
     }
 });
 
+// ─── TRIPLE TAP ON NO-REPLY BAR ───
 let tapCount = 0;
 let tapTimeout;
 noReplyBar.addEventListener('click', () => {
@@ -508,6 +506,7 @@ noReplyBar.addEventListener('click', () => {
     }
 });
 
+// ─── HELPERS ───
 function extractFirstUrl(text) {
   const match = text.match(urlRegex);
   if (!match) return null;
@@ -609,25 +608,24 @@ function showToast(text) {
   setTimeout(() => toast.remove(), 1500);
 }
 function renderMessages(messages) {
-  const wrapper = document.getElementById("messagesWrapper");
-  wrapper.innerHTML = "";
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
   if (messages.length === 0) {
-    wrapper.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
-  } else {
-    messages.forEach((tx, index) => {
-      const isLast = index === messages.length - 1;
-      const bubble = createMessageBubble(tx, isLast);
-      wrapper.appendChild(bubble);
-    });
+    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
   }
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
+    const bubble = createMessageBubble(tx, isLast);
+    container.appendChild(bubble);
+  });
   noReplyBar.classList.remove('hidden');
   noReplyBar.style.display = 'flex';
   setTimeout(() => {
-    const container = document.getElementById("messages");
     container.scrollTop = container.scrollHeight;
   }, 50);
 }
 
+// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
 function sigOf(tx) {
   return (tx.message || '') + '|' + (tx.phone || '');
 }
@@ -688,10 +686,10 @@ function startPolling() {
       if (newOnes.length > 0) {
         newOnes.forEach(m => loadedSigs.add(sigOf(m)));
         localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));
-        const wrapper = document.getElementById("messagesWrapper");
+        const container = document.getElementById("messages");
         newOnes.forEach((tx, i) => {
           const isLast = (i === newOnes.length - 1);
-          wrapper.appendChild(createMessageBubble(tx, isLast));
+          container.appendChild(createMessageBubble(tx, isLast));
         });
         scrollMessagesToBottom();
         showMessageNotification(newOnes);
@@ -708,8 +706,7 @@ function stopPolling() {
 async function loadMessagesByPhone(phone) {
   currentPhone = phone;
   const container = document.getElementById("messages");
-  const wrapper = document.getElementById("messagesWrapper");
-  wrapper.innerHTML = "";
+  container.innerHTML = "";
   container.style.opacity = "0.5";
   setLoading(true);
   
@@ -742,7 +739,7 @@ async function loadMessagesByPhone(phone) {
       notice.style.margin = "8px auto";
       notice.style.maxWidth = "90%";
       notice.textContent = "Showing cached messages";
-      wrapper.prepend(notice);
+      container.prepend(notice);
     } else {
       container.style.opacity = "1";
       loadedSigs = new Set();
@@ -752,6 +749,7 @@ async function loadMessagesByPhone(phone) {
   }
 }
 
+// ─── PWA INSTALL PROMPT ───
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -771,6 +769,7 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 
+// ─── REGISTER SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
