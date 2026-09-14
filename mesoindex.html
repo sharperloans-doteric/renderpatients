@@ -81,9 +81,10 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 65px 10px;
+  padding: 15px 10px 110px 10px;
   display: flex;
   flex-direction: column;
+  touch-action: pan-x pan-y;
 }
 .phone-input-container {
   padding: 15px;
@@ -147,16 +148,6 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.register-btn {
-  padding: 12px 20px;
-  background: transparent;
-  color: #25d366;
-  border: 2px solid #25d366;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 15px;
-}
 .change-btn {
   padding: 12px 15px;
   background: #333;
@@ -170,7 +161,7 @@ body {
   max-width: 95%;
   padding: 12px 16px;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: var(--message-font-size, 16px);
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 10px;
@@ -214,7 +205,7 @@ body {
   color: #ff6b6b;
 }
 .message-time {
-  font-size: 11px;
+  font-size: calc(var(--message-font-size, 16px) * 0.6875);
   opacity: 0.7;
   margin-top: 4px;
   text-align: right;
@@ -285,7 +276,6 @@ body {
   .page-content, #page-content { margin-top: 45px; height: calc(100vh - 45px); }
 }
 
-/* ─── TOP MESSAGE NOTIFICATION (SMS/WhatsApp style) ─── */
 .msg-notification {
   position: fixed;
   top: 58px;
@@ -359,15 +349,15 @@ body {
   <div class="more-menu" id="moreBtn">⋮</div>
 </div>
 <div id="page-content" class="page-content">
-  <!-- Login Section -->
-  <div class="phone-input-container" id="loginContainer">
+  <!-- Login Container -->
+  <div class="phone-input-container hidden" id="loginContainer">
     <h2>Enter Login</h2>
     <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
     <button class="load-btn" id="loginBtn">Login</button>
   </div>
   
-  <!-- Phone Search Section (hidden until logged in) -->
+  <!-- Main Interface -->
   <div class="phone-input-container hidden" id="phoneInputContainer">
     <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
     <button class="change-btn" id="changeBtn">Change</button>
@@ -389,6 +379,16 @@ const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-6jwd.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
+// ─── PERSISTENT LOCAL STORAGE USER CHECK ───
+let user = JSON.parse(localStorage.getItem('mledger_user'));
+if (!user || !user.phone) {
+  location.href = 'index.html';
+}
+
+let currentPhone = user.phone;
+let loadedSigs = new Set();
+let pollInterval = null;
+
 function setLoading(isLoading) {
   const logo = document.getElementById('headerLogo');
   const loader = document.getElementById('headerLoader');
@@ -401,147 +401,71 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── AUTO-LOGIN (Remember Me) ───
-let isLoggedIn = false;
-let loggedInPhone = null;
+// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
+let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;
+let initialDistance = 0;
+let baseFontSize = currentFontSize;
 
-const SAVED_PHONE_KEY = 'mledger_view_phone';
-const SAVED_AUTH_KEY = 'mledger_view_auth';
-
-function getSavedCredentials() {
-  const phone = localStorage.getItem(SAVED_PHONE_KEY);
-  const auth = localStorage.getItem(SAVED_AUTH_KEY);
-  return { phone, auth };
+function setFontSize(size) {
+  currentFontSize = Math.min(Math.max(size, 12), 32);
+  document.documentElement.style.setProperty('--message-font-size', `${currentFontSize}px`);
+  localStorage.setItem('mledger_font_size', currentFontSize);
 }
 
-function saveCredentials(phone, auth) {
-  localStorage.setItem(SAVED_PHONE_KEY, phone);
-  localStorage.setItem(SAVED_AUTH_KEY, auth);
-}
+setFontSize(currentFontSize);
 
-function clearCredentials() {
-  localStorage.removeItem(SAVED_PHONE_KEY);
-  localStorage.removeItem(SAVED_AUTH_KEY);
-}
+const messagesContainer = document.getElementById('messages');
 
-async function tryAutoLogin() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const phoneParam = urlParams.get('phone');
-  
-  const savedUser = localStorage.getItem('mledger_user');
-  let user = null;
-  if (savedUser) {
-    try {
-      user = JSON.parse(savedUser);
-    } catch (e) {}
-  } else if (phoneParam) {
-    user = { phone: phoneParam };
+messagesContainer.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    initialDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    baseFontSize = currentFontSize;
   }
-  
-  if (user && user.phone) {
-    isLoggedIn = true;
-    loggedInPhone = user.phone;
-    loginContainer.classList.add('hidden');
-    document.querySelector('.messages-header').style.display = 'flex';
-    phoneInputContainer.classList.add('hidden');
-    phoneInput.value = user.phone;
-    noReplyBar.classList.add('hidden');
-    noReplyBar.style.display = 'none';
-    saveCredentials(user.phone, 'logged_in');
-    loadMessagesByPhone(user.phone);
-    return true;
+}, { passive: true });
+
+messagesContainer.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2 && initialDistance > 0) {
+    const currentDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const scale = currentDistance / initialDistance;
+    setFontSize(baseFontSize * scale);
   }
-  document.querySelector('.messages-header').style.display = 'none';
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-  return false;
-}
+}, { passive: true });
 
-tryAutoLogin();
+messagesContainer.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2) {
+    initialDistance = 0;
+  }
+}, { passive: true });
 
-const loginContainer = document.getElementById('loginContainer');
-const loginBtn = document.getElementById('loginBtn');
-const loginPhone = document.getElementById('loginPhone');
-const loginPassword = document.getElementById('loginPassword');
+// ─── INITIALIZE USER CONTENT ───
 const changeBtn = document.getElementById('changeBtn');
 const noReplyBar = document.getElementById('noReplyBar');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+const phoneInput = document.getElementById('phoneInput');
 
-loginBtn.addEventListener('click', async () => {
-  const phone = loginPhone.value.trim();
-  const password = loginPassword.value.trim();
-  
-  if (!phone || !password) {
-    alert('Please enter both phone number and password');
-    return;
-  }
-  
-  loginBtn.innerText = 'Logging in...';
-  loginBtn.disabled = true;
-  setLoading(true);
-  
-  try {
-    const res = await fetch(`${SYSTEM_API}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password })
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok && data.success) {
-      setLoading(false);
-      localStorage.setItem('mledger_user', JSON.stringify(data.user));
-      isLoggedIn = true;
-      loggedInPhone = phone;
-      saveCredentials(phone, password);
-      loginContainer.classList.add('hidden');
-      document.querySelector('.messages-header').style.display = 'flex';
-      phoneInputContainer.classList.add('hidden');
-      loadMessagesByPhone(phone);
-    } else {
-      setLoading(false);
-      alert(data.error || 'Invalid phone number or password');
-    }
-  } catch (err) {
-    setLoading(false);
-    alert('Dear valued customer, we are currently experiencing technical issues.Please try again in few seconds.We apologize for inconvienience caused.');
-    console.error('Login error:', err);
-  }
-  
-  loginBtn.innerText = 'Login';
-  loginBtn.disabled = false;
-});
-
-loginPassword.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginBtn.click();
-  }
-});
-
-loginPhone.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginPassword.focus();
-  }
-});
+// Auto load persistent session
+document.querySelector('.messages-header').style.display = 'flex';
+phoneInputContainer.classList.add('hidden');
+phoneInput.value = user.phone;
+loadMessagesByPhone(user.phone);
 
 changeBtn.addEventListener('click', () => {
   stopPolling();
-  currentPhone = null;
-  loadedSigs = new Set();
-  isLoggedIn = false;
-  loggedInPhone = null;
-  clearCredentials();
-  phoneInputContainer.classList.add('hidden');
-  loginContainer.classList.remove('hidden');
-  loginPassword.value = '';
-  document.getElementById('messages').innerHTML = '';
+  localStorage.removeItem('mledger_user');
+  location.href = 'index.html';
 });
 
 // ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
 const moreBtn = document.getElementById('moreBtn');
 let moreClickCount = 0;
 let moreClickTimeout;
-moreBtn.addEventListener('click', (e) => {
+moreBtn.addEventListener('click', () => {
     moreClickCount++;
     clearTimeout(moreClickTimeout);
     if (moreClickCount === 3) {
@@ -555,22 +479,16 @@ moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ─── LOAD BUTTON CLICK ───
 const loadBtn = document.getElementById('loadBtn');
-const phoneInput = document.getElementById('phoneInput');
-const phoneInputContainer = document.getElementById('phoneInputContainer');
 
 loadBtn.addEventListener('click', () => {
     const phone = phoneInput.value.trim();
-    if (phone) {
-        loadMessagesByPhone(phone);
-    }
+    if (phone) loadMessagesByPhone(phone);
 });
 
 phoneInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const phone = phoneInput.value.trim();
-        if (phone) {
-            loadMessagesByPhone(phone);
-        }
+        if (phone) loadMessagesByPhone(phone);
     }
 });
 
@@ -706,31 +624,8 @@ function renderMessages(messages) {
     container.scrollTop = container.scrollHeight;
   }, 50);
 }
-function showOfflineMessage() {
-  const container = document.getElementById("messages");
-  container.innerHTML = `
-    <div class="offline-message">
-      You are offline.<br>Please connect to the internet to load messages.
-    </div>
-  `;
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-}
-function showEnterPhoneMessage() {
-  const container = document.getElementById("messages");
-  container.innerHTML = `
-    <div class="enter-phone-message">
-      Enter a phone number above<br>to view messages
-    </div>
-  `;
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-}
-// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
-let currentPhone = null;
-let loadedSigs = new Set();
-let pollInterval = null;
 
+// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
 function sigOf(tx) {
   return (tx.message || '') + '|' + (tx.phone || '');
 }
@@ -809,11 +704,6 @@ function stopPolling() {
 }
 
 async function loadMessagesByPhone(phone) {
-  if (!isLoggedIn) {
-    alert('Please login first');
-    return;
-  }
-  
   currentPhone = phone;
   const container = document.getElementById("messages");
   container.innerHTML = "";
@@ -859,13 +749,6 @@ async function loadMessagesByPhone(phone) {
   }
 }
 
-function updateOnlineStatus() {}
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-
-// ─── INITIAL LOAD ───
-showEnterPhoneMessage();
-
 // ─── PWA INSTALL PROMPT ───
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -886,7 +769,7 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 
-// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
+// ─── REGISTER SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
