@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>  
 <html lang="en">  
 <head>  
@@ -46,7 +45,7 @@
     <div class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center border border-slate-700/50"   
          style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');">  
         
-        <!-- Header / App Bar (Shows ONLY MPESA now) -->  
+        <!-- Header / App Bar -->  
         <div class="bg-slate-900/80 backdrop-blur-md text-white p-4 flex items-center justify-between z-10 border-b border-slate-800/50">  
             <div class="flex items-center gap-3">  
                 <button onclick="changeAccount()" class="text-slate-300 hover:text-white transition" title="Change Account">  
@@ -55,25 +54,29 @@
                 <div class="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 font-bold text-lg shadow-inner">  
                     <i data-lucide="user" class="w-6 h-6 text-amber-950"></i>  
                 </div>  
-                <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
+                <div>
+                    <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
+                </div>
             </div>  
             <button onclick="changeAccount()" class="text-slate-300 hover:text-white" title="Switch Account">  
-                <i data-lucide="more-vertical" class="w-5 h-5"></i>  
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>  
             </button>  
         </div>  
 
-        <!-- Messages Area (Scrollable SMS Body - Aligned to bottom/end) -->  
-        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col justify-end" id="messagesWrapper">
-            <div id="jobsContainer" class="space-y-4 w-full">  
-                <!-- Message content renders here -->
-            </div>  
-        </div>
+        <!-- Messages Area (Scrollable SMS Body) -->  
+        <div id="jobsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">  
+            <div class="text-center py-20 text-slate-400 text-sm">
+                Enter an account number to fetch messages.
+            </div>
+        </div>  
 
         <!-- Bottom Banner / Non-replyable Footer -->  
-        <div class="p-4 bg-slate-100/90 backdrop-blur-md rounded-t-3xl sm:rounded-b-[36px] text-slate-700 text-xs text-left border-t border-slate-200/50">  
-            Sender can't accept replies. <a href="#" class="underline font-medium text-slate-800">Contact them directly.</a> <a href="#" class="underline font-medium text-slate-800">Learn more</a>  
+        <div class="p-4 bg-slate-100/90 backdrop-blur-md rounded-t-3xl sm:rounded-b-[36px] text-slate-700 text-xs flex flex-col items-start text-left border-t border-slate-200/50">  
+            <div class="w-full text-left">
+                Sender can't accept replies. <a href="#" class="underline font-medium text-slate-800">Contact them directly.</a> <a href="#" class="underline font-medium text-slate-800">Learn more</a>  
+            </div>
             <!-- Navigation pill indicator -->  
-            <div class="w-32 h-1 bg-slate-400 rounded-full mx-auto mt-3"></div>  
+            <div class="w-32 h-1 bg-slate-400 rounded-full self-start mt-3"></div>  
         </div>  
 
     </div>  
@@ -98,17 +101,8 @@
             document.getElementById('accountInput').focus();
         }
 
-        function formatTime(tx) {  
-            if (tx.createdAt) {  
-                const date = new Date(tx.createdAt);  
-                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });  
-            }  
-            return "19:17";  
-        }  
-
         function renderJob(tx) {  
             const messageText = tx.message || '';  
-            const timeStr = formatTime(tx);  
 
             return `  
                 <div class="flex flex-col items-start space-y-1 mb-3">  
@@ -116,10 +110,6 @@
                     <div class="bg-[rgb(240,240,245)] text-slate-900 text-[14px] leading-relaxed p-4 rounded-3xl rounded-tl-sm max-w-[88%] shadow-md whitespace-pre-wrap break-words font-sans selection:bg-slate-300">  
                         ${escapeHtml(messageText)}  
                     </div>  
-                    <!-- Timestamp -->  
-                    <span class="text-[11px] text-slate-300 px-2 font-medium tracking-wide">  
-                        ${timeStr}  
-                    </span>  
                 </div>  
             `;  
         }  
@@ -154,12 +144,11 @@
 
         function displayJobs(jobs) {  
             const container = document.getElementById('jobsContainer');  
-            const wrapper = document.getElementById('messagesWrapper');
 
             if (!jobs || jobs.length === 0) {  
                 container.innerHTML = `  
                     <div class="text-center py-10 text-slate-300 text-sm">  
-                        No messages found.  
+                        No messages found for account: <b>${escapeHtml(currentTargetPhone)}</b>  
                     </div>  
                 `;  
                 return;  
@@ -168,8 +157,8 @@
             // Render messages (Oldest top, Newest bottom like SMS apps)  
             container.innerHTML = jobs.map(tx => renderJob(tx)).join('');  
 
-            // Scroll to bottom  
-            wrapper.scrollTop = wrapper.scrollHeight;  
+            // Scroll to the latest message  
+            container.scrollTop = container.scrollHeight;  
         }  
 
         async function loadJobs() {  
