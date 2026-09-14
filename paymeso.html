@@ -1,811 +1,193 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Messages</title>  
+    <script src="https://cdn.tailwindcss.com"></script>  
+    <script src="https://unpkg.com/lucide@latest"></script>  
+    <style>  
+        /* Custom scrollbar to match mobile feel */  
+        .custom-scrollbar::-webkit-scrollbar {  
+            width: 4px;  
+        }  
+        .custom-scrollbar::-webkit-scrollbar-track {  
+            background: transparent;  
+        }  
+        .custom-scrollbar::-webkit-scrollbar-thumb {  
+            background: rgba(255, 255, 255, 0.2);  
+            border-radius: 4px;  
+        }  
+    </style>  
+</head>  
+<body class="bg-slate-900 flex justify-center items-center min-h-screen p-0 sm:p-4 font-sans antialiased selection:bg-slate-700 selection:text-white">  
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Messages</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #fff;
-      color: #111;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* PHONE NUMBER SCREEN */
-    #loginScreen {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 25px;
-      background: #f7f7f7;
-    }
-
-    .login-box {
-      width: 100%;
-      max-width: 400px;
-      background: #fff;
-      border-radius: 18px;
-      padding: 30px 24px;
-      box-shadow: 0 5px 25px rgba(0,0,0,.08);
-    }
-
-    .login-box h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-
-    .login-box p {
-      color: #777;
-      font-size: 15px;
-      margin-bottom: 25px;
-      line-height: 1.5;
-    }
-
-    .phone-input {
-      width: 100%;
-      height: 54px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 0 16px;
-      font-size: 17px;
-      outline: none;
-    }
-
-    .phone-input:focus {
-      border-color: #555;
-    }
-
-    .load-btn {
-      width: 100%;
-      height: 54px;
-      margin-top: 14px;
-      border: none;
-      border-radius: 12px;
-      background: #111;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .load-btn:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-
-    .error {
-      color: #d00;
-      font-size: 14px;
-      margin-top: 12px;
-      display: none;
-    }
-
-    /* MESSAGE SCREEN */
-    #messageScreen {
-      display: none;
-      height: 100vh;
-      flex-direction: column;
-      background: #fff;
-    }
-
-    .top-bar {
-      height: 65px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      padding: 0 16px;
-      border-bottom: 1px solid #eee;
-      background: #fff;
-      z-index: 5;
-    }
-
-    .back-btn {
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: transparent;
-      font-size: 28px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .account-info {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .account-name {
-      font-size: 17px;
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .account-number {
-      color: #777;
-      font-size: 13px;
-      margin-top: 2px;
-    }
-
-    .refresh-btn {
-      border: none;
-      background: transparent;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    /* SCROLLABLE MESSAGE AREA */
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 15px 12px 30px;
-      background: #f5f5f5;
-      scroll-behavior: smooth;
-    }
-
-    #messages::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    #messages::-webkit-scrollbar-thumb {
-      background: #bbb;
-      border-radius: 10px;
-    }
-
-    .date-divider {
-      text-align: center;
-      margin: 13px 0;
-    }
-
-    .date-divider span {
-      background: #ddd;
-      color: #555;
-      font-size: 11px;
-      padding: 5px 10px;
-      border-radius: 12px;
-    }
-
-    .message-row {
-      display: flex;
-      margin: 7px 0;
-      width: 100%;
-    }
-
-    .message-row.received {
-      justify-content: flex-start;
-    }
-
-    .message-row.sent {
-      justify-content: flex-end;
-    }
-
-    .message {
-      max-width: 82%;
-      padding: 10px 13px 7px;
-      border-radius: 17px;
-      font-size: 15px;
-      line-height: 1.4;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-    }
-
-    .received .message {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-bottom-left-radius: 5px;
-    }
-
-    .sent .message {
-      background: #d9fdd3;
-      border-bottom-right-radius: 5px;
-    }
-
-    .message-text {
-      white-space: pre-wrap;
-    }
-
-    .message-time {
-      display: block;
-      text-align: right;
-      color: #777;
-      font-size: 10px;
-      margin-top: 4px;
-    }
-
-    .loading {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #777;
-      font-size: 15px;
-    }
-
-    .empty {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #777;
-      text-align: center;
-      padding: 30px;
-    }
-
-    .empty-icon {
-      font-size: 42px;
-      margin-bottom: 12px;
-    }
-
-    .empty p {
-      font-size: 15px;
-    }
-
-    @media (min-width: 700px) {
-      #messages {
-        padding-left: calc((100% - 650px) / 2);
-        padding-right: calc((100% - 650px) / 2);
-      }
-
-      .message {
-        max-width: 70%;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- PHONE NUMBER SCREEN -->
-  <section id="loginScreen">
-
-    <div class="login-box">
-
-      <h1>Messages</h1>
-
-      <p>
-        Enter the phone number associated with the account
-        whose messages you want to view.
-      </p>
-
-      <input
-        id="phoneNumber"
-        class="phone-input"
-        type="tel"
-        inputmode="tel"
-        autocomplete="tel"
-        placeholder="Enter phone number"
-      >
-
-      <button id="loadButton" class="load-btn">
-        Load Messages
-      </button>
-
-      <div id="errorMessage" class="error"></div>
-
+    <!-- Account Number Modal (Prompts user on open) -->
+    <div id="accountModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
+            <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Enter Account Number</h2>
+            <p class="text-xs text-slate-400 mb-5">Please enter the phone/account number to load messages.</p>
+            
+            <form onsubmit="handleAccountSubmit(event)">
+                <input type="text" id="accountInput" required placeholder="e.g. 1" 
+                       class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-amber-400 mb-4 tracking-wider">
+                <button type="submit" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3 rounded-xl transition">
+                    Load Messages
+                </button>
+            </form>
+        </div>
     </div>
 
-  </section>
-
-
-  <!-- MESSAGE SCREEN -->
-  <section id="messageScreen">
-
-    <header class="top-bar">
-
-      <button class="back-btn" onclick="goBack()">
-        ‹
-      </button>
-
-      <div class="account-info">
-        <div class="account-name" id="accountName">
-          Messages
-        </div>
-
-        <div class="account-number" id="accountNumber">
-          —
-        </div>
-      </div>
-
-      <button
-        class="refresh-btn"
-        onclick="loadMessages()"
-        title="Refresh"
-      >
-        ↻
-      </button>
-
-    </header>
-
-
-    <main id="messages">
-
-      <div class="loading">
-        Loading messages...
-      </div>
-
-    </main>
-
-  </section>
-
-
-<script>
-
-  /*
-   * =========================================================
-   * BACKEND CONFIGURATION
-   * =========================================================
-   *
-   * CHANGE THIS TO YOUR REAL BACKEND URL.
-   *
-   * Example:
-   *
-   * const API_URL = "https://your-backend.onrender.com/api/messages";
-   *
-   */
-
-  const API_URL = "https://YOUR-BACKEND-URL.com/api/messages";
-
-
-  const loginScreen = document.getElementById("loginScreen");
-  const messageScreen = document.getElementById("messageScreen");
-
-  const phoneInput = document.getElementById("phoneNumber");
-  const loadButton = document.getElementById("loadButton");
-
-  const messagesContainer = document.getElementById("messages");
-
-  const accountName = document.getElementById("accountName");
-  const accountNumber = document.getElementById("accountNumber");
-
-  const errorMessage = document.getElementById("errorMessage");
-
-
-  let currentPhone = "";
-
-
-  /*
-   * LOAD BUTTON
-   */
-
-  loadButton.addEventListener("click", function () {
-
-    const phone = phoneInput.value.trim();
-
-    if (!phone) {
-      showError("Please enter a phone number.");
-      return;
-    }
-
-    hideError();
-
-    currentPhone = phone;
-
-    loadMessages();
-
-  });
-
-
-  /*
-   * ALLOW ENTER KEY
-   */
-
-  phoneInput.addEventListener("keydown", function (event) {
-
-    if (event.key === "Enter") {
-      loadButton.click();
-    }
-
-  });
-
-
-  /*
-   * LOAD MESSAGES FROM BACKEND
-   */
-
-  async function loadMessages() {
-
-    if (!currentPhone) {
-      currentPhone = phoneInput.value.trim();
-    }
-
-    if (!currentPhone) {
-      return;
-    }
-
-
-    messageScreen.style.display = "flex";
-    loginScreen.style.display = "none";
-
-
-    accountName.textContent = "Messages";
-    accountNumber.textContent = currentPhone;
-
-
-    messagesContainer.innerHTML = `
-      <div class="loading">
-        Loading messages...
-      </div>
-    `;
-
-
-    try {
-
-      /*
-       * The phone number is sent to the backend as:
-       *
-       * GET /api/messages?phone=0712345678
-       */
-
-      const response = await fetch(
-        API_URL +
-        "?phone=" +
-        encodeURIComponent(currentPhone)
-      );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          "Server returned " + response.status
-        );
-
-      }
-
-
-      const data = await response.json();
-
-
-      /*
-       * Supports either:
-       *
-       * [
-       *   {...},
-       *   {...}
-       * ]
-       *
-       * OR:
-       *
-       * {
-       *   messages: [...]
-       * }
-       */
-
-      let messages = [];
-
-      if (Array.isArray(data)) {
-        messages = data;
-      }
-
-      else if (Array.isArray(data.messages)) {
-        messages = data.messages;
-      }
-
-      else if (Array.isArray(data.data)) {
-        messages = data.data;
-      }
-
-
-      displayMessages(messages);
-
-
-    }
-
-    catch (error) {
-
-      console.error(error);
-
-      messagesContainer.innerHTML = `
-        <div class="empty">
-
-          <div class="empty-icon">⚠️</div>
-
-          <p>
-            Unable to load messages.
-          </p>
-
-          <p style="margin-top:8px;font-size:13px;">
-            Check your backend URL and connection.
-          </p>
-
-        </div>
-      `;
-
-    }
-
-  }
-
-
-  /*
-   * DISPLAY MESSAGES
-   */
-
-  function displayMessages(messages) {
-
-    messagesContainer.innerHTML = "";
-
-
-    if (!messages || messages.length === 0) {
-
-      messagesContainer.innerHTML = `
-        <div class="empty">
-
-          <div class="empty-icon">💬</div>
-
-          <p>
-            No messages found for this account.
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    /*
-     * Sort messages oldest → newest
-     */
-
-    messages.sort(function (a, b) {
-
-      const dateA = new Date(
-        a.created_at ||
-        a.createdAt ||
-        a.timestamp ||
-        a.date ||
-        0
-      );
-
-      const dateB = new Date(
-        b.created_at ||
-        b.createdAt ||
-        b.timestamp ||
-        b.date ||
-        0
-      );
-
-      return dateA - dateB;
-
-    });
-
-
-    let lastDate = "";
-
-
-    messages.forEach(function (msg) {
-
-      /*
-       * Accept different common backend field names.
-       */
-
-      const text =
-        msg.message ??
-        msg.text ??
-        msg.body ??
-        msg.content ??
-        "";
-
-
-      const direction =
-        String(
-          msg.direction ??
-          msg.type ??
-          msg.status ??
-          "received"
-        ).toLowerCase();
-
-
-      const isSent =
-        direction === "sent" ||
-        direction === "outgoing" ||
-        direction === "send" ||
-        direction === "out";
-
-
-      const dateValue =
-        msg.created_at ||
-        msg.createdAt ||
-        msg.timestamp ||
-        msg.date ||
-        "";
-
-
-      const dateObject =
-        dateValue
-          ? new Date(dateValue)
-          : null;
-
-
-      /*
-       * Date divider
-       */
-
-      if (
-        dateObject &&
-        !isNaN(dateObject.getTime())
-      ) {
-
-        const dateString =
-          dateObject.toLocaleDateString(
-            undefined,
-            {
-              day: "numeric",
-              month: "short",
-              year: "numeric"
+    <!-- Mobile Device Container -->  
+    <div class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center border border-slate-700/50"   
+         style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');">  
+        
+        <!-- Header / App Bar (Matching the Top Bar in Image) -->  
+        <div class="bg-slate-900/80 backdrop-blur-md text-white p-4 flex items-center justify-between z-10 border-b border-slate-800/50">  
+            <div class="flex items-center gap-3">  
+                <button onclick="changeAccount()" class="text-slate-300 hover:text-white transition" title="Change Account">  
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>  
+                </button>  
+                <div class="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 font-bold text-lg shadow-inner">  
+                    <i data-lucide="user" class="w-6 h-6 text-amber-950"></i>  
+                </div>  
+                <div>
+                    <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
+                    <span id="displayAccount" class="text-[10px] text-amber-400 font-mono block">Account: -</span>
+                </div>
+            </div>  
+            <button onclick="changeAccount()" class="text-slate-300 hover:text-white" title="Switch Account">  
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>  
+            </button>  
+        </div>  
+
+        <!-- Messages Area (Scrollable SMS Body) -->  
+        <div id="jobsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">  
+            <div class="text-center py-20 text-slate-400 text-sm">
+                Enter an account number to fetch messages.
+            </div>
+        </div>  
+
+        <!-- Bottom Banner / Non-replyable Footer (Matching Pic Exactly) -->  
+        <div class="p-4 bg-slate-100/90 backdrop-blur-md rounded-t-3xl sm:rounded-b-[36px] text-slate-700 text-xs text-left border-t border-slate-200/50">  
+            Sender can't accept replies. <a href="#" class="underline font-medium text-slate-800">Contact them directly.</a> <a href="#" class="underline font-medium text-slate-800">Learn more</a>  
+            <!-- Navigation pill indicator -->  
+            <div class="w-32 h-1 bg-slate-400 rounded-full mx-auto mt-3"></div>  
+        </div>  
+
+    </div>  
+
+    <script>  
+        const API = "https://message-server-five.vercel.app";  
+        let currentTargetPhone = "";  
+        let allJobs = [];  
+
+        function handleAccountSubmit(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('accountInput').value.trim();
+            if (inputVal) {
+                currentTargetPhone = inputVal;
+                document.getElementById('displayAccount').textContent = `Account: ${currentTargetPhone}`;
+                document.getElementById('accountModal').classList.add('hidden');
+                loadJobs();
             }
-          );
-
-
-        if (dateString !== lastDate) {
-
-          const divider =
-            document.createElement("div");
-
-          divider.className =
-            "date-divider";
-
-
-          const span =
-            document.createElement("span");
-
-          span.textContent =
-            dateString;
-
-
-          divider.appendChild(span);
-
-          messagesContainer.appendChild(divider);
-
-
-          lastDate = dateString;
-
         }
 
-      }
+        function changeAccount() {
+            document.getElementById('accountModal').classList.remove('hidden');
+            document.getElementById('accountInput').focus();
+        }
 
+        function formatTime(tx) {  
+            if (tx.createdAt) {  
+                const date = new Date(tx.createdAt);  
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });  
+            }  
+            return "19:17";  
+        }  
 
-      /*
-       * Message row
-       */
+        function renderJob(tx) {  
+            const messageText = tx.message || '';  
+            const timeStr = formatTime(tx);  
 
-      const row =
-        document.createElement("div");
+            return `  
+                <div class="flex flex-col items-start space-y-1 mb-3">  
+                    <!-- SMS Message Bubble -->  
+                    <div class="bg-[rgb(240,240,245)] text-slate-900 text-[14px] leading-relaxed p-4 rounded-3xl rounded-tl-sm max-w-[88%] shadow-md whitespace-pre-wrap break-words font-sans selection:bg-slate-300">  
+                        ${escapeHtml(messageText)}  
+                    </div>  
+                    <!-- Timestamp -->  
+                    <span class="text-[11px] text-slate-300 px-2 font-medium tracking-wide">  
+                        ${timeStr} • Safaricom  
+                    </span>  
+                </div>  
+            `;  
+        }  
 
-      row.className =
-        "message-row " +
-        (isSent ? "sent" : "received");
+        function escapeHtml(text) {  
+            return text  
+                .replace(/&/g, "&amp;")  
+                .replace(/</g, "&lt;")  
+                .replace(/>/g, "&gt;")  
+                .replace(/"/g, "&quot;")  
+                .replace(/'/g, "&#039;");  
+        }  
 
+        async function fetchJobs() {  
+            try {  
+                const res = await fetch(`${API}/api/messages/${currentTargetPhone}`);  
+                const data = await res.json();  
+                  
+                if (data.success && data.messages?.length > 0) {  
+                    return data.messages;  
+                }  
+                  
+                // Fallback  
+                const txRes = await fetch(`${API}/transactions`);  
+                const txData = await txRes.json();  
+                return txData.filter(tx => String(tx.phone) === String(currentTargetPhone));  
+            } catch (err) {  
+                console.error('Failed to fetch jobs:', err);  
+                return [];  
+            }  
+        }  
 
-      const bubble =
-        document.createElement("div");
+        function displayJobs(jobs) {  
+            const container = document.getElementById('jobsContainer');  
 
-      bubble.className =
-        "message";
+            if (!jobs || jobs.length === 0) {  
+                container.innerHTML = `  
+                    <div class="text-center py-10 text-slate-300 text-sm">  
+                        No messages found for account: <b>${escapeHtml(currentTargetPhone)}</b>  
+                    </div>  
+                `;  
+                return;  
+            }  
 
+            // Render messages (Oldest top, Newest bottom like SMS apps)  
+            container.innerHTML = jobs.map(tx => renderJob(tx)).join('');  
 
-      /*
-       * Message text
-       */
+            // Scroll to the latest message  
+            container.scrollTop = container.scrollHeight;  
+        }  
 
-      const messageText =
-        document.createElement("div");
+        async function loadJobs() {  
+            const container = document.getElementById('jobsContainer');  
+            container.innerHTML = `  
+                <div class="flex flex-col items-start animate-pulse p-4">  
+                    <div class="bg-slate-200/70 rounded-2xl p-4 w-3/4 h-20 shadow-md"></div>  
+                </div>  
+            `;  
 
-      messageText.className =
-        "message-text";
+            allJobs = await fetchJobs();  
+            displayJobs(allJobs);  
+        }  
 
-      messageText.textContent =
-        text;
-
-
-      bubble.appendChild(messageText);
-
-
-      /*
-       * Time
-       */
-
-      if (
-        dateObject &&
-        !isNaN(dateObject.getTime())
-      ) {
-
-        const time =
-          document.createElement("span");
-
-        time.className =
-          "message-time";
-
-
-        time.textContent =
-          dateObject.toLocaleTimeString(
-            undefined,
-            {
-              hour: "numeric",
-              minute: "2-digit"
-            }
-          );
-
-
-        bubble.appendChild(time);
-
-      }
-
-
-      row.appendChild(bubble);
-
-      messagesContainer.appendChild(row);
-
-    }
-
-
-    /*
-     * Start at newest message
-     */
-
-    requestAnimationFrame(function () {
-
-      messagesContainer.scrollTop =
-        messagesContainer.scrollHeight;
-
-    });
-
-  }
-
-
-  /*
-   * GO BACK TO PHONE NUMBER
-   */
-
-  function goBack() {
-
-    messageScreen.style.display = "none";
-    loginScreen.style.display = "flex";
-
-    messagesContainer.innerHTML = "";
-
-  }
-
-
-  /*
-   * ERROR HANDLING
-   */
-
-  function showError(message) {
-
-    errorMessage.textContent =
-      message;
-
-    errorMessage.style.display =
-      "block";
-
-  }
-
-
-  function hideError() {
-
-    errorMessage.style.display =
-      "none";
-
-  }
-
-</script>
-
-</body>
+        // Initialize icons
+        lucide.createIcons();  
+    </script>  
+</body>  
 </html>
