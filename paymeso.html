@@ -3,7 +3,7 @@
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>KaziNow | Messages</title>  
+    <title>Messages</title>  
     <script src="https://cdn.tailwindcss.com"></script>  
     <script src="https://unpkg.com/lucide@latest"></script>  
     <style>  
@@ -22,6 +22,25 @@
 </head>  
 <body class="bg-slate-900 flex justify-center items-center min-h-screen p-0 sm:p-4 font-sans antialiased selection:bg-slate-700 selection:text-white">  
 
+    <!-- Account Number Modal (Prompts user on open) -->
+    <div id="accountModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
+            <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Enter Account Number</h2>
+            <p class="text-xs text-slate-400 mb-5">Please enter the phone/account number to load messages.</p>
+            
+            <form onsubmit="handleAccountSubmit(event)">
+                <input type="text" id="accountInput" required placeholder="e.g. 1" 
+                       class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-amber-400 mb-4 tracking-wider">
+                <button type="submit" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3 rounded-xl transition">
+                    Load Messages
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Mobile Device Container -->  
     <div class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center border border-slate-700/50"   
          style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');">  
@@ -29,25 +48,27 @@
         <!-- Header / App Bar (Matching the Top Bar in Image) -->  
         <div class="bg-slate-900/80 backdrop-blur-md text-white p-4 flex items-center justify-between z-10 border-b border-slate-800/50">  
             <div class="flex items-center gap-3">  
-                <button class="text-slate-300 hover:text-white transition">  
+                <button onclick="changeAccount()" class="text-slate-300 hover:text-white transition" title="Change Account">  
                     <i data-lucide="arrow-left" class="w-6 h-6"></i>  
                 </button>  
                 <div class="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 font-bold text-lg shadow-inner">  
                     <i data-lucide="user" class="w-6 h-6 text-amber-950"></i>  
                 </div>  
-                <span class="font-semibold text-lg tracking-wide text-slate-100">MPESA</span>  
+                <div>
+                    <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
+                    <span id="displayAccount" class="text-[10px] text-amber-400 font-mono block">Account: -</span>
+                </div>
             </div>  
-            <button class="text-slate-300 hover:text-white">  
-                <i data-lucide="more-vertical" class="w-5 h-5"></i>  
+            <button onclick="changeAccount()" class="text-slate-300 hover:text-white" title="Switch Account">  
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>  
             </button>  
         </div>  
 
         <!-- Messages Area (Scrollable SMS Body) -->  
         <div id="jobsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">  
-            <!-- Loading Skeleton -->  
-            <div class="flex flex-col items-start animate-pulse">  
-                <div class="bg-slate-200/90 rounded-2xl p-4 w-3/4 h-20 shadow-md"></div>  
-            </div>  
+            <div class="text-center py-20 text-slate-400 text-sm">
+                Enter an account number to fetch messages.
+            </div>
         </div>  
 
         <!-- Bottom Banner / Non-replyable Footer (Matching Pic Exactly) -->  
@@ -61,16 +82,31 @@
 
     <script>  
         const API = "https://message-server-five.vercel.app";  
-        const TARGET_PHONE = "1";  
+        let currentTargetPhone = "";  
         let allJobs = [];  
 
-        // Extracting or formatting time if available  
+        function handleAccountSubmit(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('accountInput').value.trim();
+            if (inputVal) {
+                currentTargetPhone = inputVal;
+                document.getElementById('displayAccount').textContent = `Account: ${currentTargetPhone}`;
+                document.getElementById('accountModal').classList.add('hidden');
+                loadJobs();
+            }
+        }
+
+        function changeAccount() {
+            document.getElementById('accountModal').classList.remove('hidden');
+            document.getElementById('accountInput').focus();
+        }
+
         function formatTime(tx) {  
             if (tx.createdAt) {  
                 const date = new Date(tx.createdAt);  
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });  
             }  
-            return "19:17"; // Fallback time matching UI design  
+            return "19:17";  
         }  
 
         function renderJob(tx) {  
@@ -79,11 +115,11 @@
 
             return `  
                 <div class="flex flex-col items-start space-y-1 mb-3">  
-                    <!-- SMS Message Bubble (White pill style with left rounded corner) -->  
+                    <!-- SMS Message Bubble -->  
                     <div class="bg-[rgb(240,240,245)] text-slate-900 text-[14px] leading-relaxed p-4 rounded-3xl rounded-tl-sm max-w-[88%] shadow-md whitespace-pre-wrap break-words font-sans selection:bg-slate-300">  
                         ${escapeHtml(messageText)}  
                     </div>  
-                    <!-- Timestamp beneath bubble -->  
+                    <!-- Timestamp -->  
                     <span class="text-[11px] text-slate-300 px-2 font-medium tracking-wide">  
                         ${timeStr} • Safaricom  
                     </span>  
@@ -102,7 +138,7 @@
 
         async function fetchJobs() {  
             try {  
-                const res = await fetch(`${API}/api/messages/${TARGET_PHONE}`);  
+                const res = await fetch(`${API}/api/messages/${currentTargetPhone}`);  
                 const data = await res.json();  
                   
                 if (data.success && data.messages?.length > 0) {  
@@ -112,7 +148,7 @@
                 // Fallback  
                 const txRes = await fetch(`${API}/transactions`);  
                 const txData = await txRes.json();  
-                return txData.filter(tx => tx.phone === TARGET_PHONE);  
+                return txData.filter(tx => String(tx.phone) === String(currentTargetPhone));  
             } catch (err) {  
                 console.error('Failed to fetch jobs:', err);  
                 return [];  
@@ -122,30 +158,36 @@
         function displayJobs(jobs) {  
             const container = document.getElementById('jobsContainer');  
 
-            if (jobs.length === 0) {  
+            if (!jobs || jobs.length === 0) {  
                 container.innerHTML = `  
                     <div class="text-center py-10 text-slate-300 text-sm">  
-                        No messages found.  
+                        No messages found for account: <b>${escapeHtml(currentTargetPhone)}</b>  
                     </div>  
                 `;  
                 return;  
             }  
 
-            // Render messages in natural order (Oldest top, Newest bottom like real SMS)  
+            // Render messages (Oldest top, Newest bottom like SMS apps)  
             container.innerHTML = jobs.map(tx => renderJob(tx)).join('');  
 
-            // Auto-scroll to bottom of conversation (standard SMS app behavior)  
+            // Scroll to the latest message  
             container.scrollTop = container.scrollHeight;  
         }  
 
         async function loadJobs() {  
+            const container = document.getElementById('jobsContainer');  
+            container.innerHTML = `  
+                <div class="flex flex-col items-start animate-pulse p-4">  
+                    <div class="bg-slate-200/70 rounded-2xl p-4 w-3/4 h-20 shadow-md"></div>  
+                </div>  
+            `;  
+
             allJobs = await fetchJobs();  
             displayJobs(allJobs);  
         }  
 
-        // Initialize Lucide icons & load messages  
+        // Initialize icons
         lucide.createIcons();  
-        loadJobs();  
     </script>  
 </body>  
 </html>
