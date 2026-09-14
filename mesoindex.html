@@ -75,21 +75,17 @@ body {
   height: calc(100vh - 50px);
   overflow: hidden;
   position: relative;
-  /* Account for static bottom bar height so content flexes correctly */
-  padding-bottom: 45px;
 }
 
-/* ─── MESSAGES CONTAINER UPDATED FOR COMPACT GAP AT BOTTOM ─── */
+/* ─── FIXED MESSAGES CONTAINER & SCROLL ─── */
 .messages-container {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  /* Reduced bottom padding to keep last message tight above bottom bar */
-  padding: 15px 10px 20px 10px;
+  padding: 15px 10px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   touch-action: pan-x pan-y;
 }
 
@@ -97,7 +93,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-top: auto;
+  margin-top: auto; /* Anchors messages to bottom when few, enables vertical scroll when many */
 }
 
 .phone-input-container {
@@ -178,15 +174,12 @@ body {
   font-size: var(--message-font-size, 16px);
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 6px; /* Tightened bubble spacing */
+  margin-bottom: 10px;
   margin-left: auto;
   margin-right: auto;
   width: fit-content;
   animation: slideInUp 0.4s ease both;
   transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.message-bubble:last-child {
-  margin-bottom: 0; /* Zero margin on last bubble */
 }
 .message-bubble.hide {
   opacity: 0;
@@ -254,16 +247,9 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
   z-index: 10;
   border-top: 1px solid #2a2a2a;
-  height: 45px;
+  flex-shrink: 0; /* Prevents bar from overlapping container */
 }
 .no-reply-info.hidden {
   display: none !important;
@@ -402,7 +388,6 @@ const API = "https://message-server-five.vercel.app";
 const SYSTEM_API = "https://funds-6jwd.vercel.app/api";
 const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-// ─── PERSISTENT LOCAL STORAGE USER CHECK ───
 let user = JSON.parse(localStorage.getItem('mledger_user'));
 if (!user || !user.phone) {
   location.href = 'index.html';
@@ -424,7 +409,6 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
 let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;
 let initialDistance = 0;
 let baseFontSize = currentFontSize;
@@ -466,13 +450,11 @@ messagesContainer.addEventListener('touchend', (e) => {
   }
 }, { passive: true });
 
-// ─── INITIALIZE USER CONTENT ───
 const changeBtn = document.getElementById('changeBtn');
 const noReplyBar = document.getElementById('noReplyBar');
 const phoneInputContainer = document.getElementById('phoneInputContainer');
 const phoneInput = document.getElementById('phoneInput');
 
-// Auto load persistent session
 document.querySelector('.messages-header').style.display = 'flex';
 phoneInputContainer.classList.add('hidden');
 phoneInput.value = user.phone;
@@ -484,7 +466,6 @@ changeBtn.addEventListener('click', () => {
   location.href = 'index.html';
 });
 
-// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
 const moreBtn = document.getElementById('moreBtn');
 let moreClickCount = 0;
 let moreClickTimeout;
@@ -500,7 +481,6 @@ moreBtn.addEventListener('click', () => {
 });
 moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// ─── LOAD BUTTON CLICK ───
 const loadBtn = document.getElementById('loadBtn');
 
 loadBtn.addEventListener('click', () => {
@@ -515,7 +495,6 @@ phoneInput.addEventListener('keypress', (e) => {
     }
 });
 
-// ─── TRIPLE TAP ON NO-REPLY BAR ───
 let tapCount = 0;
 let tapTimeout;
 noReplyBar.addEventListener('click', () => {
@@ -529,7 +508,6 @@ noReplyBar.addEventListener('click', () => {
     }
 });
 
-// ─── HELPERS ───
 function extractFirstUrl(text) {
   const match = text.match(urlRegex);
   if (!match) return null;
@@ -650,7 +628,6 @@ function renderMessages(messages) {
   }, 50);
 }
 
-// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
 function sigOf(tx) {
   return (tx.message || '') + '|' + (tx.phone || '');
 }
@@ -775,7 +752,6 @@ async function loadMessagesByPhone(phone) {
   }
 }
 
-// ─── PWA INSTALL PROMPT ───
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -795,7 +771,6 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 
-// ─── REGISTER SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
