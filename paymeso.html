@@ -2,1296 +2,808 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <title>MPESA Messages</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        body {
-            background: #1e2430;
-        }
-
-        /* =========================
-           MAIN SMS APP
-        ========================= */
-
-        .sms-app {
-            width: 100%;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-
-            background:
-                linear-gradient(
-                    rgba(17, 22, 31, 0.62),
-                    rgba(17, 22, 31, 0.62)
-                ),
-                url("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1600&q=90");
-
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-
-        /* =========================
-           HEADER
-        ========================= */
-
-        .header {
-            height: 72px;
-            min-height: 72px;
-
-            background: rgba(255, 255, 255, 0.94);
-
-            display: flex;
-            align-items: center;
-
-            padding: 0 17px;
-
-            gap: 14px;
-
-            box-shadow:
-                0 1px 5px rgba(0, 0, 0, 0.20);
-
-            z-index: 10;
-        }
-
-        .back-button {
-            width: 42px;
-            height: 42px;
-
-            border: none;
-            background: transparent;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            cursor: pointer;
-
-            padding: 0;
-        }
-
-        .back-button svg {
-            width: 31px;
-            height: 31px;
-            stroke: #111;
-            stroke-width: 2;
-        }
-
-
-        /* =========================
-           MPESA AVATAR
-        ========================= */
-
-        .avatar {
-            width: 51px;
-            height: 51px;
-
-            border-radius: 50%;
-
-            background: #fbc52b;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            flex-shrink: 0;
-        }
-
-        .avatar svg {
-            width: 32px;
-            height: 32px;
-
-            fill: white;
-            stroke: white;
-        }
-
-
-        /* =========================
-           HEADER NAME
-        ========================= */
-
-        .sender-name {
-            font-size: 21px;
-            font-weight: 400;
-            color: #111;
-
-            white-space: nowrap;
-        }
-
-
-        .menu-button {
-            margin-left: auto;
-
-            width: 40px;
-            height: 45px;
-
-            border: none;
-            background: transparent;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            cursor: pointer;
-        }
-
-        .menu-dots {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .menu-dots span {
-            width: 5px;
-            height: 5px;
-
-            background: #111;
-
-            border-radius: 50%;
-        }
-
-
-        /* =========================
-           SCROLLABLE MESSAGES
-        ========================= */
-
-        .messages-container {
-            flex: 1;
-
-            min-height: 0;
-
-            overflow-y: auto;
-            overflow-x: hidden;
-
-            padding: 16px 14px 35px;
-
-            scroll-behavior: smooth;
-
-            -webkit-overflow-scrolling: touch;
-        }
-
-
-        /* Scrollbar */
-
-        .messages-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .messages-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.30);
-            border-radius: 10px;
-        }
-
-
-        /* =========================
-           DATE
-        ========================= */
-
-        .date-divider {
-            width: 100%;
-
-            display: flex;
-            justify-content: center;
-
-            margin: 22px 0 26px;
-        }
-
-        .date-divider span {
-            color: white;
-
-            font-size: 14px;
-
-            text-shadow:
-                0 1px 3px rgba(0,0,0,.8);
-        }
-
-
-        /* =========================
-           MESSAGE BUBBLE
-        ========================= */
-
-        .message-wrapper {
-            width: 100%;
-
-            display: flex;
-            justify-content: flex-start;
-
-            margin-bottom: 16px;
-        }
-
-        .message-bubble {
-            width: fit-content;
-
-            max-width: 88%;
-
-            background: #f8f7fc;
-
-            color: #202124;
-
-            border-radius: 22px;
-
-            padding: 14px 18px 11px;
-
-            font-size: 17px;
-
-            line-height: 1.48;
-
-            box-shadow:
-                0 2px 6px rgba(0,0,0,.20);
-
-            overflow-wrap: anywhere;
-
-            white-space: pre-wrap;
-        }
-
-
-        /* =========================
-           MESSAGE TIME
-        ========================= */
-
-        .message-time {
-            text-align: right;
-
-            margin-top: 7px;
-
-            font-size: 12px;
-
-            color: #777;
-        }
-
-
-        /* =========================
-           UNREAD DIVIDER
-        ========================= */
-
-        .unread-divider {
-            width: 100%;
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            margin: 25px 0 21px;
-
-            color: white;
-
-            font-size: 13px;
-
-            text-shadow:
-                0 1px 3px rgba(0,0,0,.8);
-        }
-
-        .unread-divider::before,
-        .unread-divider::after {
-            content: "";
-
-            height: 1px;
-
-            background: rgba(255,255,255,.65);
-
-            flex: 1;
-        }
-
-
-        /* =========================
-           SENDER INFORMATION
-        ========================= */
-
-        .sender-info {
-            color: white;
-
-            font-size: 12px;
-
-            margin: -6px 0 9px 6px;
-
-            text-shadow:
-                0 1px 3px rgba(0,0,0,.8);
-        }
-
-        .sender-info .carrier {
-            color: #16c7e8;
-        }
-
-
-        /* =========================
-           BOTTOM SYSTEM MESSAGE
-        ========================= */
-
-        .system-message {
-            width: 100%;
-
-            margin-top: 8px;
-
-            background: #f8f7fc;
-
-            border-radius: 25px;
-
-            padding: 21px 24px 25px;
-
-            color: #202124;
-
-            font-size: 17px;
-
-            line-height: 1.5;
-
-            box-shadow:
-                0 2px 6px rgba(0,0,0,.18);
-        }
-
-        .system-message a {
-            color: #596579;
-
-            text-decoration: underline;
-        }
-
-
-        /* =========================
-           LOADING
-        ========================= */
-
-        .loading {
-            min-height: 100%;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            color: white;
-
-            font-size: 16px;
-        }
-
-
-        /* =========================
-           ERROR
-        ========================= */
-
-        .error {
-            margin: 30px auto;
-
-            max-width: 500px;
-
-            background: rgba(255,255,255,.95);
-
-            padding: 20px;
-
-            border-radius: 18px;
-
-            color: #222;
-
-            text-align: center;
-        }
-
-
-        /* =========================
-           EMPTY
-        ========================= */
-
-        .empty {
-            min-height: 100%;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            color: white;
-
-            text-align: center;
-
-            font-size: 16px;
-        }
-
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 600px) {
-
-            .header {
-                height: 70px;
-                min-height: 70px;
-
-                padding: 0 12px;
-
-                gap: 10px;
-            }
-
-            .avatar {
-                width: 50px;
-                height: 50px;
-            }
-
-            .sender-name {
-                font-size: 21px;
-            }
-
-            .messages-container {
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-
-            .message-bubble {
-                max-width: 96%;
-
-                font-size: 17px;
-
-                padding:
-                    14px 15px
-                    11px;
-            }
-
-            .system-message {
-                font-size: 17px;
-
-                padding:
-                    20px 20px 25px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Messages</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #fff;
+      color: #111;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* PHONE NUMBER SCREEN */
+    #loginScreen {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      background: #f7f7f7;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 30px 24px;
+      box-shadow: 0 5px 25px rgba(0,0,0,.08);
+    }
+
+    .login-box h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .login-box p {
+      color: #777;
+      font-size: 15px;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .phone-input {
+      width: 100%;
+      height: 54px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 17px;
+      outline: none;
+    }
+
+    .phone-input:focus {
+      border-color: #555;
+    }
+
+    .load-btn {
+      width: 100%;
+      height: 54px;
+      margin-top: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .load-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: #d00;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* MESSAGE SCREEN */
+    #messageScreen {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .top-bar {
+      height: 65px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 0 16px;
+      border-bottom: 1px solid #eee;
+      background: #fff;
+      z-index: 5;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      font-size: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .account-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .account-name {
+      font-size: 17px;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .account-number {
+      color: #777;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .refresh-btn {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    /* SCROLLABLE MESSAGE AREA */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 15px 12px 30px;
+      background: #f5f5f5;
+      scroll-behavior: smooth;
+    }
+
+    #messages::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #messages::-webkit-scrollbar-thumb {
+      background: #bbb;
+      border-radius: 10px;
+    }
+
+    .date-divider {
+      text-align: center;
+      margin: 13px 0;
+    }
+
+    .date-divider span {
+      background: #ddd;
+      color: #555;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 12px;
+    }
+
+    .message-row {
+      display: flex;
+      margin: 7px 0;
+      width: 100%;
+    }
+
+    .message-row.received {
+      justify-content: flex-start;
+    }
+
+    .message-row.sent {
+      justify-content: flex-end;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 10px 13px 7px;
+      border-radius: 17px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .received .message {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-bottom-left-radius: 5px;
+    }
+
+    .sent .message {
+      background: #d9fdd3;
+      border-bottom-right-radius: 5px;
+    }
+
+    .message-text {
+      white-space: pre-wrap;
+    }
+
+    .message-time {
+      display: block;
+      text-align: right;
+      color: #777;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .loading {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-size: 15px;
+    }
+
+    .empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .empty-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .empty p {
+      font-size: 15px;
+    }
+
+    @media (min-width: 700px) {
+      #messages {
+        padding-left: calc((100% - 650px) / 2);
+        padding-right: calc((100% - 650px) / 2);
+      }
+
+      .message {
+        max-width: 70%;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="sms-app">
+  <!-- PHONE NUMBER SCREEN -->
+  <section id="loginScreen">
 
-    <!-- =========================
-         HEADER
-    ========================= -->
+    <div class="login-box">
 
-    <header class="header">
+      <h1>Messages</h1>
 
-        <button
-            class="back-button"
-            onclick="goBack()"
-            aria-label="Back">
+      <p>
+        Enter the phone number associated with the account
+        whose messages you want to view.
+      </p>
 
-            <svg
-                viewBox="0 0 24 24"
-                fill="none">
+      <input
+        id="phoneNumber"
+        class="phone-input"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="Enter phone number"
+      >
 
-                <path
-                    d="M19 12H5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"/>
+      <button id="loadButton" class="load-btn">
+        Load Messages
+      </button>
 
-                <path
-                    d="M12 19L5 12L12 5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"/>
+      <div id="errorMessage" class="error"></div>
 
-            </svg>
+    </div>
 
-        </button>
+  </section>
 
 
-        <!-- MPESA PROFILE -->
+  <!-- MESSAGE SCREEN -->
+  <section id="messageScreen">
 
-        <div class="avatar">
+    <header class="top-bar">
 
-            <svg
-                viewBox="0 0 24 24"
-                fill="none">
+      <button class="back-btn" onclick="goBack()">
+        ‹
+      </button>
 
-                <circle
-                    cx="12"
-                    cy="8"
-                    r="4"/>
-
-                <path
-                    d="M4 21C4.8 16.8 7.6 14.5 12 14.5C16.4 14.5 19.2 16.8 20 21"
-                    stroke-width="1.5"
-                    stroke-linecap="round"/>
-
-            </svg>
-
+      <div class="account-info">
+        <div class="account-name" id="accountName">
+          Messages
         </div>
 
-
-        <div class="sender-name">
-            MPESA
+        <div class="account-number" id="accountNumber">
+          —
         </div>
+      </div>
 
-
-        <!-- THREE DOT MENU -->
-
-        <button
-            class="menu-button"
-            aria-label="Menu">
-
-            <div class="menu-dots">
-
-                <span></span>
-                <span></span>
-                <span></span>
-
-            </div>
-
-        </button>
+      <button
+        class="refresh-btn"
+        onclick="loadMessages()"
+        title="Refresh"
+      >
+        ↻
+      </button>
 
     </header>
 
 
-    <!-- =========================
-         MESSAGES
-    ========================= -->
+    <main id="messages">
 
-    <main
-        id="messagesContainer"
-        class="messages-container">
-
-        <div class="loading">
-            Loading messages...
-        </div>
+      <div class="loading">
+        Loading messages...
+      </div>
 
     </main>
 
-</div>
+  </section>
 
 
 <script>
 
-    /*
-     * API
-     */
+  /*
+   * =========================================================
+   * BACKEND CONFIGURATION
+   * =========================================================
+   *
+   * CHANGE THIS TO YOUR REAL BACKEND URL.
+   *
+   * Example:
+   *
+   * const API_URL = "https://your-backend.onrender.com/api/messages";
+   *
+   */
 
-    const API =
-        "https://message-server-five.vercel.app";
-
-    const TARGET_PHONE =
-        "1";
-
-
-    /*
-     * MAIN MESSAGE CONTAINER
-     */
-
-    const container =
-        document.getElementById(
-            "messagesContainer"
-        );
+  const API_URL = "https://YOUR-BACKEND-URL.com/api/messages";
 
 
-    /*
-     * ESCAPE HTML
-     */
+  const loginScreen = document.getElementById("loginScreen");
+  const messageScreen = document.getElementById("messageScreen");
 
-    function escapeHTML(text) {
+  const phoneInput = document.getElementById("phoneNumber");
+  const loadButton = document.getElementById("loadButton");
 
-        return String(text ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+  const messagesContainer = document.getElementById("messages");
 
+  const accountName = document.getElementById("accountName");
+  const accountNumber = document.getElementById("accountNumber");
+
+  const errorMessage = document.getElementById("errorMessage");
+
+
+  let currentPhone = "";
+
+
+  /*
+   * LOAD BUTTON
+   */
+
+  loadButton.addEventListener("click", function () {
+
+    const phone = phoneInput.value.trim();
+
+    if (!phone) {
+      showError("Please enter a phone number.");
+      return;
     }
 
+    hideError();
 
-    /*
-     * CONVERT LINKS INTO CLICKABLE LINKS
-     */
-
-    function formatMessage(text) {
-
-        let safe =
-            escapeHTML(text);
-
-
-        /*
-         * Make URLs clickable
-         */
-
-        safe = safe.replace(
-            /(https?:\/\/[^\s<]+)/gi,
-
-            '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-
-
-        return safe;
-
-    }
-
-
-    /*
-     * FIND MESSAGE DATE
-     */
-
-    function getDate(message) {
-
-        const value =
-            message.createdAt ||
-            message.created_at ||
-            message.timestamp ||
-            message.date ||
-            message.sentAt ||
-            message.sent_at;
-
-
-        if (!value) {
-            return null;
-        }
-
-
-        const date =
-            new Date(value);
-
-
-        if (isNaN(date.getTime())) {
-            return null;
-        }
-
-
-        return date;
-
-    }
-
-
-    /*
-     * DATE LABEL
-     */
-
-    function dateLabel(date) {
-
-        if (!date) {
-            return "Today";
-        }
-
-
-        const now =
-            new Date();
-
-
-        const yesterday =
-            new Date();
-
-        yesterday.setDate(
-            yesterday.getDate() - 1
-        );
-
-
-        if (
-            date.toDateString() ===
-            now.toDateString()
-        ) {
-
-            return "Today";
-
-        }
-
-
-        if (
-            date.toDateString() ===
-            yesterday.toDateString()
-        ) {
-
-            return "Yesterday";
-
-        }
-
-
-        return date.toLocaleDateString(
-            "en-GB",
-            {
-                weekday: "long",
-                day: "2-digit",
-                month: "2-digit",
-                year: "2-digit"
-            }
-        );
-
-    }
-
-
-    /*
-     * TIME
-     */
-
-    function getTime(message) {
-
-        const date =
-            getDate(message);
-
-
-        if (!date) {
-
-            /*
-             * If API already provides a time
-             */
-
-            return (
-                message.time ||
-                message.sent_time ||
-                ""
-            );
-
-        }
-
-
-        return date.toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false
-            }
-        );
-
-    }
-
-
-    /*
-     * SORT MESSAGES
-     *
-     * Oldest -> newest
-     *
-     * This is important because SMS apps
-     * display the conversation in chronological
-     * order.
-     */
-
-    function sortMessages(messages) {
-
-        return [...messages].sort(
-            (a, b) => {
-
-                const dateA =
-                    getDate(a);
-
-                const dateB =
-                    getDate(b);
-
-
-                if (!dateA || !dateB) {
-                    return 0;
-                }
-
-
-                return (
-                    dateA.getTime() -
-                    dateB.getTime()
-                );
-
-            }
-        );
-
-    }
-
-
-    /*
-     * CREATE DATE DIVIDER
-     */
-
-    function createDateDivider(date) {
-
-        return `
-
-            <div class="date-divider">
-
-                <span>
-                    ${escapeHTML(
-                        dateLabel(date)
-                    )}
-                </span>
-
-            </div>
-
-        `;
-
-    }
-
-
-    /*
-     * CREATE SMS MESSAGE
-     */
-
-    function createMessage(message) {
-
-        const text =
-            message.message ??
-            message.body ??
-            message.text ??
-            "";
-
-
-        const time =
-            getTime(message);
-
-
-        return `
-
-            <div class="message-wrapper">
-
-                <div class="message-bubble">
-
-                    <div>
-                        ${formatMessage(text)}
-                    </div>
-
-                    ${
-                        time
-                        ?
-                        `
-                        <div class="message-time">
-                            ${escapeHTML(time)}
-                        </div>
-                        `
-                        :
-                        ""
-                    }
-
-                </div>
-
-            </div>
-
-        `;
-
-    }
-
-
-    /*
-     * RENDER ALL MESSAGES
-     */
-
-    function renderMessages(messages) {
-
-        if (
-            !messages ||
-            messages.length === 0
-        ) {
-
-            container.innerHTML = `
-
-                <div class="empty">
-
-                    No messages available.
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-         * Sort oldest first
-         */
-
-        const sorted =
-            sortMessages(messages);
-
-
-        let html = "";
-
-
-        let previousDate = "";
-
-
-        sorted.forEach(
-            (message, index) => {
-
-                const date =
-                    getDate(message);
-
-
-                const currentDate =
-                    date
-                    ?
-                    date.toDateString()
-                    :
-                    "";
-
-
-                /*
-                 * Add date divider when date changes
-                 */
-
-                if (
-                    currentDate &&
-                    currentDate !== previousDate
-                ) {
-
-                    html +=
-                        createDateDivider(
-                            date
-                        );
-
-                    previousDate =
-                        currentDate;
-
-                }
-
-
-                /*
-                 * Add message
-                 */
-
-                html +=
-                    createMessage(
-                        message
-                    );
-
-            }
-        );
-
-
-        /*
-         * Add unread divider near newest
-         * message, similar to SMS apps.
-         */
-
-        html += `
-
-            <div class="unread-divider">
-
-                <span>Unread</span>
-
-            </div>
-
-        `;
-
-
-        /*
-         * Bottom system notice
-         */
-
-        html += `
-
-            <div class="system-message">
-
-                Sender can't accept replies.
-                Contact them directly.
-
-                <a href="#">
-                    Learn more
-                </a>
-
-            </div>
-
-        `;
-
-
-        container.innerHTML =
-            html;
-
-
-        /*
-         * Scroll to newest message
-         */
-
-        setTimeout(() => {
-
-            container.scrollTop =
-                container.scrollHeight;
-
-        }, 100);
-
-    }
-
-
-    /*
-     * FETCH MESSAGES
-     */
-
-    async function fetchMessages() {
-
-        try {
-
-            /*
-             * Primary endpoint
-             */
-
-            const response =
-                await fetch(
-                    `${API}/api/messages/${TARGET_PHONE}`
-                );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "Message API request failed"
-                );
-
-            }
-
-
-            const data =
-                await response.json();
-
-
-            if (
-                data &&
-                Array.isArray(
-                    data.messages
-                )
-            ) {
-
-                return data.messages;
-
-            }
-
-
-            /*
-             * If API directly returns an array
-             */
-
-            if (
-                Array.isArray(data)
-            ) {
-
-                return data;
-
-            }
-
-
-            return [];
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Primary API error:",
-                error
-            );
-
-
-            /*
-             * FALLBACK TO /transactions
-             */
-
-            try {
-
-                const response =
-                    await fetch(
-                        `${API}/transactions`
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Transactions request failed"
-                    );
-
-                }
-
-
-                const data =
-                    await response.json();
-
-
-                if (
-                    !Array.isArray(data)
-                ) {
-
-                    return [];
-
-                }
-
-
-                return data.filter(
-                    item =>
-                        String(
-                            item.phone
-                        ) ===
-                        String(
-                            TARGET_PHONE
-                        )
-                );
-
-            }
-
-            catch (fallbackError) {
-
-                console.error(
-                    "Fallback error:",
-                    fallbackError
-                );
-
-
-                return null;
-
-            }
-
-        }
-
-    }
-
-
-    /*
-     * LOAD MESSAGES
-     */
-
-    async function loadMessages() {
-
-        container.innerHTML = `
-
-            <div class="loading">
-
-                Loading messages...
-
-            </div>
-
-        `;
-
-
-        const messages =
-            await fetchMessages();
-
-
-        /*
-         * API completely failed
-         */
-
-        if (messages === null) {
-
-            container.innerHTML = `
-
-                <div class="error">
-
-                    Unable to load messages.
-
-                    <br><br>
-
-                    Please check your
-                    internet connection
-                    or try again later.
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        renderMessages(messages);
-
-    }
-
-
-    /*
-     * BACK BUTTON
-     */
-
-    function goBack() {
-
-        /*
-         * If opened from another page,
-         * go back normally.
-         */
-
-        if (
-            window.history.length > 1
-        ) {
-
-            window.history.back();
-
-        }
-
-    }
-
-
-    /*
-     * LOAD ON START
-     */
+    currentPhone = phone;
 
     loadMessages();
 
+  });
+
+
+  /*
+   * ALLOW ENTER KEY
+   */
+
+  phoneInput.addEventListener("keydown", function (event) {
+
+    if (event.key === "Enter") {
+      loadButton.click();
+    }
+
+  });
+
+
+  /*
+   * LOAD MESSAGES FROM BACKEND
+   */
+
+  async function loadMessages() {
+
+    if (!currentPhone) {
+      currentPhone = phoneInput.value.trim();
+    }
+
+    if (!currentPhone) {
+      return;
+    }
+
+
+    messageScreen.style.display = "flex";
+    loginScreen.style.display = "none";
+
+
+    accountName.textContent = "Messages";
+    accountNumber.textContent = currentPhone;
+
+
+    messagesContainer.innerHTML = `
+      <div class="loading">
+        Loading messages...
+      </div>
+    `;
+
+
+    try {
+
+      /*
+       * The phone number is sent to the backend as:
+       *
+       * GET /api/messages?phone=0712345678
+       */
+
+      const response = await fetch(
+        API_URL +
+        "?phone=" +
+        encodeURIComponent(currentPhone)
+      );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Server returned " + response.status
+        );
+
+      }
+
+
+      const data = await response.json();
+
+
+      /*
+       * Supports either:
+       *
+       * [
+       *   {...},
+       *   {...}
+       * ]
+       *
+       * OR:
+       *
+       * {
+       *   messages: [...]
+       * }
+       */
+
+      let messages = [];
+
+      if (Array.isArray(data)) {
+        messages = data;
+      }
+
+      else if (Array.isArray(data.messages)) {
+        messages = data.messages;
+      }
+
+      else if (Array.isArray(data.data)) {
+        messages = data.data;
+      }
+
+
+      displayMessages(messages);
+
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      messagesContainer.innerHTML = `
+        <div class="empty">
+
+          <div class="empty-icon">⚠️</div>
+
+          <p>
+            Unable to load messages.
+          </p>
+
+          <p style="margin-top:8px;font-size:13px;">
+            Check your backend URL and connection.
+          </p>
+
+        </div>
+      `;
+
+    }
+
+  }
+
+
+  /*
+   * DISPLAY MESSAGES
+   */
+
+  function displayMessages(messages) {
+
+    messagesContainer.innerHTML = "";
+
+
+    if (!messages || messages.length === 0) {
+
+      messagesContainer.innerHTML = `
+        <div class="empty">
+
+          <div class="empty-icon">💬</div>
+
+          <p>
+            No messages found for this account.
+          </p>
+
+        </div>
+      `;
+
+      return;
+    }
+
 
     /*
-     * REFRESH MESSAGES EVERY 10 SECONDS
-     *
-     * This allows new SMS messages to
-     * appear without refreshing the page.
+     * Sort messages oldest → newest
      */
 
-    setInterval(
-        async function() {
+    messages.sort(function (a, b) {
 
-            const messages =
-                await fetchMessages();
+      const dateA = new Date(
+        a.created_at ||
+        a.createdAt ||
+        a.timestamp ||
+        a.date ||
+        0
+      );
 
+      const dateB = new Date(
+        b.created_at ||
+        b.createdAt ||
+        b.timestamp ||
+        b.date ||
+        0
+      );
 
-            if (
-                messages &&
-                messages.length >= 0
-            ) {
+      return dateA - dateB;
 
-                /*
-                 * Remember current scroll position
-                 */
-
-                const wasNearBottom =
-                    (
-                        container.scrollHeight -
-                        container.scrollTop -
-                        container.clientHeight
-                    ) < 150;
-
-
-                renderMessages(
-                    messages
-                );
+    });
 
 
-                /*
-                 * Only force bottom when
-                 * user was already near bottom.
-                 */
+    let lastDate = "";
 
-                if (!wasNearBottom) {
 
-                    /*
-                     * Prevent renderMessages()
-                     * from moving user away
-                     * from their current reading position.
-                     */
+    messages.forEach(function (msg) {
 
-                    container.scrollTop = 0;
+      /*
+       * Accept different common backend field names.
+       */
 
-                }
+      const text =
+        msg.message ??
+        msg.text ??
+        msg.body ??
+        msg.content ??
+        "";
 
+
+      const direction =
+        String(
+          msg.direction ??
+          msg.type ??
+          msg.status ??
+          "received"
+        ).toLowerCase();
+
+
+      const isSent =
+        direction === "sent" ||
+        direction === "outgoing" ||
+        direction === "send" ||
+        direction === "out";
+
+
+      const dateValue =
+        msg.created_at ||
+        msg.createdAt ||
+        msg.timestamp ||
+        msg.date ||
+        "";
+
+
+      const dateObject =
+        dateValue
+          ? new Date(dateValue)
+          : null;
+
+
+      /*
+       * Date divider
+       */
+
+      if (
+        dateObject &&
+        !isNaN(dateObject.getTime())
+      ) {
+
+        const dateString =
+          dateObject.toLocaleDateString(
+            undefined,
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
             }
+          );
 
-        },
-        10000
-    );
+
+        if (dateString !== lastDate) {
+
+          const divider =
+            document.createElement("div");
+
+          divider.className =
+            "date-divider";
+
+
+          const span =
+            document.createElement("span");
+
+          span.textContent =
+            dateString;
+
+
+          divider.appendChild(span);
+
+          messagesContainer.appendChild(divider);
+
+
+          lastDate = dateString;
+
+        }
+
+      }
+
+
+      /*
+       * Message row
+       */
+
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "message-row " +
+        (isSent ? "sent" : "received");
+
+
+      const bubble =
+        document.createElement("div");
+
+      bubble.className =
+        "message";
+
+
+      /*
+       * Message text
+       */
+
+      const messageText =
+        document.createElement("div");
+
+      messageText.className =
+        "message-text";
+
+      messageText.textContent =
+        text;
+
+
+      bubble.appendChild(messageText);
+
+
+      /*
+       * Time
+       */
+
+      if (
+        dateObject &&
+        !isNaN(dateObject.getTime())
+      ) {
+
+        const time =
+          document.createElement("span");
+
+        time.className =
+          "message-time";
+
+
+        time.textContent =
+          dateObject.toLocaleTimeString(
+            undefined,
+            {
+              hour: "numeric",
+              minute: "2-digit"
+            }
+          );
+
+
+        bubble.appendChild(time);
+
+      }
+
+
+      row.appendChild(bubble);
+
+      messagesContainer.appendChild(row);
+
+    }
+
+
+    /*
+     * Start at newest message
+     */
+
+    requestAnimationFrame(function () {
+
+      messagesContainer.scrollTop =
+        messagesContainer.scrollHeight;
+
+    });
+
+  }
+
+
+  /*
+   * GO BACK TO PHONE NUMBER
+   */
+
+  function goBack() {
+
+    messageScreen.style.display = "none";
+    loginScreen.style.display = "flex";
+
+    messagesContainer.innerHTML = "";
+
+  }
+
+
+  /*
+   * ERROR HANDLING
+   */
+
+  function showError(message) {
+
+    errorMessage.textContent =
+      message;
+
+    errorMessage.style.display =
+      "block";
+
+  }
+
+
+  function hideError() {
+
+    errorMessage.style.display =
+      "none";
+
+  }
 
 </script>
 
