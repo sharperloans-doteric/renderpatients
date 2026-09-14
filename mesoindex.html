@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -407,12 +408,11 @@ let initialDistance = 0;
 let baseFontSize = currentFontSize;
 
 function setFontSize(size) {
-  currentFontSize = Math.min(Math.max(size, 12), 32); // Limit font size between 12px and 32px
+  currentFontSize = Math.min(Math.max(size, 12), 32);
   document.documentElement.style.setProperty('--message-font-size', `${currentFontSize}px`);
   localStorage.setItem('mledger_font_size', currentFontSize);
 }
 
-// Initialize font size on load
 setFontSize(currentFontSize);
 
 const messagesContainer = document.getElementById('messages');
@@ -445,41 +445,33 @@ messagesContainer.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 
-// ─── AUTO-LOGIN (Remember Me) ───
+// ─── PERSISTENT LOCAL STORAGE LOGIN ───
 let isLoggedIn = false;
 let loggedInPhone = null;
 
-const SAVED_PHONE_KEY = 'mledger_view_phone';
-const SAVED_AUTH_KEY = 'mledger_view_auth';
+const loginContainer = document.getElementById('loginContainer');
+const loginBtn = document.getElementById('loginBtn');
+const loginPhone = document.getElementById('loginPhone');
+const loginPassword = document.getElementById('loginPassword');
+const changeBtn = document.getElementById('changeBtn');
+const noReplyBar = document.getElementById('noReplyBar');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+const phoneInput = document.getElementById('phoneInput');
 
-function getSavedCredentials() {
-  const phone = localStorage.getItem(SAVED_PHONE_KEY);
-  const auth = localStorage.getItem(SAVED_AUTH_KEY);
-  return { phone, auth };
-}
-
-function saveCredentials(phone, auth) {
-  localStorage.setItem(SAVED_PHONE_KEY, phone);
-  localStorage.setItem(SAVED_AUTH_KEY, auth);
-}
-
-function clearCredentials() {
-  localStorage.removeItem(SAVED_PHONE_KEY);
-  localStorage.removeItem(SAVED_AUTH_KEY);
-}
-
-async function tryAutoLogin() {
+function tryAutoLogin() {
   const urlParams = new URLSearchParams(window.location.search);
   const phoneParam = urlParams.get('phone');
   
   const savedUser = localStorage.getItem('mledger_user');
   let user = null;
+  
   if (savedUser) {
     try {
       user = JSON.parse(savedUser);
     } catch (e) {}
   } else if (phoneParam) {
     user = { phone: phoneParam };
+    localStorage.setItem('mledger_user', JSON.stringify(user));
   }
   
   if (user && user.phone) {
@@ -489,26 +481,18 @@ async function tryAutoLogin() {
     document.querySelector('.messages-header').style.display = 'flex';
     phoneInputContainer.classList.add('hidden');
     phoneInput.value = user.phone;
-    noReplyBar.classList.add('hidden');
-    noReplyBar.style.display = 'none';
-    saveCredentials(user.phone, 'logged_in');
     loadMessagesByPhone(user.phone);
     return true;
   }
+
   document.querySelector('.messages-header').style.display = 'none';
   noReplyBar.classList.add('hidden');
   noReplyBar.style.display = 'none';
+  loginContainer.classList.remove('hidden');
   return false;
 }
 
 tryAutoLogin();
-
-const loginContainer = document.getElementById('loginContainer');
-const loginBtn = document.getElementById('loginBtn');
-const loginPhone = document.getElementById('loginPhone');
-const loginPassword = document.getElementById('loginPassword');
-const changeBtn = document.getElementById('changeBtn');
-const noReplyBar = document.getElementById('noReplyBar');
 
 loginBtn.addEventListener('click', async () => {
   const phone = loginPhone.value.trim();
@@ -534,10 +518,9 @@ loginBtn.addEventListener('click', async () => {
     
     if (res.ok && data.success) {
       setLoading(false);
-      localStorage.setItem('mledger_user', JSON.stringify(data.user));
+      localStorage.setItem('mledger_user', JSON.stringify(data.user || { phone }));
       isLoggedIn = true;
       loggedInPhone = phone;
-      saveCredentials(phone, password);
       loginContainer.classList.add('hidden');
       document.querySelector('.messages-header').style.display = 'flex';
       phoneInputContainer.classList.add('hidden');
@@ -548,7 +531,7 @@ loginBtn.addEventListener('click', async () => {
     }
   } catch (err) {
     setLoading(false);
-    alert('Dear valued customer, we are currently experiencing technical issues.Please try again in few seconds.We apologize for inconvienience caused.');
+    alert('Dear valued customer, we are currently experiencing technical issues. Please try again in few seconds.');
     console.error('Login error:', err);
   }
   
@@ -557,15 +540,11 @@ loginBtn.addEventListener('click', async () => {
 });
 
 loginPassword.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginBtn.click();
-  }
+  if (e.key === 'Enter') loginBtn.click();
 });
 
 loginPhone.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginPassword.focus();
-  }
+  if (e.key === 'Enter') loginPassword.focus();
 });
 
 changeBtn.addEventListener('click', () => {
@@ -574,7 +553,10 @@ changeBtn.addEventListener('click', () => {
   loadedSigs = new Set();
   isLoggedIn = false;
   loggedInPhone = null;
-  clearCredentials();
+  localStorage.removeItem('mledger_user');
+  document.querySelector('.messages-header').style.display = 'none';
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
   phoneInputContainer.classList.add('hidden');
   loginContainer.classList.remove('hidden');
   loginPassword.value = '';
@@ -585,7 +567,7 @@ changeBtn.addEventListener('click', () => {
 const moreBtn = document.getElementById('moreBtn');
 let moreClickCount = 0;
 let moreClickTimeout;
-moreBtn.addEventListener('click', (e) => {
+moreBtn.addEventListener('click', () => {
     moreClickCount++;
     clearTimeout(moreClickTimeout);
     if (moreClickCount === 3) {
@@ -599,22 +581,16 @@ moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ─── LOAD BUTTON CLICK ───
 const loadBtn = document.getElementById('loadBtn');
-const phoneInput = document.getElementById('phoneInput');
-const phoneInputContainer = document.getElementById('phoneInputContainer');
 
 loadBtn.addEventListener('click', () => {
     const phone = phoneInput.value.trim();
-    if (phone) {
-        loadMessagesByPhone(phone);
-    }
+    if (phone) loadMessagesByPhone(phone);
 });
 
 phoneInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const phone = phoneInput.value.trim();
-        if (phone) {
-            loadMessagesByPhone(phone);
-        }
+        if (phone) loadMessagesByPhone(phone);
     }
 });
 
@@ -750,26 +726,7 @@ function renderMessages(messages) {
     container.scrollTop = container.scrollHeight;
   }, 50);
 }
-function showOfflineMessage() {
-  const container = document.getElementById("messages");
-  container.innerHTML = `
-    <div class="offline-message">
-      You are offline.<br>Please connect to the internet to load messages.
-    </div>
-  `;
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-}
-function showEnterPhoneMessage() {
-  const container = document.getElementById("messages");
-  container.innerHTML = `
-    <div class="enter-phone-message">
-      Enter a phone number above<br>to view messages
-    </div>
-  `;
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-}
+
 // ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
 let currentPhone = null;
 let loadedSigs = new Set();
@@ -853,10 +810,7 @@ function stopPolling() {
 }
 
 async function loadMessagesByPhone(phone) {
-  if (!isLoggedIn) {
-    alert('Please login first');
-    return;
-  }
+  if (!isLoggedIn) return;
   
   currentPhone = phone;
   const container = document.getElementById("messages");
@@ -903,13 +857,6 @@ async function loadMessagesByPhone(phone) {
   }
 }
 
-function updateOnlineStatus() {}
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-
-// ─── INITIAL LOAD ───
-showEnterPhoneMessage();
-
 // ─── PWA INSTALL PROMPT ───
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -930,7 +877,7 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 
-// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
+// ─── REGISTER SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
