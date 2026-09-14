@@ -1,832 +1,1299 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KaziNow | Verified Kenyan Jobs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>MPESA Messages</title>
 
     <style>
         * {
             box-sizing: border-box;
         }
 
+        html,
         body {
+            width: 100%;
+            height: 100%;
             margin: 0;
-            background: #f8fafc;
+            padding: 0;
+            overflow: hidden;
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        /* SMS MESSAGE VIEW */
-        .sms-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: #ffffff;
-            display: none;
+        body {
+            background: #1e2430;
+        }
+
+        /* =========================
+           MAIN SMS APP
+        ========================= */
+
+        .sms-app {
+            width: 100%;
+            height: 100dvh;
+            display: flex;
             flex-direction: column;
-        }
+            overflow: hidden;
 
-        .sms-overlay.active {
-            display: flex;
-        }
-
-        /* SMS HEADER */
-        .sms-header {
-            height: 72px;
-            flex-shrink: 0;
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            gap: 14px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-
-        .sms-back {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-
-        .sms-back:hover {
-            background: #f1f5f9;
-        }
-
-        .sms-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #fbc52b;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .sms-avatar svg {
-            color: white;
-            width: 31px;
-            height: 31px;
-        }
-
-        .sms-header-name {
-            font-size: 21px;
-            color: #111827;
-            font-weight: 400;
-        }
-
-        .sms-menu {
-            margin-left: auto;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            background: transparent;
-        }
-
-        /* SMS BODY */
-        .sms-body {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px 14px 30px;
             background:
                 linear-gradient(
-                    rgba(20, 25, 35, 0.72),
-                    rgba(20, 25, 35, 0.72)
+                    rgba(17, 22, 31, 0.62),
+                    rgba(17, 22, 31, 0.62)
                 ),
-                url("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1600&q=80")
-                center center / cover fixed;
+                url("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1600&q=90");
+
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .header {
+            height: 72px;
+            min-height: 72px;
+
+            background: rgba(255, 255, 255, 0.94);
+
+            display: flex;
+            align-items: center;
+
+            padding: 0 17px;
+
+            gap: 14px;
+
+            box-shadow:
+                0 1px 5px rgba(0, 0, 0, 0.20);
+
+            z-index: 10;
+        }
+
+        .back-button {
+            width: 42px;
+            height: 42px;
+
+            border: none;
+            background: transparent;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            padding: 0;
+        }
+
+        .back-button svg {
+            width: 31px;
+            height: 31px;
+            stroke: #111;
+            stroke-width: 2;
+        }
+
+
+        /* =========================
+           MPESA AVATAR
+        ========================= */
+
+        .avatar {
+            width: 51px;
+            height: 51px;
+
+            border-radius: 50%;
+
+            background: #fbc52b;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+        }
+
+        .avatar svg {
+            width: 32px;
+            height: 32px;
+
+            fill: white;
+            stroke: white;
+        }
+
+
+        /* =========================
+           HEADER NAME
+        ========================= */
+
+        .sender-name {
+            font-size: 21px;
+            font-weight: 400;
+            color: #111;
+
+            white-space: nowrap;
+        }
+
+
+        .menu-button {
+            margin-left: auto;
+
+            width: 40px;
+            height: 45px;
+
+            border: none;
+            background: transparent;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            cursor: pointer;
+        }
+
+        .menu-dots {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-dots span {
+            width: 5px;
+            height: 5px;
+
+            background: #111;
+
+            border-radius: 50%;
+        }
+
+
+        /* =========================
+           SCROLLABLE MESSAGES
+        ========================= */
+
+        .messages-container {
+            flex: 1;
+
+            min-height: 0;
+
+            overflow-y: auto;
+            overflow-x: hidden;
+
+            padding: 16px 14px 35px;
+
             scroll-behavior: smooth;
+
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Keep scrollbar like a normal scrollable SMS conversation */
-        .sms-body::-webkit-scrollbar {
-            width: 7px;
+
+        /* Scrollbar */
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .sms-body::-webkit-scrollbar-track {
+        .messages-container::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        .sms-body::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.35);
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.30);
             border-radius: 10px;
         }
 
-        .sms-date {
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            margin: 12px 0 25px;
-            text-shadow: 0 1px 3px rgba(0,0,0,.7);
-        }
 
-        .sms-message-row {
-            display: flex;
+        /* =========================
+           DATE
+        ========================= */
+
+        .date-divider {
             width: 100%;
-            margin-bottom: 18px;
+
+            display: flex;
+            justify-content: center;
+
+            margin: 22px 0 26px;
         }
 
-        .sms-message-row.incoming {
+        .date-divider span {
+            color: white;
+
+            font-size: 14px;
+
+            text-shadow:
+                0 1px 3px rgba(0,0,0,.8);
+        }
+
+
+        /* =========================
+           MESSAGE BUBBLE
+        ========================= */
+
+        .message-wrapper {
+            width: 100%;
+
+            display: flex;
             justify-content: flex-start;
+
+            margin-bottom: 16px;
         }
 
-        .sms-message {
-            max-width: min(620px, 94%);
+        .message-bubble {
+            width: fit-content;
+
+            max-width: 88%;
+
             background: #f8f7fc;
+
             color: #202124;
+
             border-radius: 22px;
-            padding: 15px 17px 14px;
+
+            padding: 14px 18px 11px;
+
             font-size: 17px;
+
             line-height: 1.48;
-            box-shadow: 0 2px 5px rgba(0,0,0,.16);
-            word-break: break-word;
+
+            box-shadow:
+                0 2px 6px rgba(0,0,0,.20);
+
+            overflow-wrap: anywhere;
+
             white-space: pre-wrap;
         }
 
-        .sms-message a {
-            color: #202124;
-            text-decoration: underline;
-        }
 
-        .sms-message-time {
-            color: #777;
-            font-size: 12px;
+        /* =========================
+           MESSAGE TIME
+        ========================= */
+
+        .message-time {
             text-align: right;
-            margin-top: 8px;
+
+            margin-top: 7px;
+
+            font-size: 12px;
+
+            color: #777;
         }
 
-        .sms-unread {
+
+        /* =========================
+           UNREAD DIVIDER
+        ========================= */
+
+        .unread-divider {
+            width: 100%;
+
             display: flex;
+
             align-items: center;
+
             gap: 10px;
+
+            margin: 25px 0 21px;
+
             color: white;
+
             font-size: 13px;
-            margin: 22px 0;
+
+            text-shadow:
+                0 1px 3px rgba(0,0,0,.8);
         }
 
-        .sms-unread::before,
-        .sms-unread::after {
+        .unread-divider::before,
+        .unread-divider::after {
             content: "";
+
             height: 1px;
+
             background: rgba(255,255,255,.65);
+
             flex: 1;
         }
 
-        .sms-sender {
+
+        /* =========================
+           SENDER INFORMATION
+        ========================= */
+
+        .sender-info {
             color: white;
+
             font-size: 12px;
-            margin: -8px 0 8px 5px;
-            text-shadow: 0 1px 3px rgba(0,0,0,.8);
+
+            margin: -6px 0 9px 6px;
+
+            text-shadow:
+                0 1px 3px rgba(0,0,0,.8);
         }
 
-        .sms-bottom-space {
-            height: 20px;
+        .sender-info .carrier {
+            color: #16c7e8;
         }
 
-        /* MOBILE */
-        @media (max-width: 640px) {
-            .sms-header {
-                height: 68px;
-                padding: 0 10px;
-                gap: 9px;
+
+        /* =========================
+           BOTTOM SYSTEM MESSAGE
+        ========================= */
+
+        .system-message {
+            width: 100%;
+
+            margin-top: 8px;
+
+            background: #f8f7fc;
+
+            border-radius: 25px;
+
+            padding: 21px 24px 25px;
+
+            color: #202124;
+
+            font-size: 17px;
+
+            line-height: 1.5;
+
+            box-shadow:
+                0 2px 6px rgba(0,0,0,.18);
+        }
+
+        .system-message a {
+            color: #596579;
+
+            text-decoration: underline;
+        }
+
+
+        /* =========================
+           LOADING
+        ========================= */
+
+        .loading {
+            min-height: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: white;
+
+            font-size: 16px;
+        }
+
+
+        /* =========================
+           ERROR
+        ========================= */
+
+        .error {
+            margin: 30px auto;
+
+            max-width: 500px;
+
+            background: rgba(255,255,255,.95);
+
+            padding: 20px;
+
+            border-radius: 18px;
+
+            color: #222;
+
+            text-align: center;
+        }
+
+
+        /* =========================
+           EMPTY
+        ========================= */
+
+        .empty {
+            min-height: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: white;
+
+            text-align: center;
+
+            font-size: 16px;
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            .header {
+                height: 70px;
+                min-height: 70px;
+
+                padding: 0 12px;
+
+                gap: 10px;
             }
 
-            .sms-avatar {
-                width: 48px;
-                height: 48px;
+            .avatar {
+                width: 50px;
+                height: 50px;
             }
 
-            .sms-header-name {
-                font-size: 20px;
+            .sender-name {
+                font-size: 21px;
             }
 
-            .sms-body {
-                padding: 16px 8px 25px;
+            .messages-container {
+                padding-left: 8px;
+                padding-right: 8px;
             }
 
-            .sms-message {
+            .message-bubble {
                 max-width: 96%;
-                font-size: 16px;
-                border-radius: 20px;
-                padding: 14px 15px 12px;
+
+                font-size: 17px;
+
+                padding:
+                    14px 15px
+                    11px;
             }
 
-            .sms-date {
-                font-size: 13px;
-            }
-        }
+            .system-message {
+                font-size: 17px;
 
-        /* prevent page behind SMS view from scrolling */
-        body.sms-open {
-            overflow: hidden;
+                padding:
+                    20px 20px 25px;
+            }
         }
     </style>
 </head>
 
-<body class="bg-slate-50 font-sans text-slate-900">
+<body>
 
-    <!-- NAVIGATION -->
-    <nav class="bg-white border-b sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="sms-app">
 
-            <div class="flex items-center gap-2">
-                <div class="bg-green-600 p-1.5 rounded-lg text-white">
-                    <i data-lucide="briefcase"></i>
-                </div>
+    <!-- =========================
+         HEADER
+    ========================= -->
 
-                <span class="text-xl font-bold tracking-tight">
-                    Kazi<span class="text-green-600">Now</span>
-                </span>
-            </div>
+    <header class="header">
 
-            <div class="flex items-center gap-4">
-                <a href="p.html"
-                   class="text-sm text-slate-500 hover:text-green-600">
-                    Privacy Policy
-                </a>
+        <button
+            class="back-button"
+            onclick="goBack()"
+            aria-label="Back">
 
-                <a href="t.html"
-                   class="text-sm text-slate-500 hover:text-green-600">
-                    Terms
-                </a>
+            <svg
+                viewBox="0 0 24 24"
+                fill="none">
 
-                <a href="cont.html"
-                   class="text-sm text-slate-500 hover:text-green-600">
-                    Contact
-                </a>
-            </div>
+                <path
+                    d="M19 12H5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
 
-        </div>
-    </nav>
+                <path
+                    d="M12 19L5 12L12 5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
 
-    <!-- HERO -->
-    <header class="bg-white border-b">
+            </svg>
 
-        <div class="max-w-4xl mx-auto py-16 px-4 text-center">
+        </button>
 
-            <h1 class="text-4xl md:text-5xl font-extrabold mb-4">
-                Find your next opportunity in
-                <span class="text-green-600">Kenya.</span>
-            </h1>
 
-            <p class="text-slate-600 text-lg mb-8">
-                Connecting Kenyan talent with local and global employers.
-            </p>
+        <!-- MPESA PROFILE -->
 
-            <div class="bg-white p-2 rounded-2xl shadow-xl border flex flex-col md:flex-row gap-2">
+        <div class="avatar">
 
-                <div class="flex-1 flex items-center px-4">
+            <svg
+                viewBox="0 0 24 24"
+                fill="none">
 
-                    <i data-lucide="search"
-                       class="text-slate-400 w-5"></i>
+                <circle
+                    cx="12"
+                    cy="8"
+                    r="4"/>
 
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Job title or keyword"
-                        class="w-full p-3 focus:outline-none"
-                    >
+                <path
+                    d="M4 21C4.8 16.8 7.6 14.5 12 14.5C16.4 14.5 19.2 16.8 20 21"
+                    stroke-width="1.5"
+                    stroke-linecap="round"/>
 
-                </div>
-
-                <button
-                    onclick="searchJobs()"
-                    class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">
-                    Search
-                </button>
-
-            </div>
+            </svg>
 
         </div>
+
+
+        <div class="sender-name">
+            MPESA
+        </div>
+
+
+        <!-- THREE DOT MENU -->
+
+        <button
+            class="menu-button"
+            aria-label="Menu">
+
+            <div class="menu-dots">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </div>
+
+        </button>
 
     </header>
 
-    <!-- JOBS -->
-    <main class="max-w-4xl mx-auto py-12 px-4">
 
-        <div class="flex justify-between items-center mb-8">
+    <!-- =========================
+         MESSAGES
+    ========================= -->
 
-            <h2 class="text-2xl font-bold">
-                Latest Openings
-            </h2>
+    <main
+        id="messagesContainer"
+        class="messages-container">
 
-            <span
-                class="text-sm text-slate-500"
-                id="jobCount">
-                Loading...
-            </span>
-
-        </div>
-
-        <div
-            class="space-y-4"
-            id="jobsContainer">
+        <div class="loading">
+            Loading messages...
         </div>
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-slate-900 text-slate-400 py-12 mt-12">
-
-        <div class="max-w-6xl mx-auto px-4 text-center">
-
-            <p class="mb-4">
-                Made for Kenya 🇰🇪
-            </p>
-
-            <div class="text-xs">
-                © 2026 KaziNow Job Board. All Rights Reserved.
-            </div>
-
-        </div>
-
-    </footer>
+</div>
 
 
-    <!-- APPLY MODAL -->
-    <div
-        id="applyModal"
-        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+<script>
 
-        <div class="bg-white w-full max-w-lg rounded-2xl p-8 relative">
+    /*
+     * API
+     */
 
-            <button
-                onclick="closeApply()"
-                class="absolute top-4 right-4 text-slate-400 hover:text-black">
+    const API =
+        "https://message-server-five.vercel.app";
 
-                <i data-lucide="x"></i>
-
-            </button>
-
-            <h2 class="text-2xl font-bold mb-6">
-                Apply for
-                <span id="applyJobTitle">
-                    Position
-                </span>
-            </h2>
-
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-
-                <p class="text-amber-800 text-sm">
-                    You will be redirected to our application portal
-                    to complete your application.
-                </p>
-
-            </div>
-
-            <button
-                onclick="goToApply()"
-                class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">
-
-                Continue to Apply
-
-            </button>
-
-        </div>
-
-    </div>
+    const TARGET_PHONE =
+        "1";
 
 
-    <!-- =====================================================
-         SMS STYLE MESSAGE VIEW
-         ===================================================== -->
+    /*
+     * MAIN MESSAGE CONTAINER
+     */
 
-    <div
-        id="smsOverlay"
-        class="sms-overlay">
-
-        <!-- SMS HEADER -->
-        <div class="sms-header">
-
-            <button
-                class="sms-back"
-                onclick="closeMessageModal()"
-                aria-label="Back">
-
-                <i
-                    data-lucide="arrow-left"
-                    style="width:30px;height:30px;color:#111;">
-                </i>
-
-            </button>
-
-            <div class="sms-avatar">
-
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round">
-
-                    <path d="M20 21a8 8 0 0 0-16 0"/>
-                    <circle cx="12" cy="7" r="4"/>
-
-                </svg>
-
-            </div>
-
-            <div class="sms-header-name">
-                MPESA
-            </div>
-
-            <button class="sms-menu">
-                <i
-                    data-lucide="more-vertical"
-                    style="width:27px;height:27px;color:#111;">
-                </i>
-            </button>
-
-        </div>
+    const container =
+        document.getElementById(
+            "messagesContainer"
+        );
 
 
-        <!-- SCROLLABLE SMS BODY -->
-        <div
-            id="smsBody"
-            class="sms-body">
+    /*
+     * ESCAPE HTML
+     */
 
-            <!-- Messages inserted here dynamically -->
+    function escapeHTML(text) {
 
-        </div>
+        return String(text ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
-    </div>
+    }
 
 
-    <script>
+    /*
+     * CONVERT LINKS INTO CLICKABLE LINKS
+     */
 
-        const API = "https://message-server-five.vercel.app";
+    function formatMessage(text) {
 
-        const TARGET_PHONE = "1";
-
-        let allJobs = [];
+        let safe =
+            escapeHTML(text);
 
 
         /*
-         * Escape HTML so SMS content cannot inject HTML.
+         * Make URLs clickable
          */
-        function escapeHTML(text) {
 
-            return String(text || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+        safe = safe.replace(
+            /(https?:\/\/[^\s<]+)/gi,
+
+            '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+        );
+
+
+        return safe;
+
+    }
+
+
+    /*
+     * FIND MESSAGE DATE
+     */
+
+    function getDate(message) {
+
+        const value =
+            message.createdAt ||
+            message.created_at ||
+            message.timestamp ||
+            message.date ||
+            message.sentAt ||
+            message.sent_at;
+
+
+        if (!value) {
+            return null;
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (isNaN(date.getTime())) {
+            return null;
+        }
+
+
+        return date;
+
+    }
+
+
+    /*
+     * DATE LABEL
+     */
+
+    function dateLabel(date) {
+
+        if (!date) {
+            return "Today";
+        }
+
+
+        const now =
+            new Date();
+
+
+        const yesterday =
+            new Date();
+
+        yesterday.setDate(
+            yesterday.getDate() - 1
+        );
+
+
+        if (
+            date.toDateString() ===
+            now.toDateString()
+        ) {
+
+            return "Today";
 
         }
 
 
-        /*
-         * Preserve line breaks and make URLs clickable.
-         */
-        function formatSMS(text) {
+        if (
+            date.toDateString() ===
+            yesterday.toDateString()
+        ) {
 
-            let safe = escapeHTML(text);
-
-            safe = safe.replace(
-                /(https?:\/\/[^\s<]+)/gi,
-                '<a href="$1" target="_blank" rel="noopener">$1</a>'
-            );
-
-            return safe;
+            return "Yesterday";
 
         }
 
 
-        function extractJobTitle(text) {
-
-            const lines = String(text || "").split('\n');
-
-            let firstLine = lines[0].trim();
-
-            return firstLine
-                .replace(/^[\d\.\)\-]\s*/, '')
-                .replace(
-                    /\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i,
-                    ''
-                )
-                .substring(0, 85)
-                +
-                (firstLine.length > 85 ? '...' : '');
-
-        }
-
-
-        /*
-         * JOB CARD
-         */
-        function renderJob(tx, originalIndex) {
-
-            const title = extractJobTitle(tx.message);
-
-            const safeTitle = escapeHTML(title);
-
-            return `
-
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-md transition"
-                    data-index="${originalIndex}">
-
-                    <div class="mb-4">
-
-                        <h3 class="text-lg font-bold">
-                            ${safeTitle}
-                        </h3>
-
-                    </div>
-
-
-                    <button
-                        onclick="openApply(${JSON.stringify(title)})"
-                        class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">
-
-                        Apply Now
-
-                    </button>
-
-
-                    <button
-                        onclick="showFullMessage(${originalIndex})"
-                        class="w-full md:w-auto mt-2 md:mt-0 md:ml-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">
-
-                        Read More
-
-                    </button>
-
-                </div>
-
-            `;
-
-        }
-
-
-        /*
-         * CREATE SMS MESSAGE BUBBLE
-         */
-        function createSMSBubble(message, dateText, timeText) {
-
-            return `
-
-                <div class="sms-message-row incoming">
-
-                    <div class="sms-message">
-
-                        <div>
-                            ${formatSMS(message)}
-                        </div>
-
-                        ${
-                            timeText
-                            ?
-                            `
-                            <div class="sms-message-time">
-                                ${escapeHTML(timeText)}
-                            </div>
-                            `
-                            :
-                            ''
-                        }
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-
-        /*
-         * FORMAT DATE
-         */
-        function formatMessageDate(tx) {
-
-            const value =
-                tx.createdAt ||
-                tx.created_at ||
-                tx.date ||
-                tx.timestamp ||
-                tx.time;
-
-            if (!value) {
-
-                return "Today";
-
+        return date.toLocaleDateString(
+            "en-GB",
+            {
+                weekday: "long",
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit"
             }
+        );
 
-            const date = new Date(value);
-
-            if (isNaN(date.getTime())) {
-
-                return "Today";
-
-            }
-
-            const today = new Date();
-
-            const yesterday = new Date();
-
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            if (
-                date.toDateString() ===
-                today.toDateString()
-            ) {
-
-                return "Today";
-
-            }
-
-            if (
-                date.toDateString() ===
-                yesterday.toDateString()
-            ) {
-
-                return "Yesterday";
-
-            }
-
-            return date.toLocaleDateString(
-                "en-GB",
-                {
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit"
-                }
-            );
-
-        }
+    }
 
 
-        /*
-         * FORMAT TIME
-         */
-        function formatMessageTime(tx) {
+    /*
+     * TIME
+     */
 
-            const value =
-                tx.createdAt ||
-                tx.created_at ||
-                tx.date ||
-                tx.timestamp ||
-                tx.time;
+    function getTime(message) {
 
-            if (!value) {
-
-                return "";
-
-            }
-
-            const date = new Date(value);
-
-            if (isNaN(date.getTime())) {
-
-                return "";
-
-            }
-
-            return date.toLocaleTimeString(
-                [],
-                {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false
-                }
-            );
-
-        }
+        const date =
+            getDate(message);
 
 
-        /*
-         * SHOW FULL MESSAGE AS AN SMS CONVERSATION
-         *
-         * Important:
-         * The newest message is at the bottom,
-         * just like a normal SMS application.
-         */
-        function showFullMessage(index) {
-
-            const job = allJobs[index];
-
-            if (!job) return;
-
-
-            const smsBody =
-                document.getElementById("smsBody");
-
+        if (!date) {
 
             /*
-             * If the API returns only one selected job,
-             * display that message.
-             */
-            let messages = [job];
-
-
-            /*
-             * If there are several messages related to the same
-             * job, you can easily extend this later.
+             * If API already provides a time
              */
 
+            return (
+                message.time ||
+                message.sent_time ||
+                ""
+            );
 
-            smsBody.innerHTML = "";
-
-
-            messages.forEach((message, i) => {
-
-                const dateText =
-                    formatMessageDate(message);
-
-                const timeText =
-                    formatMessageTime(message);
+        }
 
 
-                smsBody.innerHTML += `
+        return date.toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            }
+        );
 
-                    ${
-                        i === 0
-                        ?
-                        `
-                        <div class="sms-date">
-                            ${escapeHTML(dateText)}
-                        </div>
-                        `
-                        :
-                        ''
-                    }
+    }
 
-                    ${
-                        i === messages.length - 1
-                        ?
-                        `
-                        <div class="sms-unread">
-                            Unread
-                        </div>
-                        `
-                        :
-                        ''
-                    }
 
-                    ${
-                        message.sender
-                        ?
-                        `
-                        <div class="sms-sender">
-                            ${escapeHTML(message.sender)}
-                        </div>
-                        `
-                        :
-                        ''
-                    }
+    /*
+     * SORT MESSAGES
+     *
+     * Oldest -> newest
+     *
+     * This is important because SMS apps
+     * display the conversation in chronological
+     * order.
+     */
 
-                    ${createSMSBubble(
-                        message.message,
-                        dateText,
-                        timeText
+    function sortMessages(messages) {
+
+        return [...messages].sort(
+            (a, b) => {
+
+                const dateA =
+                    getDate(a);
+
+                const dateB =
+                    getDate(b);
+
+
+                if (!dateA || !dateB) {
+                    return 0;
+                }
+
+
+                return (
+                    dateA.getTime() -
+                    dateB.getTime()
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+     * CREATE DATE DIVIDER
+     */
+
+    function createDateDivider(date) {
+
+        return `
+
+            <div class="date-divider">
+
+                <span>
+                    ${escapeHTML(
+                        dateLabel(date)
                     )}
+                </span>
 
-                `;
+            </div>
 
-            });
+        `;
+
+    }
 
 
-            /*
-             * Small bottom space just like SMS apps.
-             */
-            smsBody.innerHTML += `
-                <div class="sms-bottom-space"></div>
+    /*
+     * CREATE SMS MESSAGE
+     */
+
+    function createMessage(message) {
+
+        const text =
+            message.message ??
+            message.body ??
+            message.text ??
+            "";
+
+
+        const time =
+            getTime(message);
+
+
+        return `
+
+            <div class="message-wrapper">
+
+                <div class="message-bubble">
+
+                    <div>
+                        ${formatMessage(text)}
+                    </div>
+
+                    ${
+                        time
+                        ?
+                        `
+                        <div class="message-time">
+                            ${escapeHTML(time)}
+                        </div>
+                        `
+                        :
+                        ""
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /*
+     * RENDER ALL MESSAGES
+     */
+
+    function renderMessages(messages) {
+
+        if (
+            !messages ||
+            messages.length === 0
+        ) {
+
+            container.innerHTML = `
+
+                <div class="empty">
+
+                    No messages available.
+
+                </div>
+
             `;
 
+            return;
+
+        }
+
+
+        /*
+         * Sort oldest first
+         */
+
+        const sorted =
+            sortMessages(messages);
+
+
+        let html = "";
+
+
+        let previousDate = "";
+
+
+        sorted.forEach(
+            (message, index) => {
+
+                const date =
+                    getDate(message);
+
+
+                const currentDate =
+                    date
+                    ?
+                    date.toDateString()
+                    :
+                    "";
+
+
+                /*
+                 * Add date divider when date changes
+                 */
+
+                if (
+                    currentDate &&
+                    currentDate !== previousDate
+                ) {
+
+                    html +=
+                        createDateDivider(
+                            date
+                        );
+
+                    previousDate =
+                        currentDate;
+
+                }
+
+
+                /*
+                 * Add message
+                 */
+
+                html +=
+                    createMessage(
+                        message
+                    );
+
+            }
+        );
+
+
+        /*
+         * Add unread divider near newest
+         * message, similar to SMS apps.
+         */
+
+        html += `
+
+            <div class="unread-divider">
+
+                <span>Unread</span>
+
+            </div>
+
+        `;
+
+
+        /*
+         * Bottom system notice
+         */
+
+        html += `
+
+            <div class="system-message">
+
+                Sender can't accept replies.
+                Contact them directly.
+
+                <a href="#">
+                    Learn more
+                </a>
+
+            </div>
+
+        `;
+
+
+        container.innerHTML =
+            html;
+
+
+        /*
+         * Scroll to newest message
+         */
+
+        setTimeout(() => {
+
+            container.scrollTop =
+                container.scrollHeight;
+
+        }, 100);
+
+    }
+
+
+    /*
+     * FETCH MESSAGES
+     */
+
+    async function fetchMessages() {
+
+        try {
 
             /*
-             * Open SMS screen.
+             * Primary endpoint
              */
-            document
-                .getElementById("smsOverlay")
-                .classList.add("active");
+
+            const response =
+                await fetch(
+                    `${API}/api/messages/${TARGET_PHONE}`
+                );
 
 
-            document.body.classList.add("sms-open");
+            if (!response.ok) {
+
+                throw new Error(
+                    "Message API request failed"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                data &&
+                Array.isArray(
+                    data.messages
+                )
+            ) {
+
+                return data.messages;
+
+            }
 
 
             /*
-             * Always start at the newest message.
+             * If API directly returns an array
              */
-            setTimeout(() => {
 
-                smsBody.scrollTop =
-                    smsBody.scrollH
+            if (
+                Array.isArray(data)
+            ) {
+
+                return data;
+
+            }
+
+
+            return [];
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Primary API error:",
+                error
+            );
+
+
+            /*
+             * FALLBACK TO /transactions
+             */
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API}/transactions`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Transactions request failed"
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !Array.isArray(data)
+                ) {
+
+                    return [];
+
+                }
+
+
+                return data.filter(
+                    item =>
+                        String(
+                            item.phone
+                        ) ===
+                        String(
+                            TARGET_PHONE
+                        )
+                );
+
+            }
+
+            catch (fallbackError) {
+
+                console.error(
+                    "Fallback error:",
+                    fallbackError
+                );
+
+
+                return null;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * LOAD MESSAGES
+     */
+
+    async function loadMessages() {
+
+        container.innerHTML = `
+
+            <div class="loading">
+
+                Loading messages...
+
+            </div>
+
+        `;
+
+
+        const messages =
+            await fetchMessages();
+
+
+        /*
+         * API completely failed
+         */
+
+        if (messages === null) {
+
+            container.innerHTML = `
+
+                <div class="error">
+
+                    Unable to load messages.
+
+                    <br><br>
+
+                    Please check your
+                    internet connection
+                    or try again later.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        renderMessages(messages);
+
+    }
+
+
+    /*
+     * BACK BUTTON
+     */
+
+    function goBack() {
+
+        /*
+         * If opened from another page,
+         * go back normally.
+         */
+
+        if (
+            window.history.length > 1
+        ) {
+
+            window.history.back();
+
+        }
+
+    }
+
+
+    /*
+     * LOAD ON START
+     */
+
+    loadMessages();
+
+
+    /*
+     * REFRESH MESSAGES EVERY 10 SECONDS
+     *
+     * This allows new SMS messages to
+     * appear without refreshing the page.
+     */
+
+    setInterval(
+        async function() {
+
+            const messages =
+                await fetchMessages();
+
+
+            if (
+                messages &&
+                messages.length >= 0
+            ) {
+
+                /*
+                 * Remember current scroll position
+                 */
+
+                const wasNearBottom =
+                    (
+                        container.scrollHeight -
+                        container.scrollTop -
+                        container.clientHeight
+                    ) < 150;
+
+
+                renderMessages(
+                    messages
+                );
+
+
+                /*
+                 * Only force bottom when
+                 * user was already near bottom.
+                 */
+
+                if (!wasNearBottom) {
+
+                    /*
+                     * Prevent renderMessages()
+                     * from moving user away
+                     * from their current reading position.
+                     */
+
+                    container.scrollTop = 0;
+
+                }
+
+            }
+
+        },
+        10000
+    );
+
+</script>
+
+</body>
+</html>
