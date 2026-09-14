@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +84,7 @@ body {
   padding: 15px 10px 110px 10px; /* Increased bottom padding to 110px to create ample clearance above the bottom bar */
   display: flex;
   flex-direction: column;
+  touch-action: pan-x pan-y; /* Prevent default browser zoom actions */
 }
 .phone-input-container {
   padding: 15px;
@@ -400,6 +402,48 @@ function setLoading(isLoading) {
   }
 }
 
+// ─── PINCH-TO-ZOOM FOR MESSAGE FONT SIZE ───
+let currentFontSize = 16;
+let initialDistance = 0;
+let initialFontSize = 16;
+const messagesContainer = document.getElementById('messages');
+
+messagesContainer.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    initialDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    initialFontSize = currentFontSize;
+  }
+}, { passive: true });
+
+messagesContainer.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2) {
+    const currentDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    if (initialDistance > 0) {
+      const scale = currentDistance / initialDistance;
+      let newSize = Math.round(initialFontSize * scale);
+      newSize = Math.min(Math.max(newSize, 12), 32); // Limit size between 12px and 32px
+      currentFontSize = newSize;
+      
+      const bubbles = messagesContainer.querySelectorAll('.message-bubble');
+      bubbles.forEach(bubble => {
+        bubble.style.fontSize = `${currentFontSize}px`;
+      });
+    }
+  }
+}, { passive: true });
+
+messagesContainer.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2) {
+    initialDistance = 0;
+  }
+}, { passive: true });
+
 // ─── AUTO-LOGIN (Remember Me) ───
 let isLoggedIn = false;
 let loggedInPhone = null;
@@ -615,6 +659,7 @@ function extractTimeFromMessage(message) {
 function createMessageBubble(tx, isLast) {
   const bubble = document.createElement("div");
   bubble.className = "message-bubble";
+  bubble.style.fontSize = `${currentFontSize}px`;
   if (isLast) bubble.id = "last-message";
   const url = extractFirstUrl(tx.message);
   let previewHtml = '';
@@ -626,8 +671,8 @@ function createMessageBubble(tx, isLast) {
     }
   }
   bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
-                     previewHtml +
-                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+                      previewHtml +
+                      `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
   bubble.addEventListener('click', (e) => {
     if (e.target.tagName === 'A') return;
     showMessageContextMenu(bubble, tx.message);
