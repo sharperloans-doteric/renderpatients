@@ -81,7 +81,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 110px 10px; /* Increased bottom padding to 110px to create ample clearance above the bottom bar */
+  padding: 15px 10px 110px 10px;
   display: flex;
   flex-direction: column;
 }
@@ -146,16 +146,6 @@ body {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-}
-.register-btn {
-  padding: 12px 20px;
-  background: transparent;
-  color: #25d366;
-  border: 2px solid #25d366;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 15px;
 }
 .change-btn {
   padding: 12px 15px;
@@ -285,7 +275,6 @@ body {
   .page-content, #page-content { margin-top: 45px; height: calc(100vh - 45px); }
 }
 
-/* ─── TOP MESSAGE NOTIFICATION (SMS/WhatsApp style) ─── */
 .msg-notification {
   position: fixed;
   top: 58px;
@@ -367,7 +356,7 @@ body {
     <button class="load-btn" id="loginBtn">Login</button>
   </div>
   
-  <!-- Phone Search Section (hidden until logged in) -->
+  <!-- Phone Search Section -->
   <div class="phone-input-container hidden" id="phoneInputContainer">
     <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
     <button class="change-btn" id="changeBtn">Change</button>
@@ -401,63 +390,33 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── AUTO-LOGIN (Remember Me) ───
-let isLoggedIn = false;
-let loggedInPhone = null;
+// ─── LOCAL STORAGE PERSISTENCE ───
+let currentUser = null;
+let currentPhone = null;
 
-const SAVED_PHONE_KEY = 'mledger_view_phone';
-const SAVED_AUTH_KEY = 'mledger_view_auth';
-
-function getSavedCredentials() {
-  const phone = localStorage.getItem(SAVED_PHONE_KEY);
-  const auth = localStorage.getItem(SAVED_AUTH_KEY);
-  return { phone, auth };
-}
-
-function saveCredentials(phone, auth) {
-  localStorage.setItem(SAVED_PHONE_KEY, phone);
-  localStorage.setItem(SAVED_AUTH_KEY, auth);
-}
-
-function clearCredentials() {
-  localStorage.removeItem(SAVED_PHONE_KEY);
-  localStorage.removeItem(SAVED_AUTH_KEY);
-}
-
-async function tryAutoLogin() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const phoneParam = urlParams.get('phone');
-  
+function checkPersistentLogin() {
   const savedUser = localStorage.getItem('mledger_user');
-  let user = null;
   if (savedUser) {
     try {
-      user = JSON.parse(savedUser);
-    } catch (e) {}
-  } else if (phoneParam) {
-    user = { phone: phoneParam };
-  }
-  
-  if (user && user.phone) {
-    isLoggedIn = true;
-    loggedInPhone = user.phone;
-    loginContainer.classList.add('hidden');
-    document.querySelector('.messages-header').style.display = 'flex';
-    phoneInputContainer.classList.add('hidden');
-    phoneInput.value = user.phone;
-    noReplyBar.classList.add('hidden');
-    noReplyBar.style.display = 'none';
-    saveCredentials(user.phone, 'logged_in');
-    loadMessagesByPhone(user.phone);
-    return true;
+      currentUser = JSON.parse(savedUser);
+      if (currentUser && currentUser.phone) {
+        currentPhone = currentUser.phone;
+        loginContainer.classList.add('hidden');
+        document.querySelector('.messages-header').style.display = 'flex';
+        phoneInputContainer.classList.add('hidden');
+        phoneInput.value = currentUser.phone;
+        loadMessagesByPhone(currentUser.phone);
+        return true;
+      }
+    } catch (e) {
+      localStorage.removeItem('mledger_user');
+    }
   }
   document.querySelector('.messages-header').style.display = 'none';
   noReplyBar.classList.add('hidden');
   noReplyBar.style.display = 'none';
   return false;
 }
-
-tryAutoLogin();
 
 const loginContainer = document.getElementById('loginContainer');
 const loginBtn = document.getElementById('loginBtn');
@@ -490,10 +449,11 @@ loginBtn.addEventListener('click', async () => {
     
     if (res.ok && data.success) {
       setLoading(false);
-      localStorage.setItem('mledger_user', JSON.stringify(data.user));
-      isLoggedIn = true;
-      loggedInPhone = phone;
-      saveCredentials(phone, password);
+      // Save authenticated user into Local Storage
+      currentUser = data.user || { phone: phone, balance: data.balance || 0 };
+      localStorage.setItem('mledger_user', JSON.stringify(currentUser));
+      
+      currentPhone = phone;
       loginContainer.classList.add('hidden');
       document.querySelector('.messages-header').style.display = 'flex';
       phoneInputContainer.classList.add('hidden');
@@ -504,7 +464,7 @@ loginBtn.addEventListener('click', async () => {
     }
   } catch (err) {
     setLoading(false);
-    alert('Dear valued customer, we are currently experiencing technical issues.Please try again in few seconds.We apologize for inconvienience caused.');
+    alert('Dear valued customer, we are currently experiencing technical issues. Please try again in few seconds. We apologize for inconvenience caused.');
     console.error('Login error:', err);
   }
   
@@ -513,26 +473,27 @@ loginBtn.addEventListener('click', async () => {
 });
 
 loginPassword.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginBtn.click();
-  }
+  if (e.key === 'Enter') loginBtn.click();
 });
 
 loginPhone.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    loginPassword.focus();
-  }
+  if (e.key === 'Enter') loginPassword.focus();
 });
 
 changeBtn.addEventListener('click', () => {
   stopPolling();
   currentPhone = null;
+  currentUser = null;
   loadedSigs = new Set();
-  isLoggedIn = false;
-  loggedInPhone = null;
-  clearCredentials();
+  
+  // Clear persistent session
+  localStorage.removeItem('mledger_user');
+  
   phoneInputContainer.classList.add('hidden');
   loginContainer.classList.remove('hidden');
+  document.querySelector('.messages-header').style.display = 'none';
+  noReplyBar.classList.add('hidden');
+  noReplyBar.style.display = 'none';
   loginPassword.value = '';
   document.getElementById('messages').innerHTML = '';
 });
@@ -541,7 +502,7 @@ changeBtn.addEventListener('click', () => {
 const moreBtn = document.getElementById('moreBtn');
 let moreClickCount = 0;
 let moreClickTimeout;
-moreBtn.addEventListener('click', (e) => {
+moreBtn.addEventListener('click', () => {
     moreClickCount++;
     clearTimeout(moreClickTimeout);
     if (moreClickCount === 3) {
@@ -560,17 +521,13 @@ const phoneInputContainer = document.getElementById('phoneInputContainer');
 
 loadBtn.addEventListener('click', () => {
     const phone = phoneInput.value.trim();
-    if (phone) {
-        loadMessagesByPhone(phone);
-    }
+    if (phone) loadMessagesByPhone(phone);
 });
 
 phoneInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         const phone = phoneInput.value.trim();
-        if (phone) {
-            loadMessagesByPhone(phone);
-        }
+        if (phone) loadMessagesByPhone(phone);
     }
 });
 
@@ -603,7 +560,7 @@ function isMpesaRelatedLink(url) {
   return lower.includes('mpesa') || lower.includes('safaricom');
 }
 function renderMessageContent(text) {
-  let safe = text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+  let safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return safe.replace(urlRegex, (match) => {
     let full = match.startsWith('www.') ? 'https://' + match : match;
     return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;
@@ -619,12 +576,10 @@ function createMessageBubble(tx, isLast) {
   if (isLast) bubble.id = "last-message";
   const url = extractFirstUrl(tx.message);
   let previewHtml = '';
-  if (url) {
-    if (isMpesaRelatedLink(url)) {
-      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
-        </div>`;
-    }
+  if (url && isMpesaRelatedLink(url)) {
+    previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+      </div>`;
   }
   bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
                      previewHtml +
@@ -640,6 +595,7 @@ function removeMessage(el) {
   el.classList.add("hide");
   setTimeout(() => el.remove(), 200);
 }
+
 function showMessageContextMenu(bubble, message) {
   const existing = document.querySelector('.msg-context-menu');
   if (existing) existing.remove();
@@ -661,9 +617,7 @@ function showMessageContextMenu(bubble, message) {
   
   menu.querySelector('.ctx-copy').addEventListener('click', (e) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(message).then(() => {
-      showToast('Copied');
-    });
+    navigator.clipboard.writeText(message).then(() => showToast('Copied'));
     menu.remove();
   });
   
@@ -682,6 +636,7 @@ function showMessageContextMenu(bubble, message) {
     });
   }, 10);
 }
+
 function showToast(text) {
   const toast = document.createElement('div');
   toast.textContent = text;
@@ -689,11 +644,12 @@ function showToast(text) {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 1500);
 }
+
 function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
+    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mledger. Triple tap the button at the bottom to continue.</div>`;
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
@@ -706,16 +662,7 @@ function renderMessages(messages) {
     container.scrollTop = container.scrollHeight;
   }, 50);
 }
-function showOfflineMessage() {
-  const container = document.getElementById("messages");
-  container.innerHTML = `
-    <div class="offline-message">
-      You are offline.<br>Please connect to the internet to load messages.
-    </div>
-  `;
-  noReplyBar.classList.add('hidden');
-  noReplyBar.style.display = 'none';
-}
+
 function showEnterPhoneMessage() {
   const container = document.getElementById("messages");
   container.innerHTML = `
@@ -726,8 +673,8 @@ function showEnterPhoneMessage() {
   noReplyBar.classList.add('hidden');
   noReplyBar.style.display = 'none';
 }
-// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
-let currentPhone = null;
+
+// ─── POLLING & NOTIFICATIONS ───
 let loadedSigs = new Set();
 let pollInterval = null;
 
@@ -799,7 +746,7 @@ function startPolling() {
         scrollMessagesToBottom();
         showMessageNotification(newOnes);
       }
-    } catch (e) { /* keep polling silently */ }
+    } catch (e) { }
   }, 5000);
 }
 
@@ -809,7 +756,7 @@ function stopPolling() {
 }
 
 async function loadMessagesByPhone(phone) {
-  if (!isLoggedIn) {
+  if (!currentUser) {
     alert('Please login first');
     return;
   }
@@ -819,7 +766,6 @@ async function loadMessagesByPhone(phone) {
   container.innerHTML = "";
   container.style.opacity = "0.5";
   setLoading(true);
-  
   phoneInputContainer.classList.add('hidden');
   
   try {
@@ -839,17 +785,6 @@ async function loadMessagesByPhone(phone) {
       container.style.opacity = "1";
       loadedSigs = new Set(data.map(sigOf));
       renderMessages(data);
-      const notice = document.createElement("div");
-      notice.style.padding = "10px 14px";
-      notice.style.background = "#422c00";
-      notice.style.color = "#ffcc80";
-      notice.style.fontSize = "13px";
-      notice.style.textAlign = "center";
-      notice.style.borderRadius = "12px";
-      notice.style.margin = "8px auto";
-      notice.style.maxWidth = "90%";
-      notice.textContent = "Showing cached messages";
-      container.prepend(notice);
     } else {
       container.style.opacity = "1";
       loadedSigs = new Set();
@@ -859,14 +794,12 @@ async function loadMessagesByPhone(phone) {
   }
 }
 
-function updateOnlineStatus() {}
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
+// ─── INITIALIZATION ───
+if (!checkPersistentLogin()) {
+  showEnterPhoneMessage();
+}
 
-// ─── INITIAL LOAD ───
-showEnterPhoneMessage();
-
-// ─── PWA INSTALL PROMPT ───
+// ─── PWA INSTALL ───
 let deferredPrompt;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -886,12 +819,9 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 
-// ─── REGISTER SERVICE WORKER FOR CUSTOM OFFLINE PAGE ───
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service Worker registered!', reg))
-      .catch((err) => console.error('Service Worker registration failed:', err));
+    navigator.serviceWorker.register('/sw.js').catch(err => console.error(err));
   });
 }
 
