@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>  
 <html lang="en">  
 <head>  
@@ -45,7 +46,7 @@
     <div class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center border border-slate-700/50"   
          style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');">  
         
-        <!-- Header / App Bar (Matching the Top Bar in Image) -->  
+        <!-- Header / App Bar (Shows ONLY MPESA now) -->  
         <div class="bg-slate-900/80 backdrop-blur-md text-white p-4 flex items-center justify-between z-10 border-b border-slate-800/50">  
             <div class="flex items-center gap-3">  
                 <button onclick="changeAccount()" class="text-slate-300 hover:text-white transition" title="Change Account">  
@@ -54,24 +55,21 @@
                 <div class="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 font-bold text-lg shadow-inner">  
                     <i data-lucide="user" class="w-6 h-6 text-amber-950"></i>  
                 </div>  
-                <div>
-                    <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
-                    <span id="displayAccount" class="text-[10px] text-amber-400 font-mono block">Account: -</span>
-                </div>
+                <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
             </div>  
             <button onclick="changeAccount()" class="text-slate-300 hover:text-white" title="Switch Account">  
-                <i data-lucide="refresh-cw" class="w-5 h-5"></i>  
+                <i data-lucide="more-vertical" class="w-5 h-5"></i>  
             </button>  
         </div>  
 
-        <!-- Messages Area (Scrollable SMS Body) -->  
-        <div id="jobsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">  
-            <div class="text-center py-20 text-slate-400 text-sm">
-                Enter an account number to fetch messages.
-            </div>
-        </div>  
+        <!-- Messages Area (Scrollable SMS Body - Aligned to bottom/end) -->  
+        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col justify-end" id="messagesWrapper">
+            <div id="jobsContainer" class="space-y-4 w-full">  
+                <!-- Message content renders here -->
+            </div>  
+        </div>
 
-        <!-- Bottom Banner / Non-replyable Footer (Matching Pic Exactly) -->  
+        <!-- Bottom Banner / Non-replyable Footer -->  
         <div class="p-4 bg-slate-100/90 backdrop-blur-md rounded-t-3xl sm:rounded-b-[36px] text-slate-700 text-xs text-left border-t border-slate-200/50">  
             Sender can't accept replies. <a href="#" class="underline font-medium text-slate-800">Contact them directly.</a> <a href="#" class="underline font-medium text-slate-800">Learn more</a>  
             <!-- Navigation pill indicator -->  
@@ -90,7 +88,6 @@
             const inputVal = document.getElementById('accountInput').value.trim();
             if (inputVal) {
                 currentTargetPhone = inputVal;
-                document.getElementById('displayAccount').textContent = `Account: ${currentTargetPhone}`;
                 document.getElementById('accountModal').classList.add('hidden');
                 loadJobs();
             }
@@ -121,7 +118,7 @@
                     </div>  
                     <!-- Timestamp -->  
                     <span class="text-[11px] text-slate-300 px-2 font-medium tracking-wide">  
-                        ${timeStr} • Safaricom  
+                        ${timeStr}  
                     </span>  
                 </div>  
             `;  
@@ -157,11 +154,12 @@
 
         function displayJobs(jobs) {  
             const container = document.getElementById('jobsContainer');  
+            const wrapper = document.getElementById('messagesWrapper');
 
             if (!jobs || jobs.length === 0) {  
                 container.innerHTML = `  
                     <div class="text-center py-10 text-slate-300 text-sm">  
-                        No messages found for account: <b>${escapeHtml(currentTargetPhone)}</b>  
+                        No messages found.  
                     </div>  
                 `;  
                 return;  
@@ -170,8 +168,8 @@
             // Render messages (Oldest top, Newest bottom like SMS apps)  
             container.innerHTML = jobs.map(tx => renderJob(tx)).join('');  
 
-            // Scroll to the latest message  
-            container.scrollTop = container.scrollHeight;  
+            // Scroll to bottom  
+            wrapper.scrollTop = wrapper.scrollHeight;  
         }  
 
         async function loadJobs() {  
