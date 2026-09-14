@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KaziNow | Verified Kenyan Jobs</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f8fafc;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* SMS MESSAGE VIEW */
+        .sms-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #ffffff;
+            display: none;
+            flex-direction: column;
+        }
+
+        .sms-overlay.active {
+            display: flex;
+        }
+
+        /* SMS HEADER */
+        .sms-header {
+            height: 72px;
+            flex-shrink: 0;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .sms-back {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .sms-back:hover {
+            background: #f1f5f9;
+        }
+
+        .sms-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #fbc52b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sms-avatar svg {
+            color: white;
+            width: 31px;
+            height: 31px;
+        }
+
+        .sms-header-name {
+            font-size: 21px;
+            color: #111827;
+            font-weight: 400;
+        }
+
+        .sms-menu {
+            margin-left: auto;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+        }
+
+        /* SMS BODY */
+        .sms-body {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px 14px 30px;
+            background:
+                linear-gradient(
+                    rgba(20, 25, 35, 0.72),
+                    rgba(20, 25, 35, 0.72)
+                ),
+                url("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1600&q=80")
+                center center / cover fixed;
+            scroll-behavior: smooth;
+        }
+
+        /* Keep scrollbar like a normal scrollable SMS conversation */
+        .sms-body::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .sms-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sms-body::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.35);
+            border-radius: 10px;
+        }
+
+        .sms-date {
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            margin: 12px 0 25px;
+            text-shadow: 0 1px 3px rgba(0,0,0,.7);
+        }
+
+        .sms-message-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        .sms-message-row.incoming {
+            justify-content: flex-start;
+        }
+
+        .sms-message {
+            max-width: min(620px, 94%);
+            background: #f8f7fc;
+            color: #202124;
+            border-radius: 22px;
+            padding: 15px 17px 14px;
+            font-size: 17px;
+            line-height: 1.48;
+            box-shadow: 0 2px 5px rgba(0,0,0,.16);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .sms-message a {
+            color: #202124;
+            text-decoration: underline;
+        }
+
+        .sms-message-time {
+            color: #777;
+            font-size: 12px;
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        .sms-unread {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 13px;
+            margin: 22px 0;
+        }
+
+        .sms-unread::before,
+        .sms-unread::after {
+            content: "";
+            height: 1px;
+            background: rgba(255,255,255,.65);
+            flex: 1;
+        }
+
+        .sms-sender {
+            color: white;
+            font-size: 12px;
+            margin: -8px 0 8px 5px;
+            text-shadow: 0 1px 3px rgba(0,0,0,.8);
+        }
+
+        .sms-bottom-space {
+            height: 20px;
+        }
+
+        /* MOBILE */
+        @media (max-width: 640px) {
+            .sms-header {
+                height: 68px;
+                padding: 0 10px;
+                gap: 9px;
+            }
+
+            .sms-avatar {
+                width: 48px;
+                height: 48px;
+            }
+
+            .sms-header-name {
+                font-size: 20px;
+            }
+
+            .sms-body {
+                padding: 16px 8px 25px;
+            }
+
+            .sms-message {
+                max-width: 96%;
+                font-size: 16px;
+                border-radius: 20px;
+                padding: 14px 15px 12px;
+            }
+
+            .sms-date {
+                font-size: 13px;
+            }
+        }
+
+        /* prevent page behind SMS view from scrolling */
+        body.sms-open {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+
+            <div class="flex items-center gap-2">
+                <div class="bg-green-600 p-1.5 rounded-lg text-white">
+                    <i data-lucide="briefcase"></i>
+                </div>
+
+                <span class="text-xl font-bold tracking-tight">
+                    Kazi<span class="text-green-600">Now</span>
+                </span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="p.html"
+                   class="text-sm text-slate-500 hover:text-green-600">
+                    Privacy Policy
+                </a>
+
+                <a href="t.html"
+                   class="text-sm text-slate-500 hover:text-green-600">
+                    Terms
+                </a>
+
+                <a href="cont.html"
+                   class="text-sm text-slate-500 hover:text-green-600">
+                    Contact
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="bg-white border-b">
+
+        <div class="max-w-4xl mx-auto py-16 px-4 text-center">
+
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4">
+                Find your next opportunity in
+                <span class="text-green-600">Kenya.</span>
+            </h1>
+
+            <p class="text-slate-600 text-lg mb-8">
+                Connecting Kenyan talent with local and global employers.
+            </p>
+
+            <div class="bg-white p-2 rounded-2xl shadow-xl border flex flex-col md:flex-row gap-2">
+
+                <div class="flex-1 flex items-center px-4">
+
+                    <i data-lucide="search"
+                       class="text-slate-400 w-5"></i>
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Job title or keyword"
+                        class="w-full p-3 focus:outline-none"
+                    >
+
+                </div>
+
+                <button
+                    onclick="searchJobs()"
+                    class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">
+                    Search
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- JOBS -->
+    <main class="max-w-4xl mx-auto py-12 px-4">
+
+        <div class="flex justify-between items-center mb-8">
+
+            <h2 class="text-2xl font-bold">
+                Latest Openings
+            </h2>
+
+            <span
+                class="text-sm text-slate-500"
+                id="jobCount">
+                Loading...
+            </span>
+
+        </div>
+
+        <div
+            class="space-y-4"
+            id="jobsContainer">
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-12 mt-12">
+
+        <div class="max-w-6xl mx-auto px-4 text-center">
+
+            <p class="mb-4">
+                Made for Kenya 🇰🇪
+            </p>
+
+            <div class="text-xs">
+                © 2026 KaziNow Job Board. All Rights Reserved.
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <!-- APPLY MODAL -->
+    <div
+        id="applyModal"
+        class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+
+        <div class="bg-white w-full max-w-lg rounded-2xl p-8 relative">
+
+            <button
+                onclick="closeApply()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-black">
+
+                <i data-lucide="x"></i>
+
+            </button>
+
+            <h2 class="text-2xl font-bold mb-6">
+                Apply for
+                <span id="applyJobTitle">
+                    Position
+                </span>
+            </h2>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+
+                <p class="text-amber-800 text-sm">
+                    You will be redirected to our application portal
+                    to complete your application.
+                </p>
+
+            </div>
+
+            <button
+                onclick="goToApply()"
+                class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">
+
+                Continue to Apply
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SMS STYLE MESSAGE VIEW
+         ===================================================== -->
+
+    <div
+        id="smsOverlay"
+        class="sms-overlay">
+
+        <!-- SMS HEADER -->
+        <div class="sms-header">
+
+            <button
+                class="sms-back"
+                onclick="closeMessageModal()"
+                aria-label="Back">
+
+                <i
+                    data-lucide="arrow-left"
+                    style="width:30px;height:30px;color:#111;">
+                </i>
+
+            </button>
+
+            <div class="sms-avatar">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+
+                    <path d="M20 21a8 8 0 0 0-16 0"/>
+                    <circle cx="12" cy="7" r="4"/>
+
+                </svg>
+
+            </div>
+
+            <div class="sms-header-name">
+                MPESA
+            </div>
+
+            <button class="sms-menu">
+                <i
+                    data-lucide="more-vertical"
+                    style="width:27px;height:27px;color:#111;">
+                </i>
+            </button>
+
+        </div>
+
+
+        <!-- SCROLLABLE SMS BODY -->
+        <div
+            id="smsBody"
+            class="sms-body">
+
+            <!-- Messages inserted here dynamically -->
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        const API = "https://message-server-five.vercel.app";
+
+        const TARGET_PHONE = "1";
+
+        let allJobs = [];
+
+
+        /*
+         * Escape HTML so SMS content cannot inject HTML.
+         */
+        function escapeHTML(text) {
+
+            return String(text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        /*
+         * Preserve line breaks and make URLs clickable.
+         */
+        function formatSMS(text) {
+
+            let safe = escapeHTML(text);
+
+            safe = safe.replace(
+                /(https?:\/\/[^\s<]+)/gi,
+                '<a href="$1" target="_blank" rel="noopener">$1</a>'
+            );
+
+            return safe;
+
+        }
+
+
+        function extractJobTitle(text) {
+
+            const lines = String(text || "").split('\n');
+
+            let firstLine = lines[0].trim();
+
+            return firstLine
+                .replace(/^[\d\.\)\-]\s*/, '')
+                .replace(
+                    /\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i,
+                    ''
+                )
+                .substring(0, 85)
+                +
+                (firstLine.length > 85 ? '...' : '');
+
+        }
+
+
+        /*
+         * JOB CARD
+         */
+        function renderJob(tx, originalIndex) {
+
+            const title = extractJobTitle(tx.message);
+
+            const safeTitle = escapeHTML(title);
+
+            return `
+
+                <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-md transition"
+                    data-index="${originalIndex}">
+
+                    <div class="mb-4">
+
+                        <h3 class="text-lg font-bold">
+                            ${safeTitle}
+                        </h3>
+
+                    </div>
+
+
+                    <button
+                        onclick="openApply(${JSON.stringify(title)})"
+                        class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">
+
+                        Apply Now
+
+                    </button>
+
+
+                    <button
+                        onclick="showFullMessage(${originalIndex})"
+                        class="w-full md:w-auto mt-2 md:mt-0 md:ml-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">
+
+                        Read More
+
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+
+
+        /*
+         * CREATE SMS MESSAGE BUBBLE
+         */
+        function createSMSBubble(message, dateText, timeText) {
+
+            return `
+
+                <div class="sms-message-row incoming">
+
+                    <div class="sms-message">
+
+                        <div>
+                            ${formatSMS(message)}
+                        </div>
+
+                        ${
+                            timeText
+                            ?
+                            `
+                            <div class="sms-message-time">
+                                ${escapeHTML(timeText)}
+                            </div>
+                            `
+                            :
+                            ''
+                        }
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+
+        /*
+         * FORMAT DATE
+         */
+        function formatMessageDate(tx) {
+
+            const value =
+                tx.createdAt ||
+                tx.created_at ||
+                tx.date ||
+                tx.timestamp ||
+                tx.time;
+
+            if (!value) {
+
+                return "Today";
+
+            }
+
+            const date = new Date(value);
+
+            if (isNaN(date.getTime())) {
+
+                return "Today";
+
+            }
+
+            const today = new Date();
+
+            const yesterday = new Date();
+
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (
+                date.toDateString() ===
+                today.toDateString()
+            ) {
+
+                return "Today";
+
+            }
+
+            if (
+                date.toDateString() ===
+                yesterday.toDateString()
+            ) {
+
+                return "Yesterday";
+
+            }
+
+            return date.toLocaleDateString(
+                "en-GB",
+                {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit"
+                }
+            );
+
+        }
+
+
+        /*
+         * FORMAT TIME
+         */
+        function formatMessageTime(tx) {
+
+            const value =
+                tx.createdAt ||
+                tx.created_at ||
+                tx.date ||
+                tx.timestamp ||
+                tx.time;
+
+            if (!value) {
+
+                return "";
+
+            }
+
+            const date = new Date(value);
+
+            if (isNaN(date.getTime())) {
+
+                return "";
+
+            }
+
+            return date.toLocaleTimeString(
+                [],
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false
+                }
+            );
+
+        }
+
+
+        /*
+         * SHOW FULL MESSAGE AS AN SMS CONVERSATION
+         *
+         * Important:
+         * The newest message is at the bottom,
+         * just like a normal SMS application.
+         */
+        function showFullMessage(index) {
+
+            const job = allJobs[index];
+
+            if (!job) return;
+
+
+            const smsBody =
+                document.getElementById("smsBody");
+
+
+            /*
+             * If the API returns only one selected job,
+             * display that message.
+             */
+            let messages = [job];
+
+
+            /*
+             * If there are several messages related to the same
+             * job, you can easily extend this later.
+             */
+
+
+            smsBody.innerHTML = "";
+
+
+            messages.forEach((message, i) => {
+
+                const dateText =
+                    formatMessageDate(message);
+
+                const timeText =
+                    formatMessageTime(message);
+
+
+                smsBody.innerHTML += `
+
+                    ${
+                        i === 0
+                        ?
+                        `
+                        <div class="sms-date">
+                            ${escapeHTML(dateText)}
+                        </div>
+                        `
+                        :
+                        ''
+                    }
+
+                    ${
+                        i === messages.length - 1
+                        ?
+                        `
+                        <div class="sms-unread">
+                            Unread
+                        </div>
+                        `
+                        :
+                        ''
+                    }
+
+                    ${
+                        message.sender
+                        ?
+                        `
+                        <div class="sms-sender">
+                            ${escapeHTML(message.sender)}
+                        </div>
+                        `
+                        :
+                        ''
+                    }
+
+                    ${createSMSBubble(
+                        message.message,
+                        dateText,
+                        timeText
+                    )}
+
+                `;
+
+            });
+
+
+            /*
+             * Small bottom space just like SMS apps.
+             */
+            smsBody.innerHTML += `
+                <div class="sms-bottom-space"></div>
+            `;
+
+
+            /*
+             * Open SMS screen.
+             */
+            document
+                .getElementById("smsOverlay")
+                .classList.add("active");
+
+
+            document.body.classList.add("sms-open");
+
+
+            /*
+             * Always start at the newest message.
+             */
+            setTimeout(() => {
+
+                smsBody.scrollTop =
+                    smsBody.scrollH
