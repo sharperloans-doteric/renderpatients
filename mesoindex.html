@@ -75,18 +75,21 @@ body {
   height: calc(100vh - 50px);
   overflow: hidden;
   position: relative;
+  /* Account for static bottom bar height so content flexes correctly */
+  padding-bottom: 45px;
 }
 
-/* ─── MESSAGES CONTAINER UPDATED FOR BOTTOM ALIGNMENT ─── */
+/* ─── MESSAGES CONTAINER UPDATED FOR COMPACT GAP AT BOTTOM ─── */
 .messages-container {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 110px 10px;
+  /* Reduced bottom padding to keep last message tight above bottom bar */
+  padding: 15px 10px 20px 10px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Pushes content/messages to bottom like standard SMS apps */
+  justify-content: flex-end;
   touch-action: pan-x pan-y;
 }
 
@@ -94,7 +97,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-top: auto; /* Keeps single or few messages anchored at the bottom */
+  margin-top: auto;
 }
 
 .phone-input-container {
@@ -175,12 +178,15 @@ body {
   font-size: var(--message-font-size, 16px);
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 10px;
+  margin-bottom: 6px; /* Tightened bubble spacing */
   margin-left: auto;
   margin-right: auto;
   width: fit-content;
   animation: slideInUp 0.4s ease both;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-bubble:last-child {
+  margin-bottom: 0; /* Zero margin on last bubble */
 }
 .message-bubble.hide {
   opacity: 0;
@@ -240,7 +246,7 @@ body {
   background: #1a1919;
   color: #aaa;
   font-size: 13px;
-  padding: 14px;
+  padding: 12px 14px;
   text-align: center;
   border-radius: 20px 20px 0 0;
   user-select: none;
@@ -257,6 +263,7 @@ body {
   margin: 0 auto;
   z-index: 10;
   border-top: 1px solid #2a2a2a;
+  height: 45px;
 }
 .no-reply-info.hidden {
   display: none !important;
