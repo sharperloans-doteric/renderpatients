@@ -1,193 +1,728 @@
-<!DOCTYPE html>  
-<html lang="en">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>Messages</title>  
-    <script src="https://cdn.tailwindcss.com"></script>  
-    <script src="https://unpkg.com/lucide@latest"></script>  
-    <style>  
-        /* Custom scrollbar to match mobile feel */  
-        .custom-scrollbar::-webkit-scrollbar {  
-            width: 4px;  
-        }  
-        .custom-scrollbar::-webkit-scrollbar-track {  
-            background: transparent;  
-        }  
-        .custom-scrollbar::-webkit-scrollbar-thumb {  
-            background: rgba(255, 255, 255, 0.2);  
-            border-radius: 4px;  
-        }  
-    </style>  
-</head>  
-<body class="bg-slate-900 flex justify-center items-center min-h-screen p-0 sm:p-4 font-sans antialiased selection:bg-slate-700 selection:text-white">  
 
-    <!-- Account Number Modal (Prompts user on open) -->
-    <div id="accountModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
-            <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="message-square" class="w-6 h-6"></i>
-            </div>
-            <h2 class="text-xl font-bold text-white mb-2">Enter Account Number</h2>
-            <p class="text-xs text-slate-400 mb-5">Please enter the phone/account number to load messages.</p>
-            
-            <form onsubmit="handleAccountSubmit(event)">
-                <input type="text" id="accountInput" required placeholder="e.g. 1" 
-                       class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-amber-400 mb-4 tracking-wider">
-                <button type="submit" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3 rounded-xl transition">
-                    Load Messages
-                </button>
-            </form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPESA Messages</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #111827;
+        }
+
+        .messages-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,.25);
+            border-radius: 10px;
+        }
+
+        .message-text {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .sms-bubble {
+            background: rgb(244, 243, 248);
+            color: #202124;
+            border-radius: 26px;
+            border-top-left-radius: 8px;
+            padding: 15px 17px;
+            max-width: 90%;
+            font-size: 15px;
+            line-height: 1.55;
+            box-shadow: 0 1px 3px rgba(0,0,0,.18);
+        }
+
+        .date-label {
+            color: rgba(255,255,255,.9);
+            font-size: 12px;
+            text-align: center;
+            margin: 20px 0 18px;
+        }
+
+        .unread-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,.8);
+            font-size: 12px;
+            margin: 18px 0 20px;
+        }
+
+        .unread-line::before,
+        .unread-line::after {
+            content: "";
+            height: 1px;
+            background: rgba(255,255,255,.7);
+            flex: 1;
+        }
+
+        .sender-footer {
+            background: rgba(248,248,250,.94);
+            color: #3f3f46;
+            padding: 24px 22px 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .home-pill {
+            width: 108px;
+            height: 4px;
+            border-radius: 20px;
+            background: #666;
+            margin: 20px auto 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ACCOUNT NUMBER MODAL -->
+<div id="accountModal"
+     class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center">
+
+        <div class="w-12 h-12 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="message-square" class="w-6 h-6"></i>
         </div>
+
+        <h2 class="text-xl font-bold text-white mb-2">
+            Enter Account Number
+        </h2>
+
+        <p class="text-xs text-slate-400 mb-5">
+            Enter the phone/account number to load messages.
+        </p>
+
+        <form onsubmit="handleAccountSubmit(event)">
+
+            <input
+                type="text"
+                id="accountInput"
+                required
+                placeholder="Phone / Account Number"
+                autocomplete="off"
+                class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-amber-400 mb-4 tracking-wider"
+            >
+
+            <button
+                type="submit"
+                class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-3 rounded-xl transition">
+                Load Messages
+            </button>
+
+        </form>
+    </div>
+</div>
+
+
+<!-- PHONE / SMS SCREEN -->
+<div
+    class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center"
+    style="
+        background-image:
+        linear-gradient(
+            to bottom,
+            rgba(20,24,35,.55),
+            rgba(20,24,35,.65)
+        ),
+        url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');
+    "
+>
+
+    <!-- TOP BAR -->
+    <div
+        class="bg-[#555861]/90 backdrop-blur-md text-white px-4 py-4 flex items-center justify-between z-10 border-b border-white/10"
+    >
+
+        <div class="flex items-center gap-4">
+
+            <!-- Back -->
+            <button
+                onclick="changeAccount()"
+                class="text-white hover:text-gray-300 transition"
+                title="Change account"
+            >
+                <i data-lucide="arrow-left" class="w-7 h-7"></i>
+            </button>
+
+
+            <!-- MPESA ICON -->
+            <div
+                class="w-11 h-11 rounded-full bg-yellow-400 flex items-center justify-center shadow-md"
+            >
+                <i
+                    data-lucide="user"
+                    class="w-6 h-6 text-white"
+                    stroke-width="3"
+                ></i>
+            </div>
+
+
+            <!-- TITLE -->
+            <div>
+                <div class="text-[20px] font-medium leading-none">
+                    MPESA
+                </div>
+
+                <div
+                    id="displayAccount"
+                    class="hidden"
+                >
+                    -
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- THREE DOTS -->
+        <button
+            onclick="changeAccount()"
+            class="text-black hover:text-gray-800 transition"
+            title="Change account"
+        >
+            <i
+                data-lucide="more-vertical"
+                class="w-7 h-7"
+                stroke-width="3"
+            ></i>
+        </button>
+
     </div>
 
-    <!-- Mobile Device Container -->  
-    <div class="w-full max-w-md h-[100vh] sm:h-[92vh] sm:rounded-[36px] overflow-hidden flex flex-col relative shadow-2xl bg-cover bg-center border border-slate-700/50"   
-         style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.7)), url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1000&auto=format&fit=crop');">  
-        
-        <!-- Header / App Bar (Matching the Top Bar in Image) -->  
-        <div class="bg-slate-900/80 backdrop-blur-md text-white p-4 flex items-center justify-between z-10 border-b border-slate-800/50">  
-            <div class="flex items-center gap-3">  
-                <button onclick="changeAccount()" class="text-slate-300 hover:text-white transition" title="Change Account">  
-                    <i data-lucide="arrow-left" class="w-6 h-6"></i>  
-                </button>  
-                <div class="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 font-bold text-lg shadow-inner">  
-                    <i data-lucide="user" class="w-6 h-6 text-amber-950"></i>  
-                </div>  
-                <div>
-                    <span class="font-semibold text-lg tracking-wide text-slate-100 block leading-tight">MPESA</span>  
-                    <span id="displayAccount" class="text-[10px] text-amber-400 font-mono block">Account: -</span>
-                </div>
-            </div>  
-            <button onclick="changeAccount()" class="text-slate-300 hover:text-white" title="Switch Account">  
-                <i data-lucide="refresh-cw" class="w-5 h-5"></i>  
-            </button>  
-        </div>  
 
-        <!-- Messages Area (Scrollable SMS Body) -->  
-        <div id="jobsContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">  
-            <div class="text-center py-20 text-slate-400 text-sm">
-                Enter an account number to fetch messages.
-            </div>
-        </div>  
+    <!-- MESSAGES -->
+    <div
+        id="jobsContainer"
+        class="messages-scroll flex-1 overflow-y-auto px-3 pt-0 pb-5"
+    >
 
-        <!-- Bottom Banner / Non-replyable Footer (Matching Pic Exactly) -->  
-        <div class="p-4 bg-slate-100/90 backdrop-blur-md rounded-t-3xl sm:rounded-b-[36px] text-slate-700 text-xs text-left border-t border-slate-200/50">  
-            Sender can't accept replies. <a href="#" class="underline font-medium text-slate-800">Contact them directly.</a> <a href="#" class="underline font-medium text-slate-800">Learn more</a>  
-            <!-- Navigation pill indicator -->  
-            <div class="w-32 h-1 bg-slate-400 rounded-full mx-auto mt-3"></div>  
-        </div>  
+        <!-- Messages will load here -->
 
-    </div>  
+    </div>
 
-    <script>  
-        const API = "https://message-server-five.vercel.app";  
-        let currentTargetPhone = "";  
-        let allJobs = [];  
 
-        function handleAccountSubmit(e) {
-            e.preventDefault();
-            const inputVal = document.getElementById('accountInput').value.trim();
-            if (inputVal) {
-                currentTargetPhone = inputVal;
-                document.getElementById('displayAccount').textContent = `Account: ${currentTargetPhone}`;
-                document.getElementById('accountModal').classList.add('hidden');
-                loadJobs();
+    <!-- SMS FOOTER -->
+    <div class="sender-footer">
+
+        <div>
+            Sender can't accept replies.
+            <a href="#" class="underline">
+                Contact them directly.
+            </a>
+            <a href="#" class="underline ml-1">
+                Learn more
+            </a>
+        </div>
+
+        <div class="home-pill"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const API = "https://message-server-five.vercel.app";
+
+    let currentTargetPhone = "";
+    let allJobs = [];
+
+
+    /* ==============================
+       ACCOUNT
+    ============================== */
+
+    function handleAccountSubmit(event) {
+
+        event.preventDefault();
+
+        const input =
+            document.getElementById("accountInput")
+                .value
+                .trim();
+
+        if (!input) return;
+
+        currentTargetPhone = input;
+
+        document
+            .getElementById("displayAccount")
+            .textContent = currentTargetPhone;
+
+        document
+            .getElementById("accountModal")
+            .classList.add("hidden");
+
+        loadJobs();
+    }
+
+
+    function changeAccount() {
+
+        const modal =
+            document.getElementById("accountModal");
+
+        modal.classList.remove("hidden");
+
+        setTimeout(() => {
+
+            document
+                .getElementById("accountInput")
+                .focus();
+
+        }, 100);
+
+    }
+
+
+    /* ==============================
+       ESCAPE HTML
+    ============================== */
+
+    function escapeHtml(text) {
+
+        if (text === null || text === undefined) {
+            return "";
+        }
+
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* ==============================
+       TIME
+    ============================== */
+
+    function getDate(tx) {
+
+        if (tx.createdAt) {
+            const d = new Date(tx.createdAt);
+
+            if (!isNaN(d.getTime())) {
+                return d;
             }
         }
 
-        function changeAccount() {
-            document.getElementById('accountModal').classList.remove('hidden');
-            document.getElementById('accountInput').focus();
+        if (tx.date) {
+
+            const d = new Date(tx.date);
+
+            if (!isNaN(d.getTime())) {
+                return d;
+            }
         }
 
-        function formatTime(tx) {  
-            if (tx.createdAt) {  
-                const date = new Date(tx.createdAt);  
-                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });  
-            }  
-            return "19:17";  
-        }  
+        if (tx.timestamp) {
 
-        function renderJob(tx) {  
-            const messageText = tx.message || '';  
-            const timeStr = formatTime(tx);  
+            const d = new Date(tx.timestamp);
 
-            return `  
-                <div class="flex flex-col items-start space-y-1 mb-3">  
-                    <!-- SMS Message Bubble -->  
-                    <div class="bg-[rgb(240,240,245)] text-slate-900 text-[14px] leading-relaxed p-4 rounded-3xl rounded-tl-sm max-w-[88%] shadow-md whitespace-pre-wrap break-words font-sans selection:bg-slate-300">  
-                        ${escapeHtml(messageText)}  
-                    </div>  
-                    <!-- Timestamp -->  
-                    <span class="text-[11px] text-slate-300 px-2 font-medium tracking-wide">  
-                        ${timeStr} • Safaricom  
-                    </span>  
-                </div>  
-            `;  
-        }  
+            if (!isNaN(d.getTime())) {
+                return d;
+            }
+        }
 
-        function escapeHtml(text) {  
-            return text  
-                .replace(/&/g, "&amp;")  
-                .replace(/</g, "&lt;")  
-                .replace(/>/g, "&gt;")  
-                .replace(/"/g, "&quot;")  
-                .replace(/'/g, "&#039;");  
-        }  
+        return new Date();
 
-        async function fetchJobs() {  
-            try {  
-                const res = await fetch(`${API}/api/messages/${currentTargetPhone}`);  
-                const data = await res.json();  
-                  
-                if (data.success && data.messages?.length > 0) {  
-                    return data.messages;  
-                }  
-                  
-                // Fallback  
-                const txRes = await fetch(`${API}/transactions`);  
-                const txData = await txRes.json();  
-                return txData.filter(tx => String(tx.phone) === String(currentTargetPhone));  
-            } catch (err) {  
-                console.error('Failed to fetch jobs:', err);  
-                return [];  
-            }  
-        }  
+    }
 
-        function displayJobs(jobs) {  
-            const container = document.getElementById('jobsContainer');  
 
-            if (!jobs || jobs.length === 0) {  
-                container.innerHTML = `  
-                    <div class="text-center py-10 text-slate-300 text-sm">  
-                        No messages found for account: <b>${escapeHtml(currentTargetPhone)}</b>  
-                    </div>  
-                `;  
-                return;  
-            }  
+    function formatTime(tx) {
 
-            // Render messages (Oldest top, Newest bottom like SMS apps)  
-            container.innerHTML = jobs.map(tx => renderJob(tx)).join('');  
+        const date = getDate(tx);
 
-            // Scroll to the latest message  
-            container.scrollTop = container.scrollHeight;  
-        }  
+        return date.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        });
 
-        async function loadJobs() {  
-            const container = document.getElementById('jobsContainer');  
-            container.innerHTML = `  
-                <div class="flex flex-col items-start animate-pulse p-4">  
-                    <div class="bg-slate-200/70 rounded-2xl p-4 w-3/4 h-20 shadow-md"></div>  
-                </div>  
-            `;  
+    }
 
-            allJobs = await fetchJobs();  
-            displayJobs(allJobs);  
-        }  
 
-        // Initialize icons
-        lucide.createIcons();  
-    </script>  
-</body>  
+    function formatDate(tx) {
+
+        const date = getDate(tx);
+
+        const today = new Date();
+
+        const yesterday = new Date();
+
+        yesterday.setDate(today.getDate() - 1);
+
+
+        if (
+            date.toDateString() ===
+            today.toDateString()
+        ) {
+            return "Today";
+        }
+
+
+        if (
+            date.toDateString() ===
+            yesterday.toDateString()
+        ) {
+            return "Yesterday";
+        }
+
+
+        return date.toLocaleDateString([], {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit"
+        });
+
+    }
+
+
+    /* ==============================
+       SORT MESSAGES
+    ============================== */
+
+    function sortMessages(messages) {
+
+        return [...messages].sort((a, b) => {
+
+            return getDate(a) - getDate(b);
+
+        });
+
+    }
+
+
+    /* ==============================
+       RENDER ONE MESSAGE
+    ============================== */
+
+    function renderMessage(tx, index) {
+
+        const messageText =
+            tx.message ||
+            tx.text ||
+            tx.body ||
+            "";
+
+        const time =
+            formatTime(tx);
+
+
+        return `
+
+            <div
+                class="flex flex-col items-start mb-3"
+            >
+
+                <div class="sms-bubble message-text">
+
+                    ${escapeHtml(messageText)}
+
+                </div>
+
+
+                <div
+                    class="text-white/90 text-[11px] px-3 mt-1"
+                >
+
+                    ${time} • Safaricom
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* ==============================
+       RENDER ALL MESSAGES
+    ============================== */
+
+    function displayJobs(jobs) {
+
+        const container =
+            document.getElementById("jobsContainer");
+
+
+        if (!jobs || jobs.length === 0) {
+
+            container.innerHTML = "";
+
+            return;
+
+        }
+
+
+        const sorted =
+            sortMessages(jobs);
+
+
+        let html = "";
+
+
+        let previousDate = null;
+
+
+        sorted.forEach((tx, index) => {
+
+            const date =
+                getDate(tx);
+
+            const dateKey =
+                date.toDateString();
+
+
+            /*
+             * DATE SEPARATOR
+             */
+
+            if (dateKey !== previousDate) {
+
+                html += `
+
+                    <div class="date-label">
+
+                        ${escapeHtml(
+                            formatDate(tx)
+                        )}
+
+                    </div>
+
+                `;
+
+                previousDate = dateKey;
+
+            }
+
+
+            /*
+             * UNREAD DIVIDER
+             *
+             * Places it before the
+             * latest incoming messages.
+             */
+
+            if (
+                index ===
+                Math.max(0, sorted.length - 2)
+            ) {
+
+                html += `
+
+                    <div class="unread-line">
+
+                        <span>
+                            Unread
+                        </span>
+
+                    </div>
+
+                `;
+
+            }
+
+
+            html += renderMessage(tx, index);
+
+        });
+
+
+        container.innerHTML = html;
+
+
+        /*
+         * Automatically show
+         * latest SMS at bottom.
+         */
+
+        requestAnimationFrame(() => {
+
+            container.scrollTop =
+                container.scrollHeight;
+
+        });
+
+    }
+
+
+    /* ==============================
+       FETCH MESSAGES
+    ============================== */
+
+    async function fetchJobs() {
+
+        try {
+
+            /*
+             * Primary endpoint
+             */
+
+            const response =
+                await fetch(
+                    `${API}/api/messages/${encodeURIComponent(currentTargetPhone)}`
+                );
+
+
+            if (response.ok) {
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    data.success &&
+                    Array.isArray(data.messages)
+                ) {
+
+                    return data.messages;
+
+                }
+
+            }
+
+
+            /*
+             * Fallback endpoint
+             */
+
+            const txResponse =
+                await fetch(
+                    `${API}/transactions`
+                );
+
+
+            if (!txResponse.ok) {
+                return [];
+            }
+
+
+            const txData =
+                await txResponse.json();
+
+
+            if (!Array.isArray(txData)) {
+                return [];
+            }
+
+
+            return txData.filter(tx => {
+
+                return (
+                    String(tx.phone) ===
+                    String(currentTargetPhone)
+                );
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Message loading error:",
+                error
+            );
+
+            return [];
+
+        }
+
+    }
+
+
+    /* ==============================
+       LOAD MESSAGES
+    ============================== */
+
+    async function loadJobs() {
+
+        const container =
+            document.getElementById(
+                "jobsContainer"
+            );
+
+
+        /*
+         * Empty loading state.
+         * No extra text shown.
+         */
+
+        container.innerHTML = "";
+
+
+        allJobs =
+            await fetchJobs();
+
+
+        displayJobs(allJobs);
+
+    }
+
+
+    /* ==============================
+       AUTO REFRESH
+    ============================== */
+
+    setInterval(async () => {
+
+        if (!currentTargetPhone) {
+            return;
+        }
+
+
+        const messages =
+            await fetchJobs();
+
+
+        if (
+            JSON.stringify(messages) !==
+            JSON.stringify(allJobs)
+        ) {
+
+            allJobs = messages;
+
+            displayJobs(allJobs);
+
+        }
+
+    }, 10000);
+
+
+    /* ==============================
+       INITIALIZE ICONS
+    ============================== */
+
+    lucide.createIcons();
+
+</script>
+
+</body>
 </html>
