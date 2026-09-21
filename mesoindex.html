@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,7 +81,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 110px 10px;
+  padding: 15px 10px 50px 10px;
   display: flex;
   flex-direction: column;
   touch-action: pan-x pan-y;
@@ -236,13 +237,10 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
+  margin-top: auto;
   z-index: 10;
   border-top: 1px solid #2a2a2a;
 }
@@ -724,63 +722,4 @@ async function loadMessagesByPhone(phone) {
     console.error('Error loading messages:', err);
     const cached = localStorage.getItem("cached_messages_" + phone);
     if (cached) {
-      const data = JSON.parse(cached);
-      container.style.opacity = "1";
-      loadedSigs = new Set(data.map(sigOf));
-      renderMessages(data);
-      const notice = document.createElement("div");
-      notice.style.padding = "10px 14px";
-      notice.style.background = "#422c00";
-      notice.style.color = "#ffcc80";
-      notice.style.fontSize = "13px";
-      notice.style.textAlign = "center";
-      notice.style.borderRadius = "12px";
-      notice.style.margin = "8px auto";
-      notice.style.maxWidth = "90%";
-      notice.textContent = "Showing cached messages";
-      container.prepend(notice);
-    } else {
-      container.style.opacity = "1";
-      loadedSigs = new Set();
-      renderMessages([]);
-    }
-    startPolling();
-  }
-}
-
-// ─── PWA INSTALL PROMPT ───
-let deferredPrompt;
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  setTimeout(() => {
-    document.getElementById("installBtn").style.display = "block";
-  }, 5000);
-});
-document.getElementById("installBtn").addEventListener("click", async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      document.getElementById("installBtn").style.display = "none";
-    }
-    deferredPrompt = null;
-  }
-});
-
-// ─── REGISTER SERVICE WORKER ───
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service Worker registered!', reg))
-      .catch((err) => console.error('Service Worker registration failed:', err));
-  });
-}
-
-document.addEventListener('scroll', () => {
-  const menu = document.querySelector('.msg-context-menu');
-  if (menu) menu.remove();
-}, true);
-</script>
-</body>
-</html>
+      const data 
