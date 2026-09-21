@@ -84,7 +84,7 @@ body {
   padding: 15px 10px 110px 10px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Aligns single message or short lists to the bottom like standard SMS apps */
+  justify-content: flex-end; /* messages start from the bottom like SMS apps */
   touch-action: pan-x pan-y;
 }
 .phone-input-container {
@@ -354,6 +354,7 @@ body {
     <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
     <button class="load-btn" id="loginBtn">Login</button>
   </div>
+
   <!-- Main Interface -->
   <div class="phone-input-container hidden" id="phoneInputContainer">
     <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
@@ -556,22 +557,22 @@ function removeMessage(el) {
 function showMessageContextMenu(bubble, message) {
   const existing = document.querySelector('.msg-context-menu');
   if (existing) existing.remove();
-    
+  
   const menu = document.createElement('div');
   menu.className = 'msg-context-menu';
   menu.innerHTML = `
     <button class="ctx-copy">Copy</button>
     <button class="ctx-delete">Archive</button>
   `;
-    
+  
   const rect = bubble.getBoundingClientRect();
   let top = rect.top - 55;
   if (top < 60) top = rect.bottom + 8;
   menu.style.top = top + 'px';
   menu.style.left = (rect.left + rect.width / 2 - 60) + 'px';
-    
+  
   document.body.appendChild(menu);
-    
+  
   menu.querySelector('.ctx-copy').addEventListener('click', (e) => {
     e.stopPropagation();
     navigator.clipboard.writeText(message).then(() => {
@@ -579,13 +580,13 @@ function showMessageContextMenu(bubble, message) {
     });
     menu.remove();
   });
-    
+  
   menu.querySelector('.ctx-delete').addEventListener('click', (e) => {
     e.stopPropagation();
     removeMessage(bubble);
     menu.remove();
   });
-    
+  
   setTimeout(() => {
     document.addEventListener('click', function closeMenu(e) {
       if (!menu.contains(e.target) && e.target !== bubble) {
@@ -704,9 +705,9 @@ async function loadMessagesByPhone(phone) {
   container.innerHTML = "";
   container.style.opacity = "0.5";
   setLoading(true);
-    
+  
   phoneInputContainer.classList.add('hidden');
-    
+  
   try {
     const messages = await fetchMessages(phone);
     container.style.opacity = "1";
