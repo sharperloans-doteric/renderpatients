@@ -1,777 +1,782 @@
-
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Messages</title>  
-<link rel="manifest" href="manifest.json">  
-<meta name="theme-color" content="#000000">  
-<style>  
-* { box-sizing: border-box; margin: 0; padding: 0; }  
-body {  
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;  
-  background: #000;  
-  color: #fff;  
-  height: 100vh;  
-  display: flex;  
-  flex-direction: column;  
-  overflow: hidden;  
-}  
-.messages-header {  
-  position: fixed;  
-  top: 0;  
-  left: 0;  
-  right: 0;  
-  background: #201f1f;  
-  border-bottom: 1px solid #333;  
-  padding: 10px 15px;  
-  z-index: 100;  
-  display: flex;  
-  align-items: center;  
-  gap: 10px;  
-  height: 50px;  
-}  
-.logo { height: 28px; }  
-.loader {  
-  width: 28px;  
-  height: 28px;  
-  border: 3px solid rgba(255,255,255,0.3);  
-  border-radius: 50%;  
-  border-top-color: #25d366;  
-  animation: spin 1s linear infinite;  
-  display: none;  
-}  
-.logo.hidden { display: none; }  
-.loader.active { display: block; }  
-@keyframes spin {  
-  to { transform: rotate(360deg); }  
-}  
-.header-title {  
-  font-size: 1.3rem;  
-  font-weight: 600;  
-  color: #af5656;  
-}  
-.more-menu {  
-  position: absolute;  
-  right: 0.3cm;  
-  font-size: 22px;  
-  cursor: pointer;  
-  color: #fff;  
-  user-select: none;  
-  -webkit-touch-callout: none;  
-  padding: 5px;  
-}  
-.page-content, #page-content {  
-  margin-top: 50px;  
-  flex: 1;  
-  max-width: 500px;  
-  width: 100%;  
-  margin-left: auto;  
-  margin-right: auto;  
-  background: #1a1919;  
-  display: flex;  
-  flex-direction: column;  
-  height: calc(100vh - 50px);  
-  overflow: hidden;  
-  position: relative;  
-}  
-.messages-container {  
-  flex: 1;  
-  overflow-y: auto;  
-  overflow-x: hidden;  
-  -webkit-overflow-scrolling: touch;  
-  padding: 15px 10px 110px 10px;  
-  display: flex;  
-  flex-direction: column;  
-  touch-action: pan-x pan-y;  
-}  
-.phone-input-container {  
-  padding: 15px;  
-  background: #201f1f;  
-  border-bottom: 1px solid #333;  
-  display: flex;  
-  gap: 10px;  
-}  
-.hidden {  
-  display: none !important;  
-}  
-.phone-input-container.hidden {  
-  display: none;  
-}  
-#loginContainer {  
-  display: flex;  
-  flex-direction: column;  
-  justify-content: center;  
-  align-items: center;  
-  height: 100%;  
-  padding: 30px;  
-  background: #000;  
-}  
-#loginContainer.hidden {  
-  display: none;  
-}  
-#loginContainer .phone-input {  
-  width: 100%;  
-  max-width: 350px;  
-  margin-bottom: 15px;  
-}  
-#loginContainer .load-btn {  
-  width: 100%;  
-  max-width: 350px;  
-  margin-top: 10px;  
-}  
-#loginContainer h2 {  
-  margin-bottom: 30px;  
-  font-size: 28px;  
-  color: #25d366;  
-}  
-.phone-input {  
-  flex: 1;  
-  padding: 12px 15px;  
-  border: 1px solid #444;  
-  border-radius: 8px;  
-  background: #000;  
-  color: #fff;  
-  font-size: 16px;  
-}  
-.phone-input:focus {  
-  outline: none;  
-  border-color: #25d366;  
-}  
-.load-btn {  
-  padding: 12px 20px;  
-  background: #25d366;  
-  color: #000;  
-  border: none;  
-  border-radius: 8px;  
-  font-weight: 600;  
-  cursor: pointer;  
-}  
-.change-btn {  
-  padding: 12px 15px;  
-  background: #333;  
-  color: #fff;  
-  border: none;  
-  border-radius: 8px;  
-  font-weight: 600;  
-  cursor: pointer;  
-}  
-.message-bubble {  
-  max-width: 95%;  
-  padding: 12px 16px;  
-  border-radius: 20px;  
-  font-size: var(--message-font-size, 16px);  
-  background: rgba(255,255,255,0.12);  
-  border: 1px solid rgba(255,255,255,0.08);  
-  margin-bottom: 10px;  
-  margin-left: auto;  
-  margin-right: auto;  
-  width: fit-content;  
-  animation: slideInUp 0.4s ease both;  
-  transition: opacity 0.2s ease, transform 0.2s ease;  
-}  
-.message-bubble.hide {  
-  opacity: 0;  
-  transform: scale(0.9);  
-}  
-.msg-context-menu {  
-  position: fixed;  
-  background: #2a2a2a;  
-  border: 1px solid #3a3a3a;  
-  border-radius: 12px;  
-  padding: 6px;  
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);  
-  z-index: 1001;  
-  display: flex;  
-  gap: 4px;  
-  animation: fadeIn 0.15s ease;  
-}  
-.msg-context-menu button {  
-  background: none;  
-  border: none;  
-  color: #fff;  
-  padding: 8px 14px;  
-  font-size: 14px;  
-  cursor: pointer;  
-  border-radius: 8px;  
-  font-family: inherit;  
-  white-space: nowrap;  
-}  
-.msg-context-menu button:hover {  
-  background: #333;  
-}  
-.msg-context-menu button.ctx-delete {  
-  color: #ff6b6b;  
-}  
-.message-time {  
-  font-size: 11px;  
-  opacity: 0.7;  
-  margin-top: 4px;  
-  text-align: right;  
-}  
-.install-btn {  
-  position: fixed;  
-  bottom: 90px;  
-  right: 16px;  
-  background: #25d366;  
-  color: #000;  
-  padding: 14px 18px;  
-  border-radius: 30px;  
-  font-weight: 600;  
-  font-size: 14px;  
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);  
-  cursor: pointer;  
-  display: none;  
-  z-index: 999;  
-}  
-.no-reply-info {  
-  background: #1a1919;  
-  color: #aaa;  
-  font-size: 13px;  
-  padding: 14px;  
-  text-align: center;  
-  border-radius: 20px 20px 0 0;  
-  user-select: none;  
-  cursor: pointer;  
-  display: flex !important;  
-  align-items: center;  
-  justify-content: center;  
-  position: fixed;  
-  bottom: 0;  
-  left: 0;  
-  right: 0;  
-  width: 100%;  
-  max-width: 500px;  
-  margin: 0 auto;  
-  z-index: 10;  
-  border-top: 1px solid #2a2a2a;  
-}  
-.no-reply-info.hidden {  
-  display: none !important;  
-}  .offline-message, .enter-phone-message {
-flex: 1;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 16px;
-text-align: center;
-padding: 20px;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messages</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #000;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.messages-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  padding: 10px 15px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+}
+.logo { height: 28px; }
+.loader {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #25d366;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+.logo.hidden { display: none; }
+.loader.active { display: block; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.header-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #af5656;
+}
+.more-menu {
+  position: absolute;
+  right: 0.3cm;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+  user-select: none;
+  -webkit-touch-callout: none;
+  padding: 5px;
+}
+.page-content, #page-content {
+  margin-top: 50px;
+  flex: 1;
+  max-width: 500px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background: #1a1919;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+  position: relative;
+}
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 15px 10px 70px 10px;
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-x pan-y;
+}
+.phone-input-container {
+  padding: 15px;
+  background: #201f1f;
+  border-bottom: 1px solid #333;
+  display: flex;
+  gap: 10px;
+}
+.hidden {
+  display: none !important;
+}
+.phone-input-container.hidden {
+  display: none;
+}
+#loginContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 30px;
+  background: #000;
+}
+#loginContainer.hidden {
+  display: none;
+}
+#loginContainer .phone-input {
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 15px;
+}
+#loginContainer .load-btn {
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
+}
+#loginContainer h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #25d366;
+}
+.phone-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+}
+.phone-input:focus {
+  outline: none;
+  border-color: #25d366;
+}
+.load-btn {
+  padding: 12px 20px;
+  background: #25d366;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.change-btn {
+  padding: 12px 15px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.message-bubble {
+  max-width: 95%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  font-size: var(--message-font-size, 16px);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  animation: slideInUp 0.4s ease both;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-bubble.hide {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.msg-context-menu {
+  position: fixed;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 1001;
+  display: flex;
+  gap: 4px;
+  animation: fadeIn 0.15s ease;
+}
+.msg-context-menu button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.msg-context-menu button:hover {
+  background: #333;
+}
+.msg-context-menu button.ctx-delete {
+  color: #ff6b6b;
+}
+.message-time {
+  font-size: calc(var(--message-font-size, 16px) * 0.6875);
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: right;
+}
+.install-btn {
+  position: fixed;
+  bottom: 90px;
+  right: 16px;
+  background: #25d366;
+  color: #000;
+  padding: 14px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  display: none;
+  z-index: 999;
+}
+.no-reply-info {
+  background: #1a1919;
+  color: #aaa;
+  font-size: 13px;
+  padding: 14px;
+  text-align: center;
+  border-radius: 20px 20px 0 0;
+  user-select: none;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  z-index: 10;
+  border-top: 1px solid #2a2a2a;
+}
+.no-reply-info.hidden {
+  display: none !important;
+}
+.offline-message, .enter-phone-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  text-align: center;
+  padding: 20px;
 }
 .offline-message { color: #ff6b6b; }
 .enter-phone-message { color: #888; }
 
 @keyframes slideInUp {
-from { opacity: 0; transform: translateY(30px); }
-to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn {
-from { opacity: 0; }
-to { opacity: 1; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @media (max-width:480px) {
-.messages-header { padding: 8px 10px; height: 45px; }
-.page-content, #page-content { margin-top: 45px; height: calc(100vh - 45px); }
+  .messages-header { padding: 8px 10px; height: 45px; }
+  .page-content, #page-content { margin-top: 45px; height: calc(100vh - 45px); }
 }
 
 .msg-notification {
-position: fixed;
-top: 58px;
-left: 50%;
-transform: translate(-50%, -160%);
-width: calc(100% - 24px);
-max-width: 476px;
-background: #2a2a2a;
-border: 1px solid #3a3a3a;
-border-radius: 14px;
-box-shadow: 0 8px 30px rgba(0,0,0,0.55);
-padding: 12px 16px;
-z-index: 1000;
-opacity: 0;
-pointer-events: none;
-transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
-cursor: pointer;
-display: flex;
-gap: 12px;
-align-items: flex-start;
+  position: fixed;
+  top: 58px;
+  left: 50%;
+  transform: translate(-50%, -160%);
+  width: calc(100% - 24px);
+  max-width: 476px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+  padding: 12px 16px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
 }
 .msg-notification.show {
-transform: translate(-50%, 0);
-opacity: 1;
-pointer-events: auto;
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
 }
 .msg-notif-icon {
-width: 38px;
-height: 38px;
-border-radius: 50%;
-background: #25d366;
-flex: 0 0 auto;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 20px;
-color: #000;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #25d366;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #000;
 }
 .msg-notif-content { flex: 1; min-width: 0; }
 .msg-notif-title {
-font-size: 11px;
-color: #25d366;
-font-weight: 600;
-margin-bottom: 2px;
-letter-spacing: 0.3px;
-text-transform: uppercase;
+  font-size: 11px;
+  color: #25d366;
+  font-weight: 600;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 .msg-notif-name {
-font-size: 14px;
-font-weight: 600;
-margin-bottom: 2px;
-color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #fff;
 }
 .msg-notif-body {
-font-size: 13px;
-color: #ddd;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
+  font-size: 13px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width:480px) {
-.msg-notification { top: 53px; }
+  .msg-notification { top: 53px; }
 }
 </style>
+</head>
+<body>
+<div class="messages-header">
+  <img src="logo.png" class="logo" id="headerLogo">
+  <div class="loader" id="headerLoader"></div>
+  <h1 class="header-title"></h1>
+  <div class="more-menu" id="moreBtn">⋮</div>
+</div>
+<div id="page-content" class="page-content">
+  <!-- Login Container -->
+  <div class="phone-input-container hidden" id="loginContainer">
+    <h2>Enter Login</h2>
+    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">
+    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">
+    <button class="load-btn" id="loginBtn">Login</button>
+  </div>
+  <!-- Main Interface -->
+  <div class="phone-input-container hidden" id="phoneInputContainer">
+    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">
+    <button class="change-btn" id="changeBtn">Change</button>
+    <button class="load-btn" id="loadBtn">View Messages</button>
+  </div>
+  <div class="messages-container" id="messages"></div>
+  <div class="no-reply-info hidden" id="noReplyBar">
+    Sender can't accept replies. contact them directly.Learn more
+  </div>
+</div>
+<div class="install-btn" id="installBtn">
+  <span>⬇️</span> Install App
+</div>
+<div id="notificationContainer"></div>
+<script>
+const API = "https://message-server-five.vercel.app";
+const SYSTEM_API = "https://funds-6jwd.vercel.app/api";
+const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
-</head>  
-<body>  
-<div class="messages-header">  
-  <img src="logo.png" class="logo" id="headerLogo">  
-  <div class="loader" id="headerLoader"></div>  
-  <h1 class="header-title"></h1>  
-  <div class="more-menu" id="moreBtn">⋮</div>  
-</div>  
-<div id="page-content" class="page-content">  
-  <!-- Login Container -->  
-  <div class="phone-input-container hidden" id="loginContainer">  
-    <h2>Enter Login</h2>  
-    <input type="tel" class="phone-input" id="loginPhone" placeholder="Account number">  
-    <input type="password" class="phone-input" id="loginPassword" placeholder="Password">  
-    <button class="load-btn" id="loginBtn">Login</button>  
-  </div>    <!-- Main Interface -->    <div class="phone-input-container hidden" id="phoneInputContainer">  
-    <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter username (e.g., 2547...)">  
-    <button class="change-btn" id="changeBtn">Change</button>  
-    <button class="load-btn" id="loadBtn">View Messages</button>  
-  </div>  
-  <div class="messages-container" id="messages"></div>  
-  <div class="no-reply-info hidden" id="noReplyBar">  
-    Sender can't accept replies. contact them directly.Learn more  
-  </div>  
-</div>  
-<div class="install-btn" id="installBtn">  
-  <span>⬇️</span> Install App  
-</div>  <div id="notificationContainer"></div>  <script>  
-const API = "https://message-server-five.vercel.app";  
-const SYSTEM_API = "https://funds-6jwd.vercel.app/api";  
-const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;  
+// ─── PERSISTENT LOCAL STORAGE USER CHECK ───
+let user = JSON.parse(localStorage.getItem('mledger_user'));
+if (!user || !user.phone) {
+  location.href = 'index.html';
+}
+
+let currentPhone = user.phone;
+let loadedSigs = new Set();
+let pollInterval = null;
+
+function setLoading(isLoading) {
+  const logo = document.getElementById('headerLogo');
+  const loader = document.getElementById('headerLoader');
+  if (isLoading) {
+    logo.classList.add('hidden');
+    loader.classList.add('active');
+  } else {
+    logo.classList.remove('hidden');
+    loader.classList.remove('active');
+  }
+}
+
+// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
+let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;
+let initialDistance = 0;
+let baseFontSize = currentFontSize;
+
+function setFontSize(size) {
+  currentFontSize = Math.min(Math.max(size, 12), 32);
+  document.documentElement.style.setProperty('--message-font-size', `${currentFontSize}px`);
+  localStorage.setItem('mledger_font_size', currentFontSize);
+}
+
+setFontSize(currentFontSize);
+
+const messagesContainer = document.getElementById('messages');
+
+messagesContainer.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    initialDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    baseFontSize = currentFontSize;
+  }
+}, { passive: true });
+
+messagesContainer.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2 && initialDistance > 0) {
+    const currentDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const scale = currentDistance / initialDistance;
+    setFontSize(baseFontSize * scale);
+  }
+}, { passive: true });
+
+messagesContainer.addEventListener('touchend', (e) => {
+  if (e.touches.length < 2) {
+    initialDistance = 0;
+  }
+}, { passive: true });
+
+// ─── INITIALIZE USER CONTENT ───
+const changeBtn = document.getElementById('changeBtn');
+const noReplyBar = document.getElementById('noReplyBar');
+const phoneInputContainer = document.getElementById('phoneInputContainer');
+const phoneInput = document.getElementById('phoneInput');
+
+// Auto load persistent session
+document.querySelector('.messages-header').style.display = 'flex';
+phoneInputContainer.classList.add('hidden');
+phoneInput.value = user.phone;
+loadMessagesByPhone(user.phone);
+
+changeBtn.addEventListener('click', () => {
+  stopPolling();
+  localStorage.removeItem('mledger_user');
+  location.href = 'index.html';
+});
+
+// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───
+const moreBtn = document.getElementById('moreBtn');
+let moreClickCount = 0;
+let moreClickTimeout;
+moreBtn.addEventListener('click', () => {
+    moreClickCount++;
+    clearTimeout(moreClickTimeout);
+    if (moreClickCount === 3) {
+        if (currentPhone) loadMessagesByPhone(currentPhone);
+        moreClickCount = 0;
+    } else {
+        moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);
+    }
+});
+moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ─── LOAD BUTTON CLICK ───
+const loadBtn = document.getElementById('loadBtn');
+
+loadBtn.addEventListener('click', () => {
+    const phone = phoneInput.value.trim();
+    if (phone) loadMessagesByPhone(phone);
+});
+
+phoneInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const phone = phoneInput.value.trim();
+        if (phone) loadMessagesByPhone(phone);
+    }
+});
+
+// ─── TRIPLE TAP ON NO-REPLY BAR ───
+let tapCount = 0;
+let tapTimeout;
+noReplyBar.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimeout);
+    if (tapCount === 3) {
+        window.location.href = 'act.html';
+        tapCount = 0;
+    } else {
+        tapTimeout = setTimeout(() => { tapCount = 0; }, 400);
+    }
+});
+
+// ─── HELPERS ───
+function extractFirstUrl(text) {
+  const match = text.match(urlRegex);
+  if (!match) return null;
+  let url = match[0].trim();
+  if (url.startsWith('www.')) url = 'https://' + url;
+  url = url.replace(/[.,!?;)\]}>]+$/g, '');
+  return url;
+}
+function isMpesaRelatedLink(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.includes('mpesa') || lower.includes('safaricom');
+}
+function renderMessageContent(text) {
+  let safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return safe.replace(urlRegex, (match) => {
+    let full = match.startsWith('www.') ? 'https://' + match : match;
+    return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;
+  });
+}
+function extractTimeFromMessage(message) {
+  const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+  return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function createMessageBubble(tx, isLast) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+  if (isLast) bubble.id = "last-message";
+  const url = extractFirstUrl(tx.message);
+  let previewHtml = '';
+  if (url) {
+    if (isMpesaRelatedLink(url)) {
+      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+        </div>`;
+    }
+  }
+  bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +
+                     previewHtml +
+                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;
+  bubble.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A') return;
+    showMessageContextMenu(bubble, tx.message);
+  });
+  return bubble;
+}
+
+function removeMessage(el) {
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
+}
+function showMessageContextMenu(bubble, message) {
+  const existing = document.querySelector('.msg-context-menu');
+  if (existing) existing.remove();
   
-// ─── PERSISTENT LOCAL STORAGE USER CHECK ───  
-let user = JSON.parse(localStorage.getItem('mledger_user'));  
-if (!user || !user.phone) {  
-  location.href = 'index.html';  
-}  
+  const menu = document.createElement('div');
+  menu.className = 'msg-context-menu';
+  menu.innerHTML = `
+    <button class="ctx-copy">Copy</button>
+    <button class="ctx-delete">Archive</button>
+  `;
   
-let currentPhone = user.phone;  
-let loadedSigs = new Set();  
-let pollInterval = null;  
+  const rect = bubble.getBoundingClientRect();
+  let top = rect.top - 55;
+  if (top < 60) top = rect.bottom + 8;
+  menu.style.top = top + 'px';
+  menu.style.left = (rect.left + rect.width / 2 - 60) + 'px';
   
-function setLoading(isLoading) {  
-  const logo = document.getElementById('headerLogo');  
-  const loader = document.getElementById('headerLoader');  
-  if (isLoading) {  
-    logo.classList.add('hidden');  
-    loader.classList.add('active');  
-  } else {  
-    logo.classList.remove('hidden');  
-    loader.classList.remove('active');  
-  }  
-}  
+  document.body.appendChild(menu);
   
-// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───  
-let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;  
-let initialDistance = 0;  
-let baseFontSize = currentFontSize;  
+  menu.querySelector('.ctx-copy').addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(message).then(() => {
+      showToast('Copied');
+    });
+    menu.remove();
+  });
   
-function setFontSize(size) {  
-  currentFontSize = Math.min(Math.max(size, 12), 32);  
-  document.documentElement.style.setProperty('--message-font-size', `${currentFontSize}px`);  
-  localStorage.setItem('mledger_font_size', currentFontSize);  
-}  
+  menu.querySelector('.ctx-delete').addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeMessage(bubble);
+    menu.remove();
+  });
   
-setFontSize(currentFontSize);  
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target) && e.target !== bubble) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 10);
+}
+function showToast(text) {
+  const toast = document.createElement('div');
+  toast.textContent = text;
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1500);
+}
+function renderMessages(messages) {
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  if (messages.length === 0) {
+    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
+  }
+  messages.forEach((tx, index) => {
+    const isLast = index === messages.length - 1;
+    const bubble = createMessageBubble(tx, isLast);
+    container.appendChild(bubble);
+  });
+  noReplyBar.classList.remove('hidden');
+  noReplyBar.style.display = 'flex';
+  setTimeout(() => {
+    container.scrollTop = container.scrollHeight;
+  }, 50);
+}
+
+// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───
+function sigOf(tx) {
+  return (tx.message || '') + '|' + (tx.phone || '');
+}
+
+async function fetchMessages(phone) {
+  let res = await fetch(`${API}/api/messages/${phone}`);
+  let data = await res.json();
+  if (data.success && data.messages && data.messages.length > 0) {
+    return data.messages;
+  }
+  res = await fetch(`${API}/transactions`);
+  if (!res.ok) throw new Error("Network response was not ok");
+  const txData = await res.json();
+  return txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));
+}
+
+function scrollMessagesToBottom() {
+  const container = document.getElementById("messages");
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+}
+
+function showMessageNotification(messages) {
+  const box = document.getElementById("notificationContainer");
+  const latest = messages[messages.length - 1];
+  const notif = document.createElement("div");
+  notif.className = "msg-notification";
+  const title = messages.length > 1 ? `${messages.length} new messages` : "New message";
+  const body = latest.message || "";
+  notif.innerHTML = `
+    <div class="msg-notif-icon">💬</div>
+    <div class="msg-notif-content">
+      <div class="msg-notif-title">${title}</div>
+      <div class="msg-notif-name">${currentPhone || 'Messages'}</div>
+      <div class="msg-notif-body">${renderMessageContent(body)}</div>
+    </div>`;
+  box.appendChild(notif);
+  requestAnimationFrame(() => notif.classList.add("show"));
+
+  const dismiss = () => {
+    notif.classList.remove("show");
+    setTimeout(() => notif.remove(), 400);
+  };
+  notif.addEventListener("click", () => {
+    scrollMessagesToBottom();
+    dismiss();
+  });
+  setTimeout(dismiss, 4000);
+}
+
+function startPolling() {
+  stopPolling();
+  if (!currentPhone) return;
+  pollInterval = setInterval(async () => {
+    if (!navigator.onLine || !currentPhone) return;
+    try {
+      const messages = await fetchMessages(currentPhone);
+      const newOnes = messages.filter(m => !loadedSigs.has(sigOf(m)));
+      if (newOnes.length > 0) {
+        newOnes.forEach(m => loadedSigs.add(sigOf(m)));
+        localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));
+        const container = document.getElementById("messages");
+        newOnes.forEach((tx, i) => {
+          const isLast = (i === newOnes.length - 1);
+          container.appendChild(createMessageBubble(tx, isLast));
+        });
+        scrollMessagesToBottom();
+        showMessageNotification(newOnes);
+      }
+    } catch (e) { /* keep polling silently */ }
+  }, 5000);
+}
+
+function stopPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = null;
+}
+
+async function loadMessagesByPhone(phone) {
+  currentPhone = phone;
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
+  container.style.opacity = "0.5";
+  setLoading(true);
   
-const messagesContainer = document.getElementById('messages');  
+  phoneInputContainer.classList.add('hidden');
   
-messagesContainer.addEventListener('touchstart', (e) => {  
-  if (e.touches.length === 2) {  
-    initialDistance = Math.hypot(  
-      e.touches[0].clientX - e.touches[1].clientX,  
-      e.touches[0].clientY - e.touches[1].clientY  
-    );  
-    baseFontSize = currentFontSize;  
-  }  
-}, { passive: true });  
-  
-messagesContainer.addEventListener('touchmove', (e) => {  
-  if (e.touches.length === 2 && initialDistance > 0) {  
-    const currentDistance = Math.hypot(  
-      e.touches[0].clientX - e.touches[1].clientX,  
-      e.touches[0].clientY - e.touches[1].clientY  
-    );  
-    const scale = currentDistance / initialDistance;  
-    setFontSize(baseFontSize * scale);  
-  }  
-}, { passive: true });  
-  
-messagesContainer.addEventListener('touchend', (e) => {  
-  if (e.touches.length < 2) {  
-    initialDistance = 0;  
-  }  
-}, { passive: true });  
-  
-// ─── INITIALIZE USER CONTENT ───  
-const changeBtn = document.getElementById('changeBtn');  
-const noReplyBar = document.getElementById('noReplyBar');  
-const phoneInputContainer = document.getElementById('phoneInputContainer');  
-const phoneInput = document.getElementById('phoneInput');  
-  
-// Auto load persistent session  
-document.querySelector('.messages-header').style.display = 'flex';  
-phoneInputContainer.classList.add('hidden');  
-phoneInput.value = user.phone;  
-loadMessagesByPhone(user.phone);  
-  
-changeBtn.addEventListener('click', () => {  
-  stopPolling();  
-  localStorage.removeItem('mledger_user');  
-  location.href = 'index.html';  
-});  
-  
-// ─── TRIPLE CLICK ON ⋮ TO RELOAD ───  
-const moreBtn = document.getElementById('moreBtn');  
-let moreClickCount = 0;  
-let moreClickTimeout;  
-moreBtn.addEventListener('click', () => {  
-    moreClickCount++;  
-    clearTimeout(moreClickTimeout);  
-    if (moreClickCount === 3) {  
-        if (currentPhone) loadMessagesByPhone(currentPhone);  
-        moreClickCount = 0;  
-    } else {  
-        moreClickTimeout = setTimeout(() => { moreClickCount = 0; }, 400);  
-    }  
-});  
-moreBtn.addEventListener('contextmenu', (e) => e.preventDefault());  
-  
-// ─── LOAD BUTTON CLICK ───  
-const loadBtn = document.getElementById('loadBtn');  
-  
-loadBtn.addEventListener('click', () => {  
-    const phone = phoneInput.value.trim();  
-    if (phone) loadMessagesByPhone(phone);  
-});  
-  
-phoneInput.addEventListener('keypress', (e) => {  
-    if (e.key === 'Enter') {  
-        const phone = phoneInput.value.trim();  
-        if (phone) loadMessagesByPhone(phone);  
-    }  
-});  
-  
-// ─── TRIPLE TAP ON NO-REPLY BAR ───  
-let tapCount = 0;  
-let tapTimeout;  
-noReplyBar.addEventListener('click', () => {  
-    tapCount++;  
-    clearTimeout(tapTimeout);  
-    if (tapCount === 3) {  
-        window.location.href = 'act.html';  
-        tapCount = 0;  
-    } else {  
-        tapTimeout = setTimeout(() => { tapCount = 0; }, 400);  
-    }  
-});  
-  
-// ─── HELPERS ───  
-function extractFirstUrl(text) {  
-  const match = text.match(urlRegex);  
-  if (!match) return null;  
-  let url = match[0].trim();  
-  if (url.startsWith('www.')) url = 'https://' + url;  
-  url = url.replace(/[.,!?;)\]}>]+$/g, '');  
-  return url;  
-}  
-function isMpesaRelatedLink(url) {  
-  if (!url) return false;  
-  const lower = url.toLowerCase();  
-  return lower.includes('mpesa') || lower.includes('safaricom');  
-}  
-function renderMessageContent(text) {  
-  let safe = text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');  
-  return safe.replace(urlRegex, (match) => {  
-    let full = match.startsWith('www.') ? 'https://' + match : match;  
-    return `<a href="${full}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${match}</a>`;  
-  });  
-}  
-function extractTimeFromMessage(message) {  
-  const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);  
-  return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});  
-}  
-function createMessageBubble(tx, isLast) {  
-  const bubble = document.createElement("div");  
-  bubble.className = "message-bubble";  
-  if (isLast) bubble.id = "last-message";  
-  const url = extractFirstUrl(tx.message);  
-  let previewHtml = '';  
-  if (url) {  
-    if (isMpesaRelatedLink(url)) {  
-      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">  
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">  
-        </div>`;  
-    }  
-  }  
-  bubble.innerHTML = `<div style="word-break:break-word;">${renderMessageContent(tx.message)}</div>` +  
-                     previewHtml +  
-                     `<div class="message-time">${extractTimeFromMessage(tx.message)}</div>`;  
-  bubble.addEventListener('click', (e) => {  
-    if (e.target.tagName === 'A') return;  
-    showMessageContextMenu(bubble, tx.message);  
-  });  
-  return bubble;  
-}  
-  
-function removeMessage(el) {  
-  el.classList.add("hide");  
-  setTimeout(() => el.remove(), 200);  
-}  
-function showMessageContextMenu(bubble, message) {  
-  const existing = document.querySelector('.msg-context-menu');  
-  if (existing) existing.remove();  
-    
-  const menu = document.createElement('div');  
-  menu.className = 'msg-context-menu';  
-  menu.innerHTML = `  
-    <button class="ctx-copy">Copy</button>  
-    <button class="ctx-delete">Archive</button>  
-  `;  
-    
-  const rect = bubble.getBoundingClientRect();  
-  let top = rect.top - 55;  
-  if (top < 60) top = rect.bottom + 8;  
-  menu.style.top = top + 'px';  
-  menu.style.left = (rect.left + rect.width / 2 - 60) + 'px';  
-    
-  document.body.appendChild(menu);  
-    
-  menu.querySelector('.ctx-copy').addEventListener('click', (e) => {  
-    e.stopPropagation();  
-    navigator.clipboard.writeText(message).then(() => {  
-      showToast('Copied');  
-    });  
-    menu.remove();  
-  });  
-    
-  menu.querySelector('.ctx-delete').addEventListener('click', (e) => {  
-    e.stopPropagation();  
-    removeMessage(bubble);  
-    menu.remove();  
-  });  
-    
-  setTimeout(() => {  
-    document.addEventListener('click', function closeMenu(e) {  
-      if (!menu.contains(e.target) && e.target !== bubble) {  
-        menu.remove();  
-        document.removeEventListener('click', closeMenu);  
-      }  
-    });  
-  }, 10);  
-}  
-function showToast(text) {  
-  const toast = document.createElement('div');  
-  toast.textContent = text;  
-  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';  
-  document.body.appendChild(toast);  
-  setTimeout(() => toast.remove(), 1500);  
-}  
-function renderMessages(messages) {  
-  const container = document.getElementById("messages");  
-  container.innerHTML = "";  
-  if (messages.length === 0) {  
-    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;  
-  }  
-  messages.forEach((tx, index) => {  
-    const isLast = index === messages.length - 1;  
-    const bubble = createMessageBubble(tx, isLast);  
-    container.appendChild(bubble);  
-  });  
-  noReplyBar.classList.remove('hidden');  
-  noReplyBar.style.display = 'flex';  
-  setTimeout(() => {  
-    container.scrollTop = container.scrollHeight;  
-  }, 50);  
-}  
-  
-// ─── MESSAGE POLLING & TOP NOTIFICATIONS ───  
-function sigOf(tx) {  
-  return (tx.message || '') + '|' + (tx.phone || '');  
-}  
-  
-async function fetchMessages(phone) {  
-  let res = await fetch(`${API}/api/messages/${phone}`);  
-  let data = await res.json();  
-  if (data.success && data.messages && data.messages.length > 0) {  
-    return data.messages;  
-  }  
-  res = await fetch(`${API}/transactions`);  
-  if (!res.ok) throw new Error("Network response was not ok");  
-  const txData = await res.json();  
-  return txData.filter(tx => tx.phone === phone || tx.phone.includes(phone.slice(-9)));  
-}  
-  
-function scrollMessagesToBottom() {  
-  const container = document.getElementById("messages");  
-  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);  
-}  
-  
-function showMessageNotification(messages) {  
-  const box = document.getElementById("notificationContainer");  
-  const latest = messages[messages.length - 1];  
-  const notif = document.createElement("div");  
-  notif.className = "msg-notification";  
-  const title = messages.length > 1 ? `${messages.length} new messages` : "New message";  
-  const body = latest.message || "";  
-  notif.innerHTML = `  
-    <div class="msg-notif-icon">💬</div>  
-    <div class="msg-notif-content">  
-      <div class="msg-notif-title">${title}</div>  
-      <div class="msg-notif-name">${currentPhone || 'Messages'}</div>  
-      <div class="msg-notif-body">${renderMessageContent(body)}</div>  
-    </div>`;  
-  box.appendChild(notif);  
-  requestAnimationFrame(() => notif.classList.add("show"));  
-  
-  const dismiss = () => {  
-    notif.classList.remove("show");  
-    setTimeout(() => notif.remove(), 400);  
-  };  
-  notif.addEventListener("click", () => {  
-    scrollMessagesToBottom();  
-    dismiss();  
-  });  
-  setTimeout(dismiss, 4000);  
-}  
-  
-function startPolling() {  
-  stopPolling();  
-  if (!currentPhone) return;  
-  pollInterval = setInterval(async () => {  
-    if (!navigator.onLine || !currentPhone) return;  
-    try {  
-      const messages = await fetchMessages(currentPhone);  
-      const newOnes = messages.filter(m => !loadedSigs.has(sigOf(m)));  
-      if (newOnes.length > 0) {  
-        newOnes.forEach(m => loadedSigs.add(sigOf(m)));  
-        localStorage.setItem("cached_messages_" + currentPhone, JSON.stringify(messages));  
-        const container = document.getElementById("messages");  
-        newOnes.forEach((tx, i) => {  
-          const isLast = (i === newOnes.length - 1);  
-          container.appendChild(createMessageBubble(tx, isLast));  
-        });  
-        scrollMessagesToBottom();  
-        showMessageNotification(newOnes);  
-      }  
-    } catch (e) { /* keep polling silently */ }  
-  }, 5000);  
-}  
-  
-function stopPolling() {  
-  if (pollInterval) clearInterval(pollInterval);  
-  pollInterval = null;  
-}  
-  
-async function loadMessagesByPhone(phone) {  
-  currentPhone = phone;  
-  const container = document.getElementById("messages");  
-  container.innerHTML = "";  
-  container.style.opacity = "0.5";  
-  setLoading(true);  
-    
-  phoneInputContainer.classList.add('hidden');  
-    
-  try {  
-    const messages = await fetchMessages(phone);  
-    container.style.opacity = "1";  
-    setLoading(false);  
-    loadedSigs = new Set(messages.map(sigOf));  
-    renderMessages(messages);  
-    localStorage.setItem("cached_messages_" + phone, JSON.stringify(messages));  
-    startPolling();  
-  } catch (err) {  
-    setLoading(false);  
-    console.error('Error loading messages:', err);  
-    const cached = localStorage.getItem("cached_messages_" + phone);  
-    if (cached) {  
-      const data = JSON.parse(cached);  
-      container.style.opacity = "1";  
-      loadedSigs = new Set(data.map(sigOf));  
-      renderMessages(data);  
-      const notice = document.createElement("div");  
-      notice.style.padding = "10px 14px";  
-      notice.style.background = "#422c00";  
-      notice.style.color = "#ffcc80";  
-      notice.style.fontSize = "13px";  
-      notice.style.textAlign = "center";  
-      notice.style.borderRadius = "12px";  
-      notice.style.margin = "8px auto";  
-      notice.style.maxWidth = "90%";  
-      notice.textContent = "Showing cached messages";  
-      container.prepend(notice);  
-    } else {  
-      container.style.opacity = "1";  
-      loadedSigs = new Set();  
-      renderMessages([]);  
-    }  
-    startPolling();  
-  }  
-}  
-  
-// ─── PWA INSTALL PROMPT ───  
-let deferredPrompt;  
-window.addEventListener("beforeinstallprompt", (e) => {  
-  e.preventDefault();  
-  deferredPrompt = e;  
-  setTimeout(() => {  
-    document.getElementById("installBtn").style.display = "block";  
-  }, 5000);  
-});  
-document.getElementById("installBtn").addEventListener("click", async () => {  
-  if (deferredPrompt) {  
-    deferredPrompt.prompt();  
-    const { outcome } = await deferredPrompt.userChoice;  
-    if (outcome === 'accepted') {  
-      document.getElementById("installBtn").style.display = "none";  
-    }  
-    deferredPrompt = null;  
-  }  
-});  
-  
-// ─── REGISTER SERVICE WORKER ───  
-if ('serviceWorker' in navigator) {  
-  window.addEventListener('load', () => {  
-    navigator.serviceWorker.register('/sw.js')  
-      .then((reg) => console.log('Service Worker registered!', reg))  
-      .catch((err) => console.error('Service Worker registration failed:', err));  
-  });  
-}  
-  
-document.addEventListener('scroll', () => {  
-  const menu = document.querySelector('.msg-context-menu');  
-  if (menu) menu.remove();  
-}, true);  
-</script>  </body>  
+  try {
+    const messages = await fetchMessages(phone);
+    container.style.opacity = "1";
+    setLoading(false);
+    loadedSigs = new Set(messages.map(sigOf));
+    renderMessages(messages);
+    localStorage.setItem("cached_messages_" + phone, JSON.stringify(messages));
+    startPolling();
+  } catch (err) {
+    setLoading(false);
+    console.error('Error loading messages:', err);
+    const cached = localStorage.getItem("cached_messages_" + phone);
+    if (cached) {
+      const data = JSON.parse(cached);
+      container.style.opacity = "1";
+      loadedSigs = new Set(data.map(sigOf));
+      renderMessages(data);
+      const notice = document.createElement("div");
+      notice.style.padding = "10px 14px";
+      notice.style.background = "#422c00";
+      notice.style.color = "#ffcc80";
+      notice.style.fontSize = "13px";
+      notice.style.textAlign = "center";
+      notice.style.borderRadius = "12px";
+      notice.style.margin = "8px auto";
+      notice.style.maxWidth = "90%";
+      notice.textContent = "Showing cached messages";
+      container.prepend(notice);
+    } else {
+      container.style.opacity = "1";
+      loadedSigs = new Set();
+      renderMessages([]);
+    }
+    startPolling();
+  }
+}
+
+// ─── PWA INSTALL PROMPT ───
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => {
+    document.getElementById("installBtn").style.display = "block";
+  }, 5000);
+});
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById("installBtn").style.display = "none";
+    }
+    deferredPrompt = null;
+  }
+});
+
+// ─── REGISTER SERVICE WORKER ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker registered!', reg))
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  });
+}
+
+document.addEventListener('scroll', () => {
+  const menu = document.querySelector('.msg-context-menu');
+  if (menu) menu.remove();
+}, true);
+</script>
+</body>
 </html>
