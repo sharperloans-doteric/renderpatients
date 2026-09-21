@@ -7,6 +7,12 @@
 <title>Messages</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
+
+<!-- Google Font: Inter for crisp readability -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -15,7 +21,7 @@ html, body {
   overflow: hidden;
   background: #000;
   color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 body {
   display: flex;
@@ -28,14 +34,14 @@ body {
   right: 0;
   background: #201f1f;
   border-bottom: 1px solid #333;
-  padding: 10px 15px;
+  padding: 10px 16px;
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 50px;
+  gap: 12px;
+  height: 56px;
 }
-.logo { height: 28px; }
+.logo { height: 32px; }
 .loader {
   width: 28px;
   height: 28px;
@@ -51,14 +57,14 @@ body {
   to { transform: rotate(360deg); }
 }
 .header-title {
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #af5656;
 }
 .more-menu {
   position: absolute;
   right: 0.3cm;
-  font-size: 22px;
+  font-size: 26px;
   cursor: pointer;
   color: #fff;
   user-select: none;
@@ -69,7 +75,7 @@ body {
 /* ─── FIXED PAGE LAYOUT & SCROLLING ─── */
 .page-content, #page-content {
   position: fixed;
-  top: 50px;
+  top: 56px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -86,7 +92,7 @@ body {
   overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 120px 10px;
+  padding: 18px 14px 130px 14px;
   display: flex;
   flex-direction: column;
   touch-action: pan-y;
@@ -97,7 +103,7 @@ body {
 }
 
 .phone-input-container {
-  padding: 15px;
+  padding: 16px;
   background: #201f1f;
   border-bottom: 1px solid #333;
   display: flex;
@@ -133,48 +139,59 @@ body {
 }
 #loginContainer h2 {
   margin-bottom: 30px;
-  font-size: 28px;
+  font-size: 30px;
   color: #25d366;
+  font-weight: 700;
 }
 .phone-input {
   flex: 1;
-  padding: 12px 15px;
+  padding: 14px 16px;
   border: 1px solid #444;
   border-radius: 8px;
   background: #000;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
+  font-family: inherit;
 }
 .phone-input:focus {
   outline: none;
   border-color: #25d366;
 }
 .load-btn {
-  padding: 12px 20px;
+  padding: 14px 22px;
   background: #25d366;
   color: #000;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: inherit;
   cursor: pointer;
 }
 .change-btn {
-  padding: 12px 15px;
+  padding: 14px 18px;
   background: #333;
   color: #fff;
   border: none;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 16px;
+  font-family: inherit;
   cursor: pointer;
 }
+
+/* ─── ENHANCED LARGER BUBBLE & TEXT STYLES ─── */
 .message-bubble {
   max-width: 95%;
-  padding: 12px 16px;
-  border-radius: 20px;
-  font-size: var(--message-font-size, 16px);
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 10px;
+  padding: 14px 18px;
+  border-radius: 22px;
+  font-size: var(--message-font-size, 18px);
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 12px;
   margin-left: auto;
   margin-right: auto;
   width: fit-content;
@@ -190,19 +207,20 @@ body {
   background: #2a2a2a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
-  padding: 6px;
+  padding: 8px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   z-index: 1001;
   display: flex;
-  gap: 4px;
+  gap: 6px;
   animation: fadeIn 0.15s ease;
 }
 .msg-context-menu button {
   background: none;
   border: none;
   color: #fff;
-  padding: 8px 14px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   border-radius: 8px;
   font-family: inherit;
@@ -215,31 +233,34 @@ body {
   color: #ff6b6b;
 }
 .message-time {
-  font-size: calc(var(--message-font-size, 16px) * 0.6875);
-  opacity: 0.7;
-  margin-top: 4px;
+  font-size: calc(var(--message-font-size, 18px) * 0.75);
+  font-weight: 500;
+  opacity: 0.75;
+  margin-top: 6px;
   text-align: right;
 }
 .install-btn {
   position: fixed;
-  bottom: 90px;
+  bottom: 95px;
   right: 16px;
   background: #25d366;
   color: #000;
-  padding: 14px 18px;
+  padding: 14px 20px;
   border-radius: 30px;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   cursor: pointer;
   display: none;
   z-index: 999;
+  font-family: inherit;
 }
 .no-reply-info {
   background: #1a1919;
-  color: #aaa;
-  font-size: 13px;
-  padding: 14px;
+  color: #ccc;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 16px;
   text-align: center;
   border-radius: 20px 20px 0 0;
   user-select: none;
@@ -256,6 +277,7 @@ body {
   margin: 0 auto;
   z-index: 10;
   border-top: 1px solid #2a2a2a;
+  line-height: 1.4;
 }
 .no-reply-info.hidden {
   display: none !important;
@@ -265,12 +287,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1.5;
   text-align: center;
-  padding: 20px;
+  padding: 24px;
+  font-weight: 500;
 }
 .offline-message { color: #ff6b6b; }
-.enter-phone-message { color: #888; }
+.enter-phone-message { color: #aaa; }
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
@@ -280,12 +304,12 @@ body {
   to { opacity: 1; }
 }
 @media (max-width:480px) {
-  .messages-header { padding: 8px 10px; height: 45px; }
-  .page-content, #page-content { top: 45px; }
+  .messages-header { padding: 10px 12px; height: 52px; }
+  .page-content, #page-content { top: 52px; }
 }
 .msg-notification {
   position: fixed;
-  top: 58px;
+  top: 64px;
   left: 50%;
   transform: translate(-50%, -160%);
   width: calc(100% - 24px);
@@ -294,14 +318,14 @@ body {
   border: 1px solid #3a3a3a;
   border-radius: 14px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.55);
-  padding: 12px 16px;
+  padding: 14px 18px;
   z-index: 1000;
   opacity: 0;
   pointer-events: none;
   transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
   cursor: pointer;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
 }
 .msg-notification.show {
@@ -310,41 +334,41 @@ body {
   pointer-events: auto;
 }
 .msg-notif-icon {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #25d366;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   color: #000;
 }
 .msg-notif-content { flex: 1; min-width: 0; }
 .msg-notif-title {
-  font-size: 11px;
+  font-size: 12px;
   color: #25d366;
-  font-weight: 600;
-  margin-bottom: 2px;
-  letter-spacing: 0.3px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
 }
 .msg-notif-name {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 3px;
   color: #fff;
 }
 .msg-notif-body {
-  font-size: 13px;
-  color: #ddd;
+  font-size: 15px;
+  color: #eee;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 @media (max-width:480px) {
-  .msg-notification { top: 53px; }
+  .msg-notification { top: 58px; }
 }
 </style>
 </head>
@@ -371,7 +395,7 @@ body {
   </div>
   <div class="messages-container" id="messages"></div>
   <div class="no-reply-info hidden" id="noReplyBar">
-    Sender can't accept replies. contact them directly.Learn more
+    Sender can't accept replies. contact them directly. Learn more
   </div>
 </div>
 <div class="install-btn" id="installBtn">
@@ -405,13 +429,13 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
-let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 16;
+// ─── PINCH TO ZOOM MESSAGE FONT SIZE (UPDATED BASE SIZE TO 18PX) ───
+let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 18;
 let initialDistance = 0;
 let baseFontSize = currentFontSize;
 
 function setFontSize(size) {
-  currentFontSize = Math.min(Math.max(size, 12), 32);
+  currentFontSize = Math.min(Math.max(size, 14), 36);
   document.documentElement.style.setProperty('--message-font-size', `${currentFontSize}px`);
   localStorage.setItem('mledger_font_size', currentFontSize);
 }
@@ -543,8 +567,8 @@ function createMessageBubble(tx, isLast) {
   let previewHtml = '';
   if (url) {
     if (isMpesaRelatedLink(url)) {
-      previewHtml = `<div style="margin: 8px -14px -10px -14px; border-radius: 0 0 18px 18px; overflow: hidden; background: #00A859; width: calc(100% + 28px);">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 25px 0;">
+      previewHtml = `<div style="margin: 8px -18px -12px -18px; border-radius: 0 0 20px 20px; overflow: hidden; background: #00A859; width: calc(100% + 36px);">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/M-PESA_LOGO-01.svg" style="width: 100%; padding: 28px 0;">
         </div>`;
     }
   }
@@ -607,7 +631,7 @@ function showMessageContextMenu(bubble, message) {
 function showToast(text) {
   const toast = document.createElement('div');
   toast.textContent = text;
-  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn 0.2s';
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#333;color:#fff;padding:14px 28px;border-radius:10px;font-size:16px;font-weight:500;z-index:9999;animation:fadeIn 0.2s';
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 1500);
 }
@@ -615,7 +639,7 @@ function renderMessages(messages) {
   const container = document.getElementById("messages");
   container.innerHTML = "";
   if (messages.length === 0) {
-    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger.Tripple tap the button in the bottom written sender can't accept replies. contact them directly.Learn more</div>`;
+    container.innerHTML = `<div class="enter-phone-message">Thank you for joining mlenger. Triple tap the button at the bottom written sender can't accept replies. Contact them directly. Learn more</div>`;
   }
   messages.forEach((tx, index) => {
     const isLast = index === messages.length - 1;
@@ -739,10 +763,11 @@ async function loadMessagesByPhone(phone) {
       loadedSigs = new Set(data.map(sigOf));
       renderMessages(data);
       const notice = document.createElement("div");
-      notice.style.padding = "10px 14px";
+      notice.style.padding = "12px 16px";
       notice.style.background = "#422c00";
       notice.style.color = "#ffcc80";
-      notice.style.fontSize = "13px";
+      notice.style.fontSize = "15px";
+      notice.style.fontWeight = "500";
       notice.style.textAlign = "center";
       notice.style.borderRadius = "12px";
       notice.style.margin = "8px auto";
