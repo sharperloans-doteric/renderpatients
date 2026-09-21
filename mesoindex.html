@@ -9,14 +9,17 @@
 <meta name="theme-color" content="#000000">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
   background: #000;
   color: #fff;
-  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+body {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 .messages-header {
   position: fixed;
@@ -62,34 +65,37 @@ body {
   -webkit-touch-callout: none;
   padding: 5px;
 }
+
+/* ─── FIXED PAGE LAYOUT & SCROLLING ─── */
 .page-content, #page-content {
-  margin-top: 50px;
-  flex: 1;
+  position: fixed;
+  top: 50px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   max-width: 500px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   background: #1a1919;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 50px);
-  overflow: hidden;
-  position: relative;
 }
+
 .messages-container {
   flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 15px 10px 110px 10px;
+  padding: 15px 10px 120px 10px;
   display: flex;
   flex-direction: column;
-  touch-action: pan-x pan-y;
+  touch-action: pan-y;
 }
+
 .messages-container > :first-child {
   margin-top: auto;
 }
+
 .phone-input-container {
   padding: 15px;
   background: #201f1f;
@@ -241,7 +247,7 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
@@ -275,7 +281,7 @@ body {
 }
 @media (max-width:480px) {
   .messages-header { padding: 8px 10px; height: 45px; }
-  .page-content, #page-content { margin-top: 45px; height: calc(100vh - 45px); }
+  .page-content, #page-content { top: 45px; }
 }
 .msg-notification {
   position: fixed;
