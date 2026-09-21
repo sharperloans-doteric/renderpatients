@@ -92,7 +92,7 @@ body {
   overflow-y: auto !important;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 18px 14px 130px 14px;
+  padding: 18px 14px 65px 14px; /* Reduced bottom padding by half */
   display: flex;
   flex-direction: column;
   touch-action: pan-y;
@@ -241,7 +241,7 @@ body {
 }
 .install-btn {
   position: fixed;
-  bottom: 95px;
+  bottom: 60px; /* Shifted down to fit smaller gap */
   right: 16px;
   background: #25d366;
   color: #000;
@@ -429,7 +429,7 @@ function setLoading(isLoading) {
   }
 }
 
-// ─── PINCH TO ZOOM MESSAGE FONT SIZE (UPDATED BASE SIZE TO 18PX) ───
+// ─── PINCH TO ZOOM MESSAGE FONT SIZE ───
 let currentFontSize = parseFloat(localStorage.getItem('mledger_font_size')) || 18;
 let initialDistance = 0;
 let baseFontSize = currentFontSize;
